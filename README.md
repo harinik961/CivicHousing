@@ -14,7 +14,7 @@ By mapping the relationship between lower-income housing, public transportation 
 At least three models: 
 - Model 1: Communities
 - Model 2: Housing
-- odel 3: Transportation
+- Model 3: Transportation
 
 URLs of at least three data sources that you will programmatically scrape: 
 - Google Maps API: https://mapsplatform.google.com/lp/maps-apis/ 
@@ -51,24 +51,25 @@ Model 2 - Housing
     - Accessibility Score
     - Approximate Rent Cost
     - Total Affordable Units
-Connections: 
+- Connections: 
     - Model connects to Communities and Transit Stops
 
 Model 3 - Transportation (bus stations, train stations, sidewalk/trails score)
-- Instances : Specific bus or train station stops (TRANSIT STOPS)
+- Instances: Specific bus or train station stops (TRANSIT STOPS)
 - Attributes:
     - Bus/Train Line
     - Type
     - Accessibility Score
-    - Sidewalk Score
     - Frequency
+    - Total Daily Departures
+    - Route Counts
 - Connections: 
     - Model connects to Housing and Transit Stops
 
 - MEDIA FOR ALL: 
-    - Google Maps 
-    -  Google Maps embed
-    -  Data visualization charts (Chart.js)
+    - Google Maps embed
+    - Data visualization charts (Chart.js)
+    - Images
 
 - 3 Questions: 
     - Where can I find affordable housing in Austin? 
