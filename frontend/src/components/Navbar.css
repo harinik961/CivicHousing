@@ -1,0 +1,28 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #577fdd;
+  padding: 25px 55px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  margin: 5px;          
+  border-radius: 10px
+}
+
+.logo {
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  margin-left: 25px;
+  font-size: 16px;
+  transition: 0.2s ease;
+}
+
+.nav-links a:hover {
+  color: #000000;
+}
