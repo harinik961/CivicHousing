@@ -29,51 +29,51 @@ function TeamMemberCard({name, image, bio, responsibilities, commits, issues, te
   );
 }
 
+// TODO: Remember to fill in all the bios, images, etc.
+  const team = [
+  {
+    name: "Coco Zhou", 
+    username: "oxcoco",
+    email: ["cocozhou@utexas.edu", "cocozhou62405@gmail.com"],
+    image: cocoImage, 
+    bio: "I'm a Junior studying Computer Science and Mathematics at UT Austin. I enjoy sleeping, reading, and playing Minecraft in my free time.", 
+    responsibilities: "About Page",
+  }, 
+  {
+    name: "Matthew Pham", 
+    username: "matthewpham16",
+    email: ["mattpham016@gmail.com"],
+    image: matthewImage, 
+    bio: "Matthew's temporary bio.", 
+    responsibilities: "Home Page",
+  }, 
+  {
+    name: "Aarshi Khatiwada", 
+    username: "rckhatiwada1271",
+    email: ["rckhatiwada1271@gmail.com"],
+    image: aarshiImage, 
+    bio: "I'm a senior studying Computer Science and minoring in Business. I enjoy true crime podcasts, learning about psychology, and trying new foods.",
+    responsibilities: "Framework for Models and Instances",
+  }, 
+  {
+    name: "Sri Harini Kolluru", 
+    username: "sriharini.kolluru",
+    email: ["harinik961@gmail.com"],
+    image: hariniImage, 
+    bio: "I'm a Sophomore studying computer science and entreprenuership at UT Austin. I enjoy art, photography, and reading in my free time .", 
+    responsibilities: "Models and Instances",
+  }, 
+  {
+    name: "Alexander Nguyen", 
+    username: "alexandernguyen1504",
+    email: ["alexandernguyen@alexanders-macbook-air.local"],
+    image: alexImage, 
+    bio: "I'm a Junior studying computer science at UT Austin. I enjoy sports, hanging out with friends, and trying new food spots in my free tie.", 
+    responsibilities: "Models and Instances",
+  }
+];
 export default function About() {
   const [stats, setStats] = useState({});
-  // TODO: Remember to fill in all the bios, images, etc.
-  const team = [
-    {
-      name: "Coco Zhou", 
-      username: "oxcoco",
-      email: ["cocozhou@utexas.edu", "cocozhou62405@gmail.com"],
-      image: cocoImage, 
-      bio: "I'm a Junior studying Computer Science and Mathematics at UT Austin. I enjoy sleeping, reading, and playing Minecraft in my free time.", 
-      responsibilities: "About Page",
-    }, 
-    {
-      name: "Matthew Pham", 
-      username: "matthewpham16",
-      email: ["mattpham016@gmail.com"],
-      image: matthewImage, 
-      bio: "Matthew's temporary bio.", 
-      responsibilities: "Home Page",
-    }, 
-    {
-      name: "Aarshi Khatiwada", 
-      username: "rckhatiwada1271",
-      email: ["rckhatiwada1271@gmail.com"],
-      image: aarshiImage, 
-      bio: "I'm a senior studying Computer Science and minoring in Business. I enjoy true crime podcasts, learning about psychology, and trying new foods.",
-      responsibilities: "Framework for Models and Instances",
-    }, 
-    {
-      name: "Sri Harini Kolluru", 
-      username: "sriharini.kolluru",
-      email: ["harinik961@gmail.com"],
-      image: hariniImage, 
-      bio: "I'm a Sophomore studying computer science and entreprenuership at UT Austin. I enjoy art, photography, and reading in my free time .", 
-      responsibilities: "Models and Instances",
-    }, 
-    {
-      name: "Alexander Nguyen", 
-      username: "alexandernguyen1504",
-      email: ["alexandernguyen@alexanders-macbook-air.local"],
-      image: alexImage, 
-      bio: "I'm a Junior studying computer science at UT Austin. I enjoy sports, hanging out with friends, and trying new food spots in my free tie.", 
-      responsibilities: "Models and Instances",
-    }
-  ];
 
   useEffect(() => {
     async function fetchStats() {
@@ -174,10 +174,10 @@ export default function About() {
         <h2 className="subtitle">Useful Links</h2>
         <div className="links-wrapper">
           <div className="link-box">
-            <a href="https://gitlab.com/matthewpham16/cs373-spring-2026-53380_06" target="_blank">Project Repository</a>
+            <a href="https://gitlab.com/matthewpham16/cs373-spring-2026-53380_06" target="_blank" rel="noopener noreferrer">Project Repository</a>
           </div>
           <div className="link-box">
-            <a href="https://mapsplatform.google.com/lp/maps-apis/" target="_blank">API Documentation</a> 
+            <a href="https://mapsplatform.google.com/lp/maps-apis/" target="_blank" rel="noopener noreferrer">API Documentation</a> 
             {/* TODO: REMEMBER TO REPLACE WITH POSTMAN API LINK */}
           </div>
         </div>
@@ -188,16 +188,16 @@ export default function About() {
         <h2 className="subtitle">Data Sources</h2>
         <ul className="data-sources">
           <li>
-            <a href="https://mapsplatform.google.com/lp/maps-apis/" target="_blank">Google Maps API</a>
+            <a href="https://mapsplatform.google.com/lp/maps-apis/" target="_blank" rel="noopener noreferrer">Google Maps API</a>
           </li>
           <li>
-            <a href="https://www.census.gov/data/developers/data-sets.html#accordion-a8ec3eb6f0-item-3c3bf7b7cd" target="_blank">Census API</a>
+            <a href="https://www.census.gov/data/developers/data-sets.html#accordion-a8ec3eb6f0-item-3c3bf7b7cd" target="_blank" rel="noopener noreferrer">Census API</a>
           </li>
           <li>
-            <a href="https://data.austintexas.gov/Housing-and-Real-Estate/Affordable-Housing-Inventory/ifzc-3xz8/about_data" target="_blank">Austin Affordable Housing Data</a>
+            <a href="https://data.austintexas.gov/Housing-and-Real-Estate/Affordable-Housing-Inventory/ifzc-3xz8/about_data" target="_blank" rel="noopener noreferrer">Austin Affordable Housing Data</a>
           </li>
           <li>
-            <a href="https://data.texas.gov/dataset/CapMetro-GTFS/r4v4-vz24/about_data" target="_blank">CapMetro Data</a>
+            <a href="https://data.texas.gov/dataset/CapMetro-GTFS/r4v4-vz24/about_data" target="_blank" rel="noopener noreferrer">CapMetro Data</a>
           </li>
         </ul>
       </div>
