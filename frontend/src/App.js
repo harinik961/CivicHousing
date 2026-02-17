@@ -9,6 +9,7 @@ import About from "./pages/About";
 import HousingInstance from "./pages/Housing/HousingInstance";
 import TransportationInstance from "./pages/Transportation/Transport-Instance";
 import CommunityInstance from "./pages/Communities/Community-Instance";
+import "./components/instance.css";
 
 function App() {
   return (

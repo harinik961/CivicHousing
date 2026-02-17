@@ -1,28 +1,32 @@
 const housingData = [
-  {
-    id: 1,
-    name: "Affordable Apt A",
-    image: "https://picsum.photos/400/250",
-    attributes: [
-      {title: "Address", value: "1200 North Loop"},
-      {title: "Rent", value: "$950"},
-      {title: "Bedrooms", value: "2"},
-      {title: "Transit Score", value: "78"},
-      {title: "Parking", value: "Yes"}
-    ]
-  },
+{
+  id: 1,
+  name: "Alexander Oaks Apartments",
+  image: "https://picsum.photos/400/250",
+
+  attributes: [
+    { title: "Address", value: "6119 Valiant Cir, Austin, TX 78749" },
+    { title: "Housing Program", value: "Income-restricted affordable housing" },
+    { title: "Property Type", value: "Multi-family apartments" },
+    { title: "City", value: "Austin" },
+    { title: "Parking", value: "On-site parking available" }
+  ],
+
+  mapEmbed: "https://www.google.com/maps?q=6119+Valiant+Cir+Austin+TX&output=embed"
+},
 
   {
     id: 2,
     name: "Affordable Apt B",
-    image: "https://picsum.photos/400/250",
+    image: "https://picsum.photos/400/300",
     attributes: [
       {title: "Address", value: "123 Main St"},
       {title: "Rent", value: "$2000"},
       {title: "Accessibility Score", value: "80"},
       {title: "Location", value: "Mueller"},
       {title: "Parking", value: "Yes"}
-    ]
+    ],
+      mapEmbed: "https://www.google.com/maps?q=6119+Valiant+Cir+Austin+TX&output=embed"
   },
 
   {
@@ -35,7 +39,8 @@ const housingData = [
       {title: "Bedrooms", value: "1"},
       {title: "Transit Score", value: "85"},
       {title: "Parking", value: "No"}
-    ]
+    ],
+     mapEmbed: "https://www.google.com/maps?q=6119+Valiant+Cir+Austin+TX&output=embed"
   }
 ];
 
