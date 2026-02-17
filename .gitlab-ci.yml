@@ -1,7 +1,13 @@
+
+image: node:18
 stages:
   - build
 
-build:
+build_website:
   stage: build
   script:
-    - echo "Build step placeholder"
+    - cd frontend
+    - npm ci
+    - npm run build
+  only:
+    - main
