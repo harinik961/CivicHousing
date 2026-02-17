@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "./About.css"
+import "./About.css";
 import cocoImage from "../media/coco.jpg";
 import matthewImage from "../media/matthew.jpg";
 import aarshiImage from "../media/aarshi.jpg";
@@ -70,7 +70,7 @@ export default function About() {
       username: "alexandernguyen1504",
       email: ["alexandernguyen@alexanders-macbook-air.local"],
       image: alexImage, 
-      bio: "Alexander's temporary bio.", 
+      bio: "I'm a Junior studying computer science at UT Austin. I enjoy sports, hanging out with friends, and trying new food spots in my free tie.", 
       responsibilities: "Models and Instances",
     }
   ];
