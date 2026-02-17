@@ -1,26 +1,26 @@
 const housingData = [
   {
     id: 1,
-    name: "Affordable Apt A",
+    name: "Rental Home",
     image: "https://picsum.photos/400/250",
     attributes: [
-      {title: "Address", value: "1200 North Loop"},
-      {title: "Rent", value: "$950"},
-      {title: "Bedrooms", value: "2"},
-      {title: "Transit Score", value: "78"},
+      {title: "Address", value: "3705 Commerce St"},
+      {title: "Rent", value: "$1250"},
+      {title: "Bedrooms", value: "1"},
+      {title: "Transit Score", value: "45"},
       {title: "Parking", value: "Yes"}
     ]
   },
 
   {
     id: 2,
-    name: "Affordable Apt B",
+    name: "Rental Home",
     image: "https://picsum.photos/400/250",
     attributes: [
-      {title: "Address", value: "123 Main St"},
-      {title: "Rent", value: "$2000"},
-      {title: "Accessibility Score", value: "80"},
-      {title: "Location", value: "Mueller"},
+      {title: "Address", value: "1200 Autumn St"},
+      {title: "Rent", value: "$1050"},
+      {title: "Bedrooms", value: "1"},
+      {title: "Transit Score", value: "56"},
       {title: "Parking", value: "Yes"}
     ]
   },
@@ -40,3 +40,4 @@ const housingData = [
 ];
 
 export default housingData;
+
