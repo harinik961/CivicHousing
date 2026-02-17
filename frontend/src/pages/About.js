@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./About.css"
 import cocoImage from "../media/coco.jpg";
-import matthewImage from "../media/temp_pfp.png";
+import matthewImage from "../media/matthew.jpg";
 import aarshiImage from "../media/aarshi.jpg";
 import hariniImage from "../media/harini.jpg";
 import alexImage from "../media/alexander.jpg";
