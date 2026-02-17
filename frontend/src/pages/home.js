@@ -22,7 +22,7 @@ export default function Home() {
           <div className="carousel-slide slide-2">
             <div className="carousel-overlay">
               <h1>Discover Your Community</h1>
-              <p>Learn about neighborhoods across Austin — safety, transit, and more.</p>
+              <p>Learn about neighborhoods across Austin, safety, transit, and more.</p>
               <Link to="/community"><Button variant="light">Explore Communities</Button></Link>
             </div>
           </div>
@@ -44,7 +44,7 @@ export default function Home() {
         <p>
           CivicHousing is a data-driven platform highlighting affordable housing availability
           and transportation accessibility gaps across Austin, Texas. We help residents,
-          planners, and policymakers identify where affordability and mobility intersect — or fail to.
+          planners, and policymakers identify where affordability and mobility intersect or fail to.
         </p>
       </Container>
 
@@ -54,7 +54,7 @@ export default function Home() {
           <Col md={4}>
             <Card className="model-card">
               <Card.Body>
-                <Card.Title>🏘️ Communities</Card.Title>
+                <Card.Title>Communities</Card.Title>
                 <Card.Text>
                   Explore Austin neighborhoods by median housing prices, crime index, population, and transit scores.
                 </Card.Text>
@@ -65,9 +65,9 @@ export default function Home() {
           <Col md={4}>
             <Card className="model-card">
               <Card.Body>
-                <Card.Title>🏠 Housing</Card.Title>
+                <Card.Title>Housing</Card.Title>
                 <Card.Text>
-                  Browse affordable housing units — apartments, rentals, and more — with accessibility and cost info.
+                  Browse affordable housing units including apartments and rentals with accessibility and cost info.
                 </Card.Text>
                 <Link to="/housing"><Button variant="primary">View Housing</Button></Link>
               </Card.Body>
@@ -76,9 +76,9 @@ export default function Home() {
           <Col md={4}>
             <Card className="model-card">
               <Card.Body>
-                <Card.Title>🚌 Transportation</Card.Title>
+                <Card.Title>Transportation</Card.Title>
                 <Card.Text>
-                  Find bus and train stops near you, with walkability scores and sidewalk accessibility data.
+                  Find bus and train stops near you with walkability scores and sidewalk accessibility data.
                 </Card.Text>
                 <Link to="/transportation"><Button variant="primary">View Transportation</Button></Link>
               </Card.Body>
@@ -93,17 +93,17 @@ export default function Home() {
         <Row className="justify-content-center">
           <Col md={4}>
             <div className="question-box">
-              <h5>🔍 Where can I find affordable housing in Austin?</h5>
+              <h5>Where can I find affordable housing in Austin?</h5>
             </div>
           </Col>
           <Col md={4}>
             <div className="question-box">
-              <h5>🚶 Is the path between my apartment and the bus stop safe and accessible?</h5>
+              <h5>Is the path between my apartment and the bus stop safe and accessible?</h5>
             </div>
           </Col>
           <Col md={4}>
             <div className="question-box">
-              <h5>🚏 What affordable housing is closest to reliable transit options?</h5>
+              <h5>What affordable housing is closest to reliable transit options?</h5>
             </div>
           </Col>
         </Row>
