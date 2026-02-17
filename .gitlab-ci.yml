@@ -7,7 +7,7 @@ build_website:
   stage: build
   script:
     - cd frontend
-    - npm ci
+    - npm install
     - npm run build
   only:
     - main
