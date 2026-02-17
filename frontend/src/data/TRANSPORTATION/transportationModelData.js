@@ -4,11 +4,11 @@ const transportationData = [
     name: "MetroRail - Downtown Station",
     image: "https://picsum.photos/400/210",
     attributes: [
-      "Type: Rail",
-      "Line: Red Line",
-      "Accessibility Score: 92",
-      "Daily Departures: 28",
-      "Route Count: 1"
+      {title: "Type", value: "Rail"},
+      {title: "Line", value: "Red Line"},
+      {title: "Accessibility Score", value: "92"},
+      {title: "Daily Departures", value: "28"},
+      {title: "Route Count", value: "1"}
     ]
   },
   {
@@ -16,11 +16,11 @@ const transportationData = [
     name: "CapMetro - Riverside Stop",
     image: "https://picsum.photos/400/220",
     attributes: [
-      "Type: Bus",
-      "Line: 7",
-      "Accessibility Score: 81",
-      "Daily Departures: 45",
-      "Route Count: 2"
+      {title: "Type", value: "Bus"},
+      {title: "Line", value: "7"},
+      {title: "Accessibility Score", value: "81"},
+      {title: "Daily Departures", value: "45"},
+      {title: "Route Count", value: "2"}
     ]
   },
   {
@@ -28,11 +28,11 @@ const transportationData = [
     name: "CapMetro - North Lamar Stop",
     image: "https://picsum.photos/400/230",
     attributes: [
-      "Type: Bus",
-      "Line: 803",
-      "Accessibility Score: 88",
-      "Daily Departures: 60",
-      "Route Count: 3"
+      {title: "Type", value: "Bus"},
+      {title: "Line", value: "803"},
+      {title: "Accessibility Score", value: "88"},
+      {title: "Daily Departures", value: "60"},
+      {title: "Route Count", value: "3"}
     ]
   }
 ];

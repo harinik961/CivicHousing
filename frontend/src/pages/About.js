@@ -6,6 +6,7 @@ import aarshiImage from "../media/aarshi.jpg";
 import hariniImage from "../media/harini.jpg";
 import alexImage from "../media/alexander.jpg";
 
+
 function TeamMemberCard({name, image, bio, responsibilities, commits, issues, tests}) {
   return(
     <div className="member-card">
@@ -53,8 +54,8 @@ export default function About() {
       username: "rckhatiwada1271",
       email: ["rckhatiwada1271@gmail.com"],
       image: aarshiImage, 
-      bio: "Aarshi's temporary bio.", 
-      responsibilities: "Models and Instances",
+      bio: "I'm a senior studying Computer Science and minoring in Business. I enjoy true crime podcasts, learning about psychology, and trying new foods.",
+      responsibilities: "Framework for Models and Instances",
     }, 
     {
       name: "Sri Harini Kolluru", 
@@ -115,7 +116,7 @@ export default function About() {
       commits.forEach(commit => {
         const member = team.find(
           m => m.email.some(email => 
-            email.toLowerCase() == commit.author_email.toLowerCase()
+            email.toLowerCase() === commit.author_email.toLowerCase()
           )
         );
         if (member) stats[member.username].commits += 1;
