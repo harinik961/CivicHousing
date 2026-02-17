@@ -61,7 +61,7 @@ export default function About() {
       username: "sriharini.kolluru",
       email: ["harinik961@gmail.com"],
       image: hariniImage, 
-      bio: "Sri's temporary bio.", 
+      bio: "I'm a Sophomore studying computer science and entreprenuership at UT Austin. I enjoy art, photography, and reading in my free time .", 
       responsibilities: "Models and Instances",
     }, 
     {
