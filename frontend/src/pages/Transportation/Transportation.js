@@ -1,3 +1,12 @@
-export default function Home() {
-  return <h1>Transporation Page</h1>;
+import ModelPage from "../../components/ModelPage";
+import transportationData from "../../data/TRANSPORTATION/transportationModelData";
+
+export default function Transportation() {
+  return (
+    <ModelPage
+      title="Transportation"
+      data={transportationData}
+      modelName="transportation"
+    />
+  );
 }
