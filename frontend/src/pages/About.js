@@ -1,5 +1,10 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "./About.css"
+import cocoImage from "../media/coco.jpg";
+import matthewImage from "../media/temp_pfp.png";
+import aarshiImage from "../media/aarshi.jpg";
+import hariniImage from "../media/harini.jpg";
+import alexImage from "../media/alexander.jpg";
 
 function TeamMemberCard({name, image, bio, responsibilities, commits, issues, tests}) {
   return(
@@ -10,14 +15,13 @@ function TeamMemberCard({name, image, bio, responsibilities, commits, issues, te
       <div className="card-body">
         <h5 className="member-name">{name}</h5>
         <h5>Bio:</h5>
-        <p>{bio}</p>
+        <p className="bio">{bio}</p>
         <h5>Responsibilities:</h5>
         <p>{responsibilities}</p>
-        <h5>Stats:</h5>
         <div className="member-stats">
-          <span>Commits: {commits}</span>
-          <span>Issues: {issues}</span>
-          <span>Tests: {tests}</span>
+          <span>Commits: {commits}</span>{" | "}
+          <span>Closed Issues: {issues}</span>{" | "}
+          <span>Unit Tests: {tests}</span>
         </div>
       </div>
     </div>
@@ -25,44 +29,46 @@ function TeamMemberCard({name, image, bio, responsibilities, commits, issues, te
 }
 
 export default function About() {
+  const [stats, setStats] = useState({});
+  // TODO: Remember to fill in all the bios, images, etc.
   const team = [
     {
       name: "Coco Zhou", 
       username: "oxcoco",
-      email: "cocozhou62405@gmail.com",
-      image: "../media/coco.jpg", 
-      bio: "Coco's temporary bio.", 
+      email: "cocozhou@utexas.edu",
+      image: cocoImage, 
+      bio: "I'm a Junior studying Computer Science and Mathematics at UT Austin. I enjoy sleeping, reading, and playing Minecraft in my free time.", 
       responsibilities: "About Page",
     }, 
     {
       name: "Matthew Pham", 
       username: "matthewpham16",
-      email: "map7578@my.utexas.edu",
-      image: "../media/temp_pfp.png", 
+      email: "mattpham016@gmail.com",
+      image: matthewImage, 
       bio: "Matthew's temporary bio.", 
       responsibilities: "Home Page",
     }, 
     {
       name: "Aarshi Khatiwada", 
       username: "rckhatiwada1271",
-      email: "ak48827@my.utexas.edu",
-      image: "../media/aarshi.jpg", 
+      email: "rckhatiwada1271@gmail.com",
+      image: aarshiImage, 
       bio: "Aarshi's temporary bio.", 
       responsibilities: "Models and Instances",
     }, 
     {
       name: "Sri Harini Kolluru", 
       username: "sriharini.kolluru",
-      email: "sk59945@my.utexas.edu",
-      image: "../media/harini.jpg", 
+      email: "harinik961@gmail.com",
+      image: hariniImage, 
       bio: "Sri's temporary bio.", 
       responsibilities: "Models and Instances",
     }, 
     {
       name: "Alexander Nguyen", 
       username: "alexandernguyen1504",
-      email: "aln2284@my.utexas.edu",
-      image: "../media/alexander.jpg", 
+      email: "alexandernguyen@alexanders-macbook-air.local",
+      image: alexImage, 
       bio: "Alexander's temporary bio.", 
       responsibilities: "Models and Instances",
     }
@@ -70,7 +76,50 @@ export default function About() {
 
   useEffect(() => {
     async function fetchStats() {
+      
+      async function fetchData(url) {
+        let allData = [];
+        let page = 1;
+        while (true) {
+          const res = await fetch(`${url}&page=${page}`);
+          if (!res.ok)
+            break;
+          const data = await res.json();
+          if (!data.length) 
+            break;
+          allData = allData.concat(data);
+          page++;
+        }
+        return allData
+      }
 
+      const [issues, commits] = await Promise.all([
+        fetchData("https://gitlab.com/api/v4/projects/79423455/issues?per_page=100&state=all"), 
+        fetchData("https://gitlab.com/api/v4/projects/79423455/repository/commits?per_page=100")
+      ]);
+
+      const stats = {};
+      // Tests are default 0 at the moment. Tracking tests will be implemented later on when we have tests
+      team.forEach(member => {
+        stats[member.username] = {commits: 0, issues: 0, tests: 0};
+      });
+
+      // Finds number of closed issues
+      issues.forEach(issue => {
+        if (issue.closed_by && stats[issue.closed_by.username]) {
+          stats[issue.closed_by.username].issues += 1;
+        }
+      });
+
+      // Finds number of commits
+      commits.forEach(commit => {
+        const member = team.find(
+          m => m.email.toLowerCase() == commit.author_email.toLowerCase()
+        );
+        if (member) stats[member.username].commits += 1;
+      });
+
+      setStats(stats);
     }
 
     fetchStats();
@@ -78,6 +127,8 @@ export default function About() {
 
   return (
     <div className="about-container">
+
+      {/* About Blurb */}
       <div className="about-top-section">
         <h1 className="title">About CivicHousing</h1>
         <p className="about-blurb">
@@ -87,9 +138,24 @@ export default function About() {
           transit-accessible affordable housing, evaluate safety and walkability, and uncover inequities in urban development.
         </p>
       </div>
+
+      {/* Team Members */}
       <div className="team-section">
         <h2 className="subtitle">Our Team</h2>
+        <div className="team-cards">
+          {team.map(member =>(
+            <TeamMemberCard
+              key={member.username}
+              {...member}
+              commits={stats[member.username]?.commits || 0}
+              issues={stats[member.username]?.issues || 0}
+              tests={stats[member.username]?.tests || 0}
+            />
+          ))} 
+        </div>
       </div>
+
+      {/* List of Tools Used */}
       <div className="tools-section">
         <h2 className="subtitle">Tools Used</h2>
         <ul className="text-section">
@@ -99,6 +165,8 @@ export default function About() {
           <li><strong>AWS:</strong> Cloud platform used to host our website.<br /></li>
         </ul>
       </div>
+
+      {/* Github Repo & API Documentation */}
       <div className="links-section">
         <h2 className="subtitle">Useful Links</h2>
         <div className="links-wrapper">
@@ -111,6 +179,8 @@ export default function About() {
           </div>
         </div>
       </div>
+
+      {/* Data Sources */}
       <div className="data-source-section"> 
         <h2 className="subtitle">Data Sources</h2>
         <ul className="data-sources">

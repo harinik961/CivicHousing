@@ -19,7 +19,7 @@ At least three models:
 URLs of at least three data sources that you will programmatically scrape: 
 - Google Maps API: https://mapsplatform.google.com/lp/maps-apis/ 
 - Census API: https://www.census.gov/data/developers/data-sets.html#accordion-a8ec3eb6f0-item-3c3bf7b7cd 
-= Austin Affordable Housing Data: https://data.austintexas.gov/Housing-and-Real-Estate/Affordable-Housing-Inventory/ifzc-3xz8/about_data 
+- Austin Affordable Housing Data: https://data.austintexas.gov/Housing-and-Real-Estate/Affordable-Housing-Inventory/ifzc-3xz8/about_data 
 - CapMetro Data: https://data.texas.gov/dataset/CapMetro-GTFS/r4v4-vz24/about_data
 
 An estimate of the number of instances of each model:
