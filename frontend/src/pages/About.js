@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./About.css"
 import cocoImage from "../media/coco.jpg";
-import matthewImage from "../media/temp_pfp.png";
+import matthewImage from "../media/matthew.jpg";
 import aarshiImage from "../media/aarshi.jpg";
 import hariniImage from "../media/harini.jpg";
 import alexImage from "../media/alexander.jpg";
@@ -62,7 +62,7 @@ export default function About() {
       username: "sriharini.kolluru",
       email: ["harinik961@gmail.com"],
       image: hariniImage, 
-      bio: "Sri's temporary bio.", 
+      bio: "I'm a Sophomore studying computer science and entreprenuership at UT Austin. I enjoy art, photography, and reading in my free time .", 
       responsibilities: "Models and Instances",
     }, 
     {

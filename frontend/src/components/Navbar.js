@@ -1,19 +1,26 @@
-import { Link } from "react-router-dom";
+import { Navbar as BSNavbar, Nav, Container } from 'react-bootstrap';
 import "./Navbar.css";
+import logo from "../logo.svg"
 
-export default function Navbar() {
+export default function NavBar() {
   return (
-    <nav className="navbar">
-      <div className="logo">CivicHousing</div>
+    <BSNavbar expand="lg" variant="dark" className="navbar">
+      <Container fluid className="px-0 px-lg-4">
+        <BSNavbar.Brand className="logo" href="/">
+          <img src={logo} alt="CivicHousing" className="logo-icon"></img>
+        </BSNavbar.Brand>
 
-      <div className="nav-links">
-        <Link to="/">Home</Link>
-        <Link to="/community">Communities</Link>
-        <Link to="/housing">Housing</Link>
-        <Link to="/transportation">Transportation</Link>
-        <Link to="/about">About</Link>
-
-      </div>
-    </nav>
+        <BSNavbar.Toggle aria-controls="navbar-toggle"/>
+          <BSNavbar.Collapse id="navbar-toggle">
+            <Nav className="ms-auto nav-links">
+              <Nav.Link href="/">Home</Nav.Link>
+              <Nav.Link href="/community">Communities</Nav.Link>
+              <Nav.Link href="/housing">Housing</Nav.Link>
+              <Nav.Link href="/transportation">Transportation</Nav.Link>
+              <Nav.Link href="/about">About</Nav.Link>
+            </Nav>
+          </BSNavbar.Collapse>
+      </Container>
+    </BSNavbar>
   );
 }
