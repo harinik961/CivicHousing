@@ -1,12 +1,13 @@
 import { Navbar as BSNavbar, Nav, Container } from 'react-bootstrap';
 import "./Navbar.css";
+import logo from "../logo.svg"
 
 export default function NavBar() {
   return (
     <BSNavbar expand="lg" variant="dark" className="navbar">
       <Container fluid className="px-0 px-lg-4">
         <BSNavbar.Brand className="logo" href="/">
-          CivicHousing
+          <img src={logo} alt="CivicHousing" className="logo-icon"></img>
         </BSNavbar.Brand>
 
         <BSNavbar.Toggle aria-controls="navbar-toggle"/>

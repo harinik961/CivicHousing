@@ -12,6 +12,11 @@
   font-weight: 600;
 }
 
+.logo-icon {
+  height: 40px;
+  width: auto;
+}
+
 .nav-links .nav-link {
   color: white !important;
   text-decoration: none;
