@@ -35,7 +35,7 @@ export default function About() {
     {
       name: "Coco Zhou", 
       username: "oxcoco",
-      email: "cocozhou@utexas.edu",
+      email: ["cocozhou@utexas.edu", "cocozhou62405@gmail.com"],
       image: cocoImage, 
       bio: "I'm a Junior studying Computer Science and Mathematics at UT Austin. I enjoy sleeping, reading, and playing Minecraft in my free time.", 
       responsibilities: "About Page",
@@ -43,7 +43,7 @@ export default function About() {
     {
       name: "Matthew Pham", 
       username: "matthewpham16",
-      email: "mattpham016@gmail.com",
+      email: ["mattpham016@gmail.com"],
       image: matthewImage, 
       bio: "Matthew's temporary bio.", 
       responsibilities: "Home Page",
@@ -51,7 +51,7 @@ export default function About() {
     {
       name: "Aarshi Khatiwada", 
       username: "rckhatiwada1271",
-      email: "rckhatiwada1271@gmail.com",
+      email: ["rckhatiwada1271@gmail.com"],
       image: aarshiImage, 
       bio: "Aarshi's temporary bio.", 
       responsibilities: "Models and Instances",
@@ -59,7 +59,7 @@ export default function About() {
     {
       name: "Sri Harini Kolluru", 
       username: "sriharini.kolluru",
-      email: "harinik961@gmail.com",
+      email: ["harinik961@gmail.com"],
       image: hariniImage, 
       bio: "Sri's temporary bio.", 
       responsibilities: "Models and Instances",
@@ -67,7 +67,7 @@ export default function About() {
     {
       name: "Alexander Nguyen", 
       username: "alexandernguyen1504",
-      email: "alexandernguyen@alexanders-macbook-air.local",
+      email: ["alexandernguyen@alexanders-macbook-air.local"],
       image: alexImage, 
       bio: "Alexander's temporary bio.", 
       responsibilities: "Models and Instances",
@@ -114,7 +114,9 @@ export default function About() {
       // Finds number of commits
       commits.forEach(commit => {
         const member = team.find(
-          m => m.email.toLowerCase() == commit.author_email.toLowerCase()
+          m => m.email.some(email => 
+            email.toLowerCase() == commit.author_email.toLowerCase()
+          )
         );
         if (member) stats[member.username].commits += 1;
       });
