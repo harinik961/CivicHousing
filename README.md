@@ -44,13 +44,13 @@ Model 1 - Communities (county, zip, median housing prices, population, crime ind
 Model 2 - Housing 
 - Instances: Apartments, Rentals, etc. 
 - Attributes: 
-    - Address
-    - Zip Codes
-    - Unit Type
-    - Housing Tenure
-    - Accessibility Score
-    - Approximate Rent Cost
-    - Total Affordable Units
+    -Address:
+    Unit Type: 
+    Income Restriction Level:
+    Accessibility Score:
+    Approximate Rent Cost:
+    Total Affordable Units: 
+
 - Connections: 
     - Model connects to Communities and Transit Stops
 

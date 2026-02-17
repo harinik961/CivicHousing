@@ -8,23 +8,31 @@ export default function ModelPage({ title, data, modelName }) {
     const item = data[i];
 
     cards.push(
-      //col-lg-4 for large screens, col-md-6 for medium screens, col-sm-12 for small screens
       <div className="col-lg-4 col-md-6 col-sm-12 mb-4" key={item.id}>
-        <ModelCard item={item} modelName={modelName} 
+        <ModelCard
+          item={item}
+          modelName={modelName}
           linkPath={`/${modelName}/${item.id}`}
         />
-
       </div>
     );
   }
 
   return (
     <div className="container mt-4">
+
+      {/* instance count */}
+      <p className="text-muted small text-center mb-1">
+        {data.length} instances
+      </p>
+
+      {/* title */}
       <h2 className="text-center mb-4">{title}</h2>
 
       <div className="row">
         {cards}
       </div>
+
     </div>
   );
 }
