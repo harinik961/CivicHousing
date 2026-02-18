@@ -176,8 +176,7 @@ export default function About() {
             <a href="https://gitlab.com/matthewpham16/cs373-spring-2026-53380_06" target="_blank" rel="noopener noreferrer">Project Repository</a>
           </div>
           <div className="link-box">
-            <a href="https://mapsplatform.google.com/lp/maps-apis/" target="_blank" rel="noopener noreferrer">API Documentation</a> 
-            {/* TODO: REMEMBER TO REPLACE WITH POSTMAN API LINK */}
+            <a href="https://documenter.getpostman.com/view/52514232/2sBXcDHMyK" target="_blank" rel="noopener noreferrer">API Documentation</a> 
           </div>
         </div>
       </div>
