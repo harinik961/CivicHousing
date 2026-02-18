@@ -58,7 +58,7 @@ export default function Home() {
                 <Card.Text>
                   Explore Austin neighborhoods by median housing prices, crime index, population, and transit scores.
                 </Card.Text>
-                <Link to="/community"><Button variant="primary">View Communities</Button></Link>
+                <Link to="/community"><Button className="custom-btn">View Communities</Button></Link>
               </Card.Body>
             </Card>
           </Col>
@@ -69,7 +69,7 @@ export default function Home() {
                 <Card.Text>
                   Browse affordable housing units including apartments and rentals with accessibility and cost info.
                 </Card.Text>
-                <Link to="/housing"><Button variant="primary">View Housing</Button></Link>
+                <Link to="/housing"><Button className="custom-btn">View Housing</Button></Link>
               </Card.Body>
             </Card>
           </Col>
@@ -80,7 +80,7 @@ export default function Home() {
                 <Card.Text>
                   Find bus and train stops near you with walkability scores and sidewalk accessibility data.
                 </Card.Text>
-                <Link to="/transportation"><Button variant="primary">View Transportation</Button></Link>
+                <Link to="/transportation"><Button className="custom-btn">View Transportation</Button></Link>
               </Card.Body>
             </Card>
           </Col>
