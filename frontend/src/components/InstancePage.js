@@ -43,6 +43,7 @@ export default function InstancePage({ data, modelName }) {
           <div className="masonry-item" key={i}>
             <InstanceCard title={attr.title}>
               <p>{attr.value}</p>
+              <p>{attr.Description}</p>
             </InstanceCard>
           </div>
         ))}
