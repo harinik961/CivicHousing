@@ -29,7 +29,6 @@ function TeamMemberCard({name, image, bio, responsibilities, commits, issues, te
   );
 }
 
-// TODO: Remember to fill in all the bios, images, etc.
   const team = [
   {
     name: "Coco Zhou", 
@@ -37,7 +36,7 @@ function TeamMemberCard({name, image, bio, responsibilities, commits, issues, te
     email: ["cocozhou@utexas.edu", "cocozhou62405@gmail.com"],
     image: cocoImage, 
     bio: "I'm a Junior studying Computer Science and Mathematics at UT Austin. I enjoy sleeping, reading, and playing Minecraft in my free time.", 
-    responsibilities: "About Page",
+    responsibilities: "About Page, Navbar",
   }, 
   {
     name: "Matthew Pham", 
@@ -68,7 +67,7 @@ function TeamMemberCard({name, image, bio, responsibilities, commits, issues, te
     username: "alexandernguyen1504",
     email: ["alexandernguyen@alexanders-macbook-air.local"],
     image: alexImage, 
-    bio: "I'm a Junior studying computer science at UT Austin. I enjoy sports, hanging out with friends, and trying new food spots in my free tie.", 
+    bio: "I'm a Junior studying computer science at UT Austin. I enjoy sports, hanging out with friends, and trying new food spots in my free time.", 
     responsibilities: "Models and Instances",
   }
 ];

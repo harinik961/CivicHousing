@@ -40,11 +40,14 @@ export default function Home() {
 
       {/* Intro Blurb */}
       <Container className="intro-section text-center">
-        <h2>What is CivicHousing?</h2>
+        <h2>Nearly half of Austin renters spend more than 30% of their income on rent.</h2>
         <p>
-          CivicHousing is a data-driven platform highlighting affordable housing availability
+          Housing is a basic right. Austin renters shouldn't have to break the bank just to keep a roof over their heads. 
+          But without clear, accessible data, inequality remains invisible and unaddressed.
+        </p>
+        <p> <b>CivicHousing</b> is a data-driven platform built to address this problem by highlighting affordable housing availability
           and transportation accessibility gaps across Austin, Texas. We help residents,
-          planners, and policymakers identify where affordability and mobility intersect or fail to.
+          planners, and policymakers identify where affordability and mobility intersect or fail to. 
         </p>
       </Container>
 
