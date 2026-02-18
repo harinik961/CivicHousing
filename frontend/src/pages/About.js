@@ -44,7 +44,7 @@ function TeamMemberCard({name, image, bio, responsibilities, commits, issues, te
     username: "matthewpham16",
     email: ["mattpham016@gmail.com"],
     image: matthewImage, 
-    bio: "Matthew's temporary bio.", 
+    bio: "I'm a junior studying CS with a minor in SDS and Business at UT. I love staying active, chilling with friends, and enjoying the outdoors.", 
     responsibilities: "Home Page",
   }, 
   {
