@@ -4,6 +4,7 @@
 
 ## Tools Used
 - Claude (Anthropic) — via claude.ai
+- ChatGPT 
 
 ## How AI Was Used
 
@@ -11,6 +12,7 @@ Debugging Help
 - Resolved a PowerShell execution policy error preventing npm from running
 - Fixed a `Cannot read properties of undefined (reading 'length')` error in 
   ModelCard.js caused by restructuring the data format
+- When working on yml file to automatically build and push, we were having errors when running the pipeline, and I used chatgpt to help debug what the issue could be. 
 
 Conceptual Clarification
 - Understood why GET requests should not have a body in REST API design
@@ -32,6 +34,8 @@ The carousel section of the home page was heavily guided by AI. AI helped set
 up the React Bootstrap Carousel component with overlay text and buttons linking 
 to each model page.
 
+With the help of AI interaction I was able to understand what may be failing our pipeline, and it was due to our package-lock.json not having updated information from whenever we do npm install because it doesn't save react-scripts and that was breaking when running the pipeline. So based on it's inputs I ran npm install with  --save-dev react-scripts and pushed the package-lock file with the updated information. 
+
 How did you decide what to keep or ignore?
 
 The carousel was initially made with solid background colors for each 
@@ -40,13 +44,14 @@ background images by changing the CSS from `background-color` to
 `background-image` with actual photo URLs. The base URL for the API was also 
 changed from the AI's initial suggestion of `api.civichousing.me` to 
 `civichousing.me/api` after discussing it with the team.
+To decide what to keep or ignore, I would ask it to clarify what something may mean before doing it and then discussing with my teammates before making any changes.  
 
 **Did the AI ever produce incorrect suggestions?**
 Yes — AI initially suggested restructuring the model data to use flat fields, 
 but another team member had already updated the repo to use a `{title, value}` 
 object format. This was caught by comparing the AI output against the actual 
 repo and the data format was adjusted to stay consistent with the team's code.
-
+It took the AI some time to figure out what may be the issue with npm install, but it eventually worked. 
 
 ## Evidence of Independent Work
 
@@ -67,7 +72,18 @@ repo and the data format was adjusted to stay consistent with the team's code.
 This change taught me that CSS background images require `background-size: cover` 
 and `background-position: center` to display properly, and that swapping colors 
 for real images makes a significant visual difference on a landing page.
+**Before:**
+  script:
+    - cd frontend
+    - npm ci
+    - npm run build
 
+**After:**
+  script:
+    - cd frontend
+    - npm install --include=dev
+    - npm run build
+This change taught me more first hand about how something may run properly in your local machine but it could break on others.
 
 ## Integrity Statement
 
