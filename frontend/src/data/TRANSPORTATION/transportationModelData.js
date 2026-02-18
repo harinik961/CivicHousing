@@ -3,6 +3,7 @@ const transportationData = [
     id: 1,
     name: "MetroRail - Downtown Station",
     image: "https://www.capmetro.org/images/default-source/plans-and-development/major-projects/metrorail-improvements/downtown-station-view.jpg?sfvrsn=60c26da5_2",
+    description: "A train for commuters traveling between Leander and downtown. Whether you're traveling to work or Q2 Stadium, get there quickly and comfortably.",
     attributes: [
       {title: "Type", value: "Rail"},
       {title: "Route(s)", value: "Red Line 550"},
@@ -16,6 +17,7 @@ const transportationData = [
   {
     id: 2,
     name: "CapMetro - Barbara Jordan/Berkman",
+    description: "CapMetro is Austin's regional public transportation provider. They've been around since 1985 and work every day to give residents, commuters and visitors the best possible transit options available to match their busy everyday lives.",
     image: "https://www.capmetro.org/images/default-source/plans-and-development/major-projects/20250227_rapid-800-and-837_10.jpg?sfvrsn=7c53cb89_2",
     attributes: [
       {title: "Type", value: "Bus"},
@@ -30,6 +32,7 @@ const transportationData = [
   {
     id: 3,
     name: "CapMetro - ACC Eastside",
+    description: "CapMetro is Austin's regional public transportation provider. They've been around since 1985 and work every day to give residents, commuters and visitors the best possible transit options available to match their busy everyday lives.",
     image: "https://www.capmetro.org/images/default-source/special-events/rapid-goes-eastside/acc-eastview-stop.jpg?sfvrsn=37d78798_6",
     attributes: [
       {title: "Type", value: "Bus"},
@@ -45,3 +48,4 @@ const transportationData = [
 ];
 
 export default transportationData;
+

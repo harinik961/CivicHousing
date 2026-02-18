@@ -21,7 +21,9 @@ export default function InstancePage({ data, modelName }) {
   return (
     <div className="container-fluid mt-4">
 
-      <h1 className="mb-4">{item.name}</h1>
+      <h1 className="mb-4">{item.name}</h1>{
+          item.description && <p className="mb-4">{item.description}</p>
+      }
 
       <div className="masonry">
 
