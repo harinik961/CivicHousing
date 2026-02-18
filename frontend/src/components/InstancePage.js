@@ -1,5 +1,6 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import InstanceCard from "./InstanceCard";
+import ModelCard from "./ModelCard";
 
 import housingData from "../data/HOUSING/housingModelData";
 import communityData from "../data/COMMUNITY/communityModelData";
@@ -22,7 +23,6 @@ export default function InstancePage({ data, modelName }) {
 
       <h1 className="mb-4">{item.name}</h1>
 
-      {/* SINGLE MASONRY CONTAINER */}
       <div className="masonry">
 
         {/* IMAGE CARD */}
@@ -59,7 +59,7 @@ export default function InstancePage({ data, modelName }) {
           </InstanceCard>
         </div>
 
-        {/* RELATED MODEL CARDS */}
+        {/* RELATED MODEL CARDS (FIXED) */}
         {relatedModels.map((model, i) => {
 
           const dataset =
@@ -73,22 +73,10 @@ export default function InstancePage({ data, modelName }) {
 
           return (
             <div className="masonry-item" key={i}>
-              <InstanceCard title={relatedItem.name}>
-
-                <img
-                  src={relatedItem.image}
-                  alt={relatedItem.name}
-                  className="related-image"
-                />
-
-                <Link
-                  to={`/${model}/${item.id}`}
-                  className="btn btn-primary mt-3 w-100"
-                >
-                  View {model}
-                </Link>
-
-              </InstanceCard>
+              <ModelCard
+                item={relatedItem}
+                modelName={model}
+              />
             </div>
           );
         })}
