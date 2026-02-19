@@ -46,6 +46,15 @@ Estimated and Actual Hours:
 | Alexander Nguyen | 11 hrs | 18 hrs |
 | Aarshi Khatiwada | 10-12 hrs | 18-20 hrs |
 
+Customer Stories Estimated and Time Spent: 
+| Customer Story | Estimated Hours | Time Spent |
+|------|-------------------|--------------|
+| Customer Story #1 (Issue #31) | 30 mins | 25 mins |
+| Customer Story #2 (Issue #32) | 20 mins | 30 mins |
+| Customer Story #3 (Issue #33) | 45 mins | 30 mins |
+| Customer Story #4 (Issue #34) | 20 mins | 30 mins |
+| Customer Story #5 (Issue #36) | 10 mins | 20 mins |
+
 Comments: N/A
 
 ## Project Proposal
