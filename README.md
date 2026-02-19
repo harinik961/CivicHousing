@@ -31,14 +31,13 @@ Responsibilities:
 - Ensured task completion
 
 GitLab Information: 
-- Git SHA: 
-- Git Pipeline Link: 
-
-Comments: N/A
+- Git SHA: 6199de944c9a18433d38332f5fdba1033f316193
+- Git Pipeline Link: https://gitlab.com/matthewpham16/cs373-spring-2026-53380_06/-/pipelines/2335920488
 
 Website Link: 
 [civichousing.me](https://civichousing.me/)
 
+Estimated and Actual Hours: 
 | Name | Estimated Hours | Actual Hours |
 |------|-------------------|--------------|
 | Coco Zhou | 15 hrs | 20 hrs |
@@ -46,6 +45,8 @@ Website Link:
 | Sri Harini Kolluru | 12 hrs | 20 hrs |
 | Alexander Nguyen | 11 hrs | 18 hrs |
 | Aarshi Khatiwada | 10-12 hrs | 18-20 hrs |
+
+Comments: N/A
 
 ## Project Proposal
 
