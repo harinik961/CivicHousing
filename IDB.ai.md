@@ -13,6 +13,8 @@ Debugging Help
 - Fixed a `Cannot read properties of undefined (reading 'length')` error in 
   ModelCard.js caused by restructuring the data format
 - When working on yml file to automatically build and push, we were having errors when running the pipeline, and I used chatgpt to help debug what the issue could be. 
+- * Helped debug and fix  routing between model and instance pages by identifying a missing `modelName` prop, which resolved the `/undefined/1` navigation issue and enabled proper linking across all models
+
 
 Conceptual Clarification
 - Understood why GET requests should not have a body in REST API design
@@ -24,6 +26,9 @@ Code Improvement
 - Restructured model data files from a flat attributes string array to a proper
   key-value object format for better scalability
 - Updated ModelCard.js to use a per-model attribute map instead of relying on string splitting
+
+UI Layout and Masonry Implementation
+- Helped implement a masonry style layout for the instance   pages so cards would flow naturally instead of stacking in rigid rows
 
 
 ## Reflection on Use
@@ -67,6 +72,35 @@ It took the AI some time to figure out what may be the issue with npm install, b
 .slide-1 { background-image: url("https://images.unsplash.com/..."); }
 .slide-2 { background-image: url("https://images.unsplash.com/..."); }
 .slide-3 { background-image: url("https://..."); }
+```
+
+
+
+
+**Before:**
+
+<div className="row">
+  <div className="col-md-6">
+    <InstanceCard>...</InstanceCard>
+  </div>
+  <div className="col-md-6">
+    {attributes.map(...)}
+  </div>
+</div>
+
+
+**After:**
+
+<div className="masonry">
+  <div className="masonry-item">
+    <InstanceCard>...</InstanceCard>
+  </div>
+
+  {attributes.map(...)}
+
+  <div className="masonry-item">...</div>
+</div>
+
 ```
 
 This change taught me that CSS background images require `background-size: cover` 
