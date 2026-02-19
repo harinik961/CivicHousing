@@ -2,6 +2,46 @@
   font-family: sans-serif;
 }
 
+/* Splash statement — leads with civic purpose and real stat */
+.splash-statement {
+  width: 100%;
+  background: linear-gradient(135deg, #0d1b4a 0%, #1b3a6b 50%, #0d3d56 100%);
+  color: #fff;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+}
+
+.splash-statement-inner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.splash-title {
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.02em;
+}
+
+.splash-tagline {
+  font-size: 1.15rem;
+  opacity: 0.95;
+  margin: 0 0 1.25rem 0;
+  font-weight: 500;
+}
+
+.splash-stat {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0;
+  opacity: 0.92;
+}
+
+.splash-stat strong {
+  color: #ffd54f;
+  font-weight: 700;
+}
+
 /* Carousel */
 
 .hero-carousel {
