@@ -13,12 +13,14 @@ Debugging Help
 - Fixed a `Cannot read properties of undefined (reading 'length')` error in 
   ModelCard.js caused by restructuring the data format
 - When working on yml file to automatically build and push, we were having errors when running the pipeline, and I used chatgpt to help debug what the issue could be. 
-- * Helped debug and fix  routing between model and instance pages by identifying a missing `modelName` prop, which resolved the `/undefined/1` navigation issue and enabled proper linking across all models
-
+- Helped debug and fix  routing between model and instance pages by identifying a missing `modelName` prop, which resolved the `/undefined/1` navigation issue and enabled proper linking across all models
+- Assisted in fixing page linking issues for the Navbar
+- Helped debug GitLab API retrievals and link warnings on the About Page 
 
 Conceptual Clarification
 - Understood why GET requests should not have a body in REST API design
 - Learned the difference between hot reloading vs restarting the dev server
+- Learned how to use GitLab API to retrieve number of commits and issues closed and the why one is tracked via Gitlab usernames and the other with user emails
 
 Code Improvement
 - Built out the home page carousel using React Bootstrap's Carousel component with
