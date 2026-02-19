@@ -21,9 +21,7 @@ export default function InstancePage({ data, modelName }) {
 
       {/* PAGE TITLE */}
       <h1 className="instance-title">{item.name}</h1>
-      {item.description && (
-        <p className="instance-description">{item.description}</p>
-      )}
+      
 
       <div className="masonry">
 
@@ -35,6 +33,9 @@ export default function InstancePage({ data, modelName }) {
               alt={item.name}
               className="instance-image"
             />
+            {item.description && (
+        <p className="instance-description">{item.description}</p>
+      )}
           </InstanceCard>
         </div>
 
