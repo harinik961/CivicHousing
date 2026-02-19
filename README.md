@@ -44,14 +44,13 @@ Model 1 - Communities (county, zip, median housing prices, population, crime ind
 Model 2 - Housing 
 - Instances: Apartments, Rentals, etc. 
 - Attributes: 
-    -Address:
-    Unit Type: 
-    Income Restriction Level:
-    Accessibility Score:
-    Approximate Rent Cost:
-    Total Affordable Units: 
-
-- Connections: 
+    - Address
+    - Unit Type
+    - Income Restriction Level
+    - Total ADA Units
+    - Approximate Rent Cost
+    - Total Affordable Units
+- Connections:
     - Model connects to Communities and Transit Stops
 
 Model 3 - Transportation (bus stations, train stations, sidewalk/trails score)
@@ -64,7 +63,7 @@ Model 3 - Transportation (bus stations, train stations, sidewalk/trails score)
     - Total Daily Departures
     - Route Counts
 - Connections: 
-    - Model connects to Housing and Transit Stops
+    - Model connects to Housing and Communities Stops
 
 - MEDIA FOR ALL: 
     - Google Maps embed
