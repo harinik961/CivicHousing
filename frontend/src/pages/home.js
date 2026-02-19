@@ -7,6 +7,18 @@ export default function Home() {
   return (
     <div className="home-container">
 
+      {/* Splash statement */}
+      <section className="splash-statement">
+        <div className="splash-statement-inner">
+          <h1 className="splash-title">Welcome to Civic Housing</h1>
+          <p className="splash-tagline">Find your affordable housing in Austin.</p>
+          <p className="splash-stat">
+            With the recent boom in Austin’s housing market, finding a home within a reasonable budget increasingly difficult. 
+            This platform exists to make that inequity visible and to connect residents, advocates, and leaders with the data that drives change.
+          </p>
+        </div>
+      </section>
+
       {/* Hero Carousel */}
       <Carousel className="hero-carousel">
         <Carousel.Item>
@@ -42,7 +54,7 @@ export default function Home() {
       <Container className="intro-section text-center">
         <h2>Nearly half of Austin renters spend more than 30% of their income on rent.</h2>
         <p>
-          Housing is a basic right. Austin renters shouldn't have to break the bank just to keep a roof over their heads. 
+          Housing is a <b>basic right</b>. Austin renters shouldn't have to break the bank just to keep a roof over their heads. 
           But without clear, accessible data, inequality remains invisible and unaddressed.
         </p>
         <p> <b>CivicHousing</b> is a data-driven platform built to address this problem by highlighting affordable housing availability
