@@ -58,7 +58,6 @@ Model 3 - Transportation (bus stations, train stations, sidewalk/trails score)
 - Attributes:
     - Bus/Train Line
     - Type
-    - Accessibility Score
     - Frequency
     - Total Daily Departures
     - Route Counts
