@@ -11,6 +11,44 @@ The proposed project:
 CivicHousing is a data-driven web platform that highlights affordable housing availability and transportation accessibility gaps across Austin, Texas. It integrates public housing inventory data, transit infrastructure data, sidewalk and walkability metrics, and community-level indicators to reveal where affordability and mobility intersect, or fail to.
 By mapping the relationship between lower-income housing, public transportation density, and neighborhood accessibility, the platform empowers residents, planners, and policymakers to identify transit-accessible affordable housing, evaluate safety and walkability, and uncover inequities in urban development.
 
+## Phase 1
+
+Team Member Names, EIDs, GitLabID's: 
+
+| Name | EID | GitLabID |
+|---|---|---|
+| Coco Zhou | ccz247 | @oxcoco |
+| Matthew Pham | map7578 | @matthewpham16 |
+| Sri Harini Kolluru | sk59945 | @sriharini.kolluru |
+| Alexander Nguyen | ALN2284 | @alexandernguyen1504 |
+| Aarshi Khatiwada | ak48827 | @rckhatiwada1271 |
+
+Project Leader: 
+Name: Coco Zhou
+Responsibilities: 
+- Scheduled meetings/calls
+- Assigned tasks/issues
+- Ensured task completion
+
+GitLab Information: 
+- Git SHA: 
+- Git Pipeline Link: 
+
+Comments: N/A
+
+Website Link: 
+[civichousing.me](https://civichousing.me/)
+
+| Name | Estimated Hours | Actual Hours |
+|------|-------------------|--------------|
+| Coco Zhou | 15 hrs | 20 hrs |
+| Matthew Pham | 12 hrs | 20 hrs |
+| Sri Harini Kolluru | 12 hrs | 20 hrs |
+| Alexander Nguyen | 11 hrs | 18 hrs |
+| Aarshi Khatiwada | 10-12 hrs | 18-20 hrs |
+
+## Project Proposal
+
 At least three models: 
 - Model 1: Communities
 - Model 2: Housing
