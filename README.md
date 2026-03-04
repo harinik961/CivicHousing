@@ -11,6 +11,54 @@ The proposed project:
 CivicHousing is a data-driven web platform that highlights affordable housing availability and transportation accessibility gaps across Austin, Texas. It integrates public housing inventory data, transit infrastructure data, sidewalk and walkability metrics, and community-level indicators to reveal where affordability and mobility intersect, or fail to.
 By mapping the relationship between lower-income housing, public transportation density, and neighborhood accessibility, the platform empowers residents, planners, and policymakers to identify transit-accessible affordable housing, evaluate safety and walkability, and uncover inequities in urban development.
 
+## Phase 1
+
+Team Member Names, EIDs, GitLabID's: 
+
+| Name | EID | GitLabID |
+|---|---|---|
+| Coco Zhou | ccz247 | @oxcoco |
+| Matthew Pham | map7578 | @matthewpham16 |
+| Sri Harini Kolluru | sk59945 | @sriharini.kolluru |
+| Alexander Nguyen | ALN2284 | @alexandernguyen1504 |
+| Aarshi Khatiwada | ak48827 | @rckhatiwada1271 |
+
+Project Leader: 
+Name: Coco Zhou
+Responsibilities: 
+- Scheduled meetings/calls
+- Assigned tasks/issues
+- Ensured task completion
+
+GitLab Information: 
+- Git SHA: 804fa2830e707077c5f6def2649b24a098bea755
+- Git Pipeline Link: https://gitlab.com/matthewpham16/cs373-spring-2026-53380_06/-/pipelines/2335937433
+
+Website Link: 
+[civichousing.me](https://civichousing.me/)
+
+Estimated and Actual Hours: 
+| Name | Estimated Hours | Actual Hours |
+|------|-------------------|--------------|
+| Coco Zhou | 15 hrs | 20 hrs |
+| Matthew Pham | 12 hrs | 20 hrs |
+| Sri Harini Kolluru | 12 hrs | 20 hrs |
+| Alexander Nguyen | 11 hrs | 18 hrs |
+| Aarshi Khatiwada | 10-12 hrs | 18-20 hrs |
+
+Customer Stories Estimated and Time Spent: 
+| Customer Story | Estimated Hours | Time Spent |
+|------|-------------------|--------------|
+| Customer Story #1 (Issue #31) | 30 mins | 25 mins |
+| Customer Story #2 (Issue #32) | 20 mins | 30 mins |
+| Customer Story #3 (Issue #33) | 45 mins | 30 mins |
+| Customer Story #4 (Issue #34) | 20 mins | 30 mins |
+| Customer Story #5 (Issue #36) | 10 mins | 20 mins |
+
+Comments: N/A
+
+## Project Proposal
+
 At least three models: 
 - Model 1: Communities
 - Model 2: Housing
