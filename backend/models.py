@@ -61,20 +61,40 @@ class Community(db.Model):
 class Housing(db.Model):
     __tablename__ = "housing"
 
-    id = db.Column(db.Integer, primary_key=True)
-
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    project_name = db.Column(db.String(255), nullable=False)
     address = db.Column(db.String(200))
+    zip_code = db.Column(db.String(10))
     unit_type = db.Column(db.String(100))
-    income_restriction_level = db.Column(db.String(100))
-    accessibility_score = db.Column(db.Float)
-    rent_cost = db.Column(db.Float)
-    total_affordable_units = db.Column(db.Integer)
+    housing_tenure = db.Column(db.String(100))
+    income_restriction_level = db.Column(db.String(255))
+    total_ada_units = db.Column(db.Integer, default=0)
+    total_affordable_units = db.Column(db.Integer, default=0)
+    council_district = db.Column(db.String(10))
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
 
     transportation = db.relationship(
         "Transportation",
         secondary=housing_transportation,
         backref="housing"
     )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "project_name": self.project_name,
+            "address": self.address,
+            "zip_code": self.zip_code,
+            "unit_type": self.unit_type,
+            "housing_tenure": self.housing_tenure,
+            "income_restriction_level": self.income_restriction_level,
+            "total_ada_units": self.total_ada_units,
+            "total_affordable_units": self.total_affordable_units,
+            "council_district": self.council_district,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+        }
 
 
 # -------------------------
@@ -88,6 +108,6 @@ class Transportation(db.Model):
 
     line = db.Column(db.String(100))
     type = db.Column(db.String(50))
+    route_count = db.Column(db.Float)
+    service = db.Column(db.String(50))
     accessibility_score = db.Column(db.Float)
-    sidewalk_score = db.Column(db.Float)
-    frequency = db.Column(db.String(50))
