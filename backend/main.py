@@ -1,120 +1,61 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-import os
-app = Flask(__name__)
+from flask import Flask, jsonify
+from flask_cors import CORS
 from dotenv import load_dotenv
+import os
+
+from models import db
 
 load_dotenv()
 
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-db = SQLAlchemy(app)
+def create_app():
+    app = Flask(__name__)
+    CORS(app)
 
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# -------------------------
-# Association Tables
-# -------------------------
+    db.init_app(app)
 
-community_housing = db.Table(
-    "community_housing",
-    db.Column("community_id", db.Integer, db.ForeignKey("communities.id"), primary_key=True),
-    db.Column("housing_id", db.Integer, db.ForeignKey("housing.id"), primary_key=True)
-)
+    @app.route("/")
+    def index():
+        return {"message": "CivicHousing API is running."}
 
-community_transportation = db.Table(
-    "community_transportation",
-    db.Column("community_id", db.Integer, db.ForeignKey("communities.id"), primary_key=True),
-    db.Column("transportation_id", db.Integer, db.ForeignKey("transportation.id"), primary_key=True)
-)
+    @app.route("/health")
+    def health():
+        return {"status": "ok"}
 
-housing_transportation = db.Table(
-    "housing_transportation",
-    db.Column("housing_id", db.Integer, db.ForeignKey("housing.id"), primary_key=True),
-    db.Column("transportation_id", db.Integer, db.ForeignKey("transportation.id"), primary_key=True)
-)
+    @app.route("/api/community")
+    def get_communities():
+        return {"message": "get all communities"}
 
+    @app.route("/api/community/<int:id>")
+    def get_community(id):
+        return {"message": f"get community {id}"}
 
-# -------------------------
-# Communities Model
-# -------------------------
+    @app.route("/api/housing")
+    def get_housing():
+        return {"message": "get all housing"}
 
-class Community(db.Model):
-    __tablename__ = "communities"
+    @app.route("/api/housing/<int:id>")
+    def get_one_housing(id):
+        return {"message": f"get housing {id}"}
 
-    id = db.Column(db.Integer, primary_key=True)
+    @app.route("/api/transportation")
+    def get_transportation():
+        return {"message": "get all transportation"}
 
-    county = db.Column(db.String(100))
-    zip_code = db.Column(db.String(20))
-    median_housing_price = db.Column(db.Float)
-    population = db.Column(db.Integer)
-    crime_index = db.Column(db.Float)
-    transit_score = db.Column(db.Float)
+    @app.route("/api/transportation/<int:id>")
+    def get_one_transportation(id):
+        return {"message": f"get transportation {id}"}
 
-    housing = db.relationship(
-        "Housing",
-        secondary=community_housing,
-        backref="communities"
-    )
-
-    transportation = db.relationship(
-        "Transportation",
-        secondary=community_transportation,
-        backref="communities"
-    )
+    return app
 
 
-# -------------------------
-# Housing Model
-# -------------------------
-
-class Housing(db.Model):
-    __tablename__ = "housing"
-
-    id = db.Column(db.Integer, primary_key=True)
-
-    address = db.Column(db.String(200))
-    unit_type = db.Column(db.String(100))
-    income_restriction_level = db.Column(db.String(100))
-    accessibility_score = db.Column(db.Float)
-    rent_cost = db.Column(db.Float)
-    total_affordable_units = db.Column(db.Integer)
-
-    transportation = db.relationship(
-        "Transportation",
-        secondary=housing_transportation,
-        backref="housing"
-    )
-
-    communities = db.relationship(
-        "Community",
-        secondary=community_housing,
-        backref="housing_list"
-    )
-
-
-# -------------------------
-# Transportation Model
-# -------------------------
-
-class Transportation(db.Model):
-    __tablename__ = "transportation"
-
-    id = db.Column(db.Integer, primary_key=True)
-
-    line = db.Column(db.String(100))
-    type = db.Column(db.String(50))
-    accessibility_score = db.Column(db.Float)
-    sidewalk_score = db.Column(db.Float)
-    frequency = db.Column(db.String(50))
-
-
-# -------------------------
-# Create Tables
-# -------------------------
+app = create_app()
 
 if __name__ == "__main__":
     with app.app_context():
-        db.drop_all()
         db.create_all()
-        print("Tables created successfully.")
+
+    app.run(host="0.0.0.0", port=5000, debug=True)
