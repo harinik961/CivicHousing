@@ -5,11 +5,20 @@ from dotenv import load_dotenv
 import zipfile
 import pandas as pd
 from datetime import datetime
-# from app.models import TransportStop
 from collections import defaultdict
+import json
 
 load_dotenv()
 GTFS_URL = os.getenv("GTFS_URL")
+DAY_ORDER = {
+  "Monday": 0, 
+  "Tuesday": 1, 
+  "Wednesday": 2, 
+  "Thursday": 3, 
+  "Friday": 4, 
+  "Saturday": 5, 
+  "Sunday": 6, 
+}
 
 def extract_data(): 
   try: 
@@ -46,12 +55,20 @@ def extract_data():
     trip_route_map = dict(zip(trips.trip_id, trips.route_id))
     trip_service_map = dict(zip(trips.trip_id, trips.service_id))
     trip_wheelchair_map = dict(zip(trips.trip_id, trips.wheelchair_accessible)) if 'wheelchair_accessible' in trips.columns else {}
+    service_days_map = defaultdict(set)
+
+    for _, row in calendar_dates.iterrows(): 
+      if row["exception_type"] == 1: 
+        date_obj = datetime.strptime(str(row["date"]), "%Y%m%d")
+        weekday = date_obj.strftime("%A")
+        service_days_map[row["service_id"]].add(weekday)
 
     # Process Stop-Level Data
     stop_routes = defaultdict(set)                      # distinct route_ids at each stop
     stop_route_types = defaultdict(set)                 # route types (0=Rail, 3=Bus)
     stop_trip_times_by_service = defaultdict(lambda: defaultdict(list))  # service_id -> arrival times
     stop_wheelchair_accessible = defaultdict(bool)     # wheelchair accessibility at trip level
+    stop_service_days = defaultdict(set)
 
     for _, row in stop_times.iterrows(): 
       stop_id = row["stop_id"]
@@ -75,6 +92,10 @@ def extract_data():
       wheelchair_accessible = trip_wheelchair_map.get(trip_id, 0)
       if wheelchair_accessible == 1:
         stop_wheelchair_accessible[stop_id] = True
+
+      # Data Point 6: Service Days
+      if service_id in service_days_map: 
+        stop_service_days[stop_id].update(service_days_map[service_id])
 
     # Calculate Frequency Per Service
     def calculate_frequency_for_times(times_list):
@@ -138,7 +159,7 @@ def extract_data():
       # Data Point 3: Service Frequency
       service_frequencies = stop_trip_times_by_service.get(stop_id, {})
       frequency = calculate_average_frequency(service_frequencies)
-      frequency_str = f"{frequency} min" if frequency else "Unknown"
+      frequency_str = f"Every {round(frequency)} Minutes" if frequency else "Unknown"
 
       # Data Point 4: How Many Routes
       num_routes = len(routes_at_stop)
@@ -146,6 +167,10 @@ def extract_data():
       # Data Point 5: Disability Services
       wheelchair_boarding = int(stop.get("wheelchair_boarding", 0))
       wheelchair_trip_accessible = stop_wheelchair_accessible.get(stop_id, False)
+
+      # Data Point 6: Service Days
+      days_served = sorted(list(stop_service_days.get(stop_id, [])), key=lambda d: DAY_ORDER[d])
+      days_served_str = ", ".join(days_served) if days_served else "Unknown"
       
       if wheelchair_boarding == 1 or wheelchair_trip_accessible:
         disability_services = "Wheelchair Accessible"
@@ -167,12 +192,21 @@ def extract_data():
         "frequency": frequency_str,                 # Data Point 3
         "num_routes": num_routes,                   # Data Point 4
         "wheelchair_accessible": disability_services,  # Data Point 5
+        "service_days": days_served_str,            # Daya Point 6
       })
 
     return transportation_data
 
   except requests.exceptions.RequestException as error: 
     print(f"An error occurred: {error}")
+
+def save_to_json(data):
+  base_dir = os.path.dirname(__file__)
+  file_path = os.path.join(base_dir, "..", "data", "transportation_stops.json")
+  os.makedirs(os.path.dirname(file_path), exist_ok=True)
+  with open(file_path, "w") as f:
+    json.dump(data, f, indent=2)
+  print(f"Saved {len(data)} stops to {file_path}")
 
 if __name__ == "__main__": 
   data = extract_data()
@@ -189,3 +223,5 @@ if __name__ == "__main__":
     print(f"Frequency: {stop['frequency']}")
     print(f"Wheelchair Accessible: {stop['wheelchair_accessible']}")
     print("-" * 80) 
+  if data: 
+    save_to_json(data)
