@@ -8,6 +8,8 @@ load_dotenv()
 
 #census data 
 CENSUS_KEY = os.getenv("CENSUS_KEY")
+GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+
 austin_url = "https://data.austintexas.gov/resource/ifzc-3xz8.json"
 census_url = "https://api.census.gov/data/2024/acs/acs5"
 params = {
@@ -53,26 +55,69 @@ crime_response = requests.get(crime_url)
 crime_data = crime_response.json()
 
 crime_df = pd.DataFrame(crime_data)
-
+# count crimes 
 crime_counts = {}
 for zip_code in crime_df['zip_code']:
     if zip_code in crime_counts:
         crime_counts[zip_code] +=1
     else:
         crime_counts[zip_code] = 1
+
 crime_counts = pd.DataFrame(list(crime_counts.items()), columns=['zip', 'crime_count'])
 
 crime_counts = crime_counts.merge(merged_df[['zip', 'population']], on='zip', how='left')
 crime_counts['population'] = pd.to_numeric(crime_counts['population'])
-
+# get crime index
 crime_counts['crime_rate'] = (crime_counts['crime_count'] / crime_counts['population'] * 1000)
-
+# normalize crime index 
 crime_counts['crime_index'] = (
     (crime_counts['crime_rate'] - crime_counts['crime_rate'].min()) /
     (crime_counts['crime_rate'].max() - crime_counts['crime_rate'].min()) * 100
 ).round(2)
-
+# put in merged data 
 merged_df = merged_df.merge(crime_counts[['zip', 'crime_index']], on='zip', how='left')
 print(merged_df.head())
 #print(crime_df.columns.tolist())
 #print(crime_df.head(2))
+
+# parks per zipcode 
+parks_url = "https://data.austintexas.gov/resource/v8hw-gz65.json"
+parks_response = requests.get(parks_url)
+parks_data = parks_response.json()
+
+parks_df = pd.DataFrame(parks_data)
+print(parks_df.columns.tolist())
+
+park_counts = {}
+for zip_code in parks_df['zipcode']:
+    if zip_code in park_counts:
+        park_counts[zip_code] +=1
+    else:
+        park_counts[zip_code] = 1
+park_counts = pd.DataFrame(list(park_counts.items()), columns=['zip', 'park_count'])
+
+merged_df = merged_df.merge(park_counts[['zip', 'park_count']], on='zip', how='left')
+print(merged_df[['zip', 'park_count']].head())
+
+
+# google maps street view images and map embed 
+map_urls = []
+
+for _, row in merged_df.iterrows():
+    lat = row['latitude']
+    lon = row['longitude']
+    zip_code = row['zip']
+
+    map_urls.append({
+        "zip": zip_code,
+        "map_embed_url": f"https://www.google.com/maps/embed/v1/place?q={lat},{lon}&key={GOOGLE_MAPS_API_KEY}",
+        "street_view_url": f"https://maps.googleapis.com/maps/api/streetview?size=400x300&location={lat},{lon}&key={GOOGLE_MAPS_API_KEY}",
+    })
+
+map_urls_df = pd.DataFrame(map_urls)
+merged_df = merged_df.merge(map_urls_df, on='zip', how='left')
+
+print(merged_df.columns.tolist())
+print(merged_df.head())
+
+
