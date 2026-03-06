@@ -1,4 +1,5 @@
 import os
+import sys
 import requests
 import io
 from dotenv import load_dotenv
@@ -8,9 +9,24 @@ from datetime import datetime
 from collections import defaultdict
 import json
 
-load_dotenv()
+# Add backend folder to path so we can import models
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
+from flask import Flask
+from models import db, Transportation
+
+load_dotenv(os.path.join(os.path.dirname(__file__), "../.env"))
+
 GTFS_URL = os.getenv("GTFS_URL")
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+
+# ----------------------------------------
+# SETUP FLASK APP AND DB CONNECTION
+# ----------------------------------------
+app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+db.init_app(app)
 DAY_ORDER = {
   "Monday": 0, 
   "Tuesday": 1, 
@@ -20,6 +36,76 @@ DAY_ORDER = {
   "Saturday": 5, 
   "Sunday": 6, 
 }
+
+# ----------------------------------------
+# SEED FUNCTION - UPSERT LOGIC
+# ----------------------------------------
+def seed_transportation(transportation_data):
+    """
+    Upsert transportation data: update existing records, insert new ones.
+    Uses stop_id as the unique identifier.
+    No downtime window, only changes what's different.
+    Removes stale records that no longer exist in the API.
+    """
+    print("Syncing transportation data with database (upsert)...")
+    
+    inserted = 0
+    updated = 0
+    skipped = 0
+    seen_stop_ids = set()
+
+    for record in transportation_data:
+        stop_id = str(record.get("stop_id", "")).strip()
+        
+        if not stop_id:
+            skipped += 1
+            continue
+
+        seen_stop_ids.add(stop_id)
+
+        # Check if transportation with this stop_id already exists
+        existing = Transportation.query.filter_by(stop_id=stop_id).first()
+        
+        if existing:
+            # Update existing record
+            existing.stop_name = record.get("stop_name", "")
+            existing.latitude = record.get("latitude")
+            existing.longitude = record.get("longitude")
+            existing.stop_url = record.get("stop_url", "")
+            existing.map_embed_url = record.get("map_embed_url", "")
+            existing.street_view_url = record.get("street_view_url", "")
+            existing.transport_type = record.get("transport_type", "")
+            existing.routes = record.get("routes", "")
+            existing.frequency = record.get("frequency", "")
+            existing.num_routes = record.get("num_routes", 0)
+            existing.wheelchair_accessible = record.get("wheelchair_accessible", "")
+            existing.service_days = record.get("service_days", "")
+            updated += 1
+        else:
+            # Insert new record
+            transportation = Transportation(
+                stop_id=stop_id,
+                stop_name=record.get("stop_name", ""),
+                latitude=record.get("latitude"),
+                longitude=record.get("longitude"),
+                stop_url=record.get("stop_url", ""),
+                map_embed_url=record.get("map_embed_url", ""),
+                street_view_url=record.get("street_view_url", ""),
+                transport_type=record.get("transport_type", ""),
+                routes=record.get("routes", ""),
+                frequency=record.get("frequency", ""),
+                num_routes=record.get("num_routes", 0),
+                wheelchair_accessible=record.get("wheelchair_accessible", ""),
+                service_days=record.get("service_days", "")
+            )
+            db.session.add(transportation)
+            inserted += 1
+
+    # Remove stale records that no longer exist in the API
+    deleted = Transportation.query.filter(Transportation.stop_id.notin_(seen_stop_ids)).delete(synchronize_session=False)
+    
+    db.session.commit()
+    print(f"Inserted {inserted} new records, updated {updated}, deleted {deleted} stale records, skipped {skipped}")
 
 def extract_data(): 
   try: 
@@ -165,6 +251,10 @@ def extract_data():
       # Data Point 4: How Many Routes
       num_routes = len(routes_at_stop)
 
+      # Skip stops with no routes
+      if num_routes == 0:
+        continue
+
       # Data Point 5: Disability Services
       wheelchair_boarding = int(stop.get("wheelchair_boarding", 0))
       wheelchair_trip_accessible = stop_wheelchair_accessible.get(stop_id, False)
@@ -206,14 +296,6 @@ def extract_data():
   except requests.exceptions.RequestException as error: 
     print(f"An error occurred: {error}")
 
-def save_to_json(data):
-  base_dir = os.path.dirname(__file__)
-  file_path = os.path.join(base_dir, "..", "data", "transportation_stops.json")
-  os.makedirs(os.path.dirname(file_path), exist_ok=True)
-  with open(file_path, "w") as f:
-    json.dump(data, f, indent=2)
-  print(f"Saved {len(data)} stops to {file_path}")
-
 if __name__ == "__main__": 
   data = extract_data()
   print(f"\nSuccessfully processed {len(data)} stops\n")
@@ -229,5 +311,17 @@ if __name__ == "__main__":
     print(f"Frequency: {stop['frequency']}")
     print(f"Wheelchair Accessible: {stop['wheelchair_accessible']}")
     print("-" * 80) 
-  if data: 
-    save_to_json(data)
+  
+  # Seed database with transportation data
+  with app.app_context():
+    db.create_all()
+    
+    # Alter existing columns to accommodate longer strings
+    from sqlalchemy import text
+    with db.engine.connect() as conn:
+      conn.execute(text("ALTER TABLE transportation ALTER COLUMN routes TYPE varchar(500)"))
+      conn.execute(text("ALTER TABLE transportation ALTER COLUMN service_days TYPE varchar(200)"))
+      conn.commit()
+    
+    seed_transportation(data)
+    print("Done!")
