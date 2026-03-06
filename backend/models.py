@@ -40,7 +40,9 @@ class Community(db.Model):
     median_housing_price = db.Column(db.Float)
     population = db.Column(db.Integer)
     crime_index = db.Column(db.Float)
-    transit_score = db.Column(db.Float)
+    park_count = db.Column(db.Integer)
+    map_embed_url = db.Column(db.Text)
+    street_view_url = db.Column(db.Text)
 
     housing = db.relationship(
         "Housing",
@@ -64,7 +66,10 @@ class Community(db.Model):
             "median_housing_price": self.median_housing_price,
             "population": self.population,
             "crime_index": self.crime_index,
-            "transit_score": self.transit_score,
+            "park_count": self.park_count,
+            "map_embed_url": self.map_embed_url,
+            "street_view_url": self.street_view_url,
+            
 
             # return only IDs to avoid recursion
             "housing_ids": [h.id for h in self.housing],

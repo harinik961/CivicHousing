@@ -6,6 +6,22 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+##IS THIS RIGHT##
+
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
+from dotenv import load_dotenv
+from flask import Flask
+from models import db, Community
+
+load_dotenv(os.path.join(os.path.dirname(__file__), "../.env"))
+
+app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+db.init_app(app)
+##IS THIS RIGHT##
+
 #census data 
 CENSUS_KEY = os.getenv("CENSUS_KEY")
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
@@ -119,5 +135,53 @@ merged_df = merged_df.merge(map_urls_df, on='zip', how='left')
 
 print(merged_df.columns.tolist())
 print(merged_df.head())
+
+
+
+# IS THIS RIGHT??????????
+def seed_communities(df):
+    inserted = 0
+    updated = 0
+    skipped = 0
+
+    for _, row in df.iterrows():
+        if not row.get('zip'):
+            skipped += 1
+            continue
+        
+
+        existing = Community.query.filter_by(zip_code=row['zip']).first()
+        
+        if existing:
+            existing.population = row['population']
+            existing.median_housing_price = row['median_housing_price']
+            existing.crime_index = row['crime_index']
+            existing.latitude = row['latitude']
+            existing.longitude = row['longitude']
+            updated += 1
+        else: 
+            community = Community(
+                zip_code=row['zip'],
+                county="Travis County",
+                population=row['population'],
+                median_housing_price=row['median_housing_price'],
+                crime_index=row['crime_index'],
+                park_count=row['park_count'],
+                map_embed_url=row['map_embed_url'], 
+                street_view_url=row['street_view_url'],
+            )
+
+        db.session.add(community)
+        inserted += 1
+
+    db.session.commit()
+    print(f"Inserted {inserted} communities, skipped {skipped}")
+
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
+        seed_communities(merged_df)
+        print("Done!")
+
 
 
