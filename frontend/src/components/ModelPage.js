@@ -4,6 +4,7 @@ import ModelCard from "./ModelCard";
 export default function ModelPage({ title, apiEndpoint, modelName, data }) {
 
   const [items, setItems] = useState(data || []);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
 
@@ -31,6 +32,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, data }) {
         }));
 
         setItems(formatted);
+        setLoading(false);
 
       });
 
@@ -46,7 +48,15 @@ export default function ModelPage({ title, apiEndpoint, modelName, data }) {
     </div>
   ));
 
+if (loading) {
   return (
+    <div className="container mt-4 text-center">
+      <h2>{title}</h2>
+      <p>Loading housing data...</p>
+    </div>
+  );
+  
+}  return (
     <div className="container mt-4">
 
       <p className="text-muted small text-center mb-1">

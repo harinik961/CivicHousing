@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import ARRAY
 
 db = SQLAlchemy()
 
@@ -83,20 +84,18 @@ class Housing(db.Model):
     project_name = db.Column(db.String(255), nullable=False)
     address = db.Column(db.String(200))
     zip_code = db.Column(db.String(10))
-
     unit_type = db.Column(db.String(100))
     housing_tenure = db.Column(db.String(100))
-
     income_restriction_level = db.Column(db.String(255))
-
     total_ada_units = db.Column(db.Integer, default=0)
     total_affordable_units = db.Column(db.Integer, default=0)
-
     council_district = db.Column(db.String(10))
-
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
-    
+    street_view_image = db.Column(db.Text)
+
+
+
 
     transportation = db.relationship(
         "Transportation",
@@ -119,6 +118,7 @@ class Housing(db.Model):
             "council_district": self.council_district,
             "latitude": self.latitude,
             "longitude": self.longitude,
+            "street_view_image": self.street_view_image,
 
             # relationship references
             "community_ids": [c.id for c in self.communities],
@@ -134,7 +134,7 @@ class Transportation(db.Model):
     __tablename__ = "transportation"
 
     id = db.Column(db.Integer, primary_key=True)
-    stop_id = db.Column(db.String(50), unique=True, nullable=False)
+    stop_id = db.Column(db.String(50), unique=True, nullable=True)
     stop_name = db.Column(db.String(255), nullable=False)
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
@@ -142,11 +142,12 @@ class Transportation(db.Model):
     map_embed_url = db.Column(db.String(1000))
     street_view_url = db.Column(db.String(1000))
     transport_type = db.Column(db.String(50))
-    routes = db.Column(db.Text)
     frequency = db.Column(db.String(100))
     num_routes = db.Column(db.Integer)
     wheelchair_accessible = db.Column(db.String(100))
-    service_days = db.Column(db.String(255))
+    routes = db.Column(db.String(100))
+    service_days = db.Column(db.String(50))
+
 
     def to_dict(self):
         return {
@@ -164,6 +165,8 @@ class Transportation(db.Model):
             "num_routes": self.num_routes,
             "wheelchair_accessible": self.wheelchair_accessible,
             "service_days": self.service_days,
+            "stop_id": self.stop_id,
+            
 
             "community_ids": [c.id for c in self.communities],
             "housing_ids": [h.id for h in self.housing],

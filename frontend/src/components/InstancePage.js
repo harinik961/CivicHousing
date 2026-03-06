@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import InstanceCard from "./InstanceCard";
 
-export default function InstancePage({ apiEndpoint }) {
+export default function InstancePage({ apiEndpoint, attributeDescriptions }) {
 
   const { id } = useParams();
   const [item, setItem] = useState(null);
@@ -42,6 +42,14 @@ export default function InstancePage({ apiEndpoint }) {
                   <div className="attribute-value">
                     {String(value)}
                   </div>
+
+                   {attributeDescriptions && attributeDescriptions[key] && (
+                    <p className="description">
+                      {typeof attributeDescriptions[key] === "function"
+                        ? attributeDescriptions[key](value, item)
+                        : attributeDescriptions[key]}
+                    </p>
+                  )}
 
                 </div>
               </InstanceCard>
