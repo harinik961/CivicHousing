@@ -44,14 +44,31 @@ class Community(db.Model):
     housing = db.relationship(
         "Housing",
         secondary=community_housing,
-        backref="communities"
+        backref="communities",
+        lazy=True
     )
 
     transportation = db.relationship(
         "Transportation",
         secondary=community_transportation,
-        backref="communities"
+        backref="communities",
+        lazy=True
     )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "county": self.county,
+            "zip_code": self.zip_code,
+            "median_housing_price": self.median_housing_price,
+            "population": self.population,
+            "crime_index": self.crime_index,
+            "transit_score": self.transit_score,
+
+            # return only IDs to avoid recursion
+            "housing_ids": [h.id for h in self.housing],
+            "transportation_ids": [t.id for t in self.transportation]
+        }
 
 
 # -------------------------
@@ -62,22 +79,30 @@ class Housing(db.Model):
     __tablename__ = "housing"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+
     project_name = db.Column(db.String(255), nullable=False)
     address = db.Column(db.String(200))
     zip_code = db.Column(db.String(10))
+
     unit_type = db.Column(db.String(100))
     housing_tenure = db.Column(db.String(100))
+
     income_restriction_level = db.Column(db.String(255))
+
     total_ada_units = db.Column(db.Integer, default=0)
     total_affordable_units = db.Column(db.Integer, default=0)
+
     council_district = db.Column(db.String(10))
+
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
+    
 
     transportation = db.relationship(
         "Transportation",
         secondary=housing_transportation,
-        backref="housing"
+        backref="housing",
+        lazy=True
     )
 
     def to_dict(self):
@@ -94,6 +119,10 @@ class Housing(db.Model):
             "council_district": self.council_district,
             "latitude": self.latitude,
             "longitude": self.longitude,
+
+            # relationship references
+            "community_ids": [c.id for c in self.communities],
+            "transportation_ids": [t.id for t in self.transportation],
         }
 
 
@@ -105,9 +134,37 @@ class Transportation(db.Model):
     __tablename__ = "transportation"
 
     id = db.Column(db.Integer, primary_key=True)
+    stop_id = db.Column(db.String(50), unique=True, nullable=False)
+    stop_name = db.Column(db.String(255), nullable=False)
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
+    stop_url = db.Column(db.String(500))
+    map_embed_url = db.Column(db.String(1000))
+    street_view_url = db.Column(db.String(1000))
+    transport_type = db.Column(db.String(50))
+    routes = db.Column(db.Text)
+    frequency = db.Column(db.String(100))
+    num_routes = db.Column(db.Integer)
+    wheelchair_accessible = db.Column(db.String(100))
+    service_days = db.Column(db.String(255))
 
-    line = db.Column(db.String(100))
-    type = db.Column(db.String(50))
-    route_count = db.Column(db.Float)
-    service = db.Column(db.String(50))
-    accessibility_score = db.Column(db.Float)
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "stop_id": self.stop_id,
+            "stop_name": self.stop_name,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "stop_url": self.stop_url,
+            "map_embed_url": self.map_embed_url,
+            "street_view_url": self.street_view_url,
+            "transport_type": self.transport_type,
+            "routes": self.routes,
+            "frequency": self.frequency,
+            "num_routes": self.num_routes,
+            "wheelchair_accessible": self.wheelchair_accessible,
+            "service_days": self.service_days,
+
+            "community_ids": [c.id for c in self.communities],
+            "housing_ids": [h.id for h in self.housing],
+        }

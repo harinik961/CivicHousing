@@ -1,32 +1,58 @@
+import { useEffect, useState } from "react";
 import ModelCard from "./ModelCard";
 
-export default function ModelPage({ title, data, modelName }) {
+export default function ModelPage({ title, apiEndpoint, modelName, data }) {
 
-  const cards = [];
+  const [items, setItems] = useState(data || []);
 
-  for (let i = 0; i < data.length; i++) {
-    const item = data[i];
+  useEffect(() => {
 
-    cards.push(
-      <div className="col-lg-4 col-md-6 col-sm-12 mb-4" key={item.id}>
-        <ModelCard
-          item={item}
-          modelName={modelName}
-          linkPath={`/${modelName}/${item.id}`}
-        />
-      </div>
-    );
-  }
+    if (!apiEndpoint) return;
+
+    fetch(`http://localhost:5000${apiEndpoint}`)
+      .then(res => res.json())
+      .then(res => {
+
+        const raw = res.data || res;
+
+        const formatted = raw.map(h => ({
+          id: h.id,
+          name: h.project_name || "Housing Project",
+          image: "/housing.jpg",
+          attributes: [
+            { title: "Address", value: h.address },
+            { title: "Zip Code", value: h.zip_code },
+            { title: "Affordable Units", value: h.total_affordable_units },
+            {title : "Unit Type", value: h.unit_type},
+            {title : "Housing Tenure", value: h.housing_tenure},
+            {title : "Income Restriction Level", value: h.income_restriction_level},
+            {title: "Total Affordable Units", value: h.total_affordable_units},
+          ]
+        }));
+
+        setItems(formatted);
+
+      });
+
+  }, [apiEndpoint]);
+
+  const cards = items.map(item => (
+    <div className="col-lg-4 col-md-6 col-sm-12 mb-4" key={item.id}>
+      <ModelCard
+        item={item}
+        modelName={modelName}
+        linkPath={`/${modelName}/${item.id}`}
+      />
+    </div>
+  ));
 
   return (
     <div className="container mt-4">
 
-      {/* instance count */}
       <p className="text-muted small text-center mb-1">
-        {data.length} instances
+        {items.length} instances
       </p>
 
-      {/* title */}
       <h2 className="text-center mb-4">{title}</h2>
 
       <div className="row">
