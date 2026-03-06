@@ -33,3 +33,6 @@ __pycache__/
 
 /migrations/
 migrations/
+
+# GTFS data (generated locally, updated periodically)
+backend/data/

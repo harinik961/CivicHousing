@@ -91,11 +91,21 @@ def get_income_restriction(record):
     return ", ".join(levels) if levels else "Not Specified"
 
 # ----------------------------------------
-# STEP 3: Load data into database
+# STEP 3: Load data into database (Upsert)
 # ----------------------------------------
 def seed_housing(records):
+    """
+    Upsert housing data: update existing records, insert new ones.
+    Uses address as the unique identifier.
+    No downtime window, only changes what's different.
+    Removes stale records that no longer exist in the API.
+    """
+    print("Syncing housing data with database (upsert)...")
+    
     inserted = 0
+    updated = 0
     skipped = 0
+    seen_addresses = set()
 
     for record in records:
         if not record.get("address") or not record.get("zip"):
@@ -119,25 +129,48 @@ def seed_housing(records):
             latitude = None
             longitude = None
 
-        housing = Housing(
-            project_name=record.get("project_name", "Unknown"),
-            address=record.get("address", ""),
-            zip_code=record.get("zip", ""),
-            unit_type=record.get("unit_type", ""),
-            housing_tenure=record.get("housing_tenure", ""),
-            income_restriction_level=get_income_restriction(record),
-            total_ada_units=total_ada_units,
-            total_affordable_units=total_affordable_units,
-            council_district=record.get("council_district", ""),
-            latitude=latitude,
-            longitude=longitude,
-        )
+        address = record.get("address", "")
+        seen_addresses.add(address)  # Track that we've seen this address
+        
+        # Check if housing with this address already exists
+        existing = Housing.query.filter_by(address=address).first()
+        
+        if existing:
+            # Update existing record
+            existing.project_name = record.get("project_name", "Unknown")
+            existing.zip_code = record.get("zip", "")
+            existing.unit_type = record.get("unit_type", "")
+            existing.housing_tenure = record.get("housing_tenure", "")
+            existing.income_restriction_level = get_income_restriction(record)
+            existing.total_ada_units = total_ada_units
+            existing.total_affordable_units = total_affordable_units
+            existing.council_district = record.get("council_district", "")
+            existing.latitude = latitude
+            existing.longitude = longitude
+            updated += 1
+        else:
+            # Insert new record
+            housing = Housing(
+                project_name=record.get("project_name", "Unknown"),
+                address=address,
+                zip_code=record.get("zip", ""),
+                unit_type=record.get("unit_type", ""),
+                housing_tenure=record.get("housing_tenure", ""),
+                income_restriction_level=get_income_restriction(record),
+                total_ada_units=total_ada_units,
+                total_affordable_units=total_affordable_units,
+                council_district=record.get("council_district", ""),
+                latitude=latitude,
+                longitude=longitude,
+            )
+            db.session.add(housing)
+            inserted += 1
 
-        db.session.add(housing)
-        inserted += 1
-
+    # Remove stale records that no longer exist in the API
+    deleted = Housing.query.filter(Housing.address.notin_(seen_addresses)).delete(synchronize_session=False)
+    
     db.session.commit()
-    print(f"Inserted {inserted} housing records, skipped {skipped}")
+    print(f"Inserted {inserted} new records, updated {updated}, deleted {deleted} stale records, skipped {skipped}")
 
 # ----------------------------------------
 # MAIN
