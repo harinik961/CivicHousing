@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.dialects.postgresql import ARRAY
 
 db = SQLAlchemy()
 
@@ -137,7 +138,7 @@ class Transportation(db.Model):
     __tablename__ = "transportation"
 
     id = db.Column(db.Integer, primary_key=True)
-    stop_id = db.Column(db.String(50), unique=True, nullable=False)
+    stop_id = db.Column(db.String(50), unique=True, nullable=False, index=True)
     stop_name = db.Column(db.String(255), nullable=False)
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
@@ -145,11 +146,11 @@ class Transportation(db.Model):
     map_embed_url = db.Column(db.String(1000))
     street_view_url = db.Column(db.String(1000))
     transport_type = db.Column(db.String(50))
-    routes = db.Column(db.Text)
+    routes = db.Column(ARRAY(db.String(100))) 
     frequency = db.Column(db.String(100))
     num_routes = db.Column(db.Integer)
     wheelchair_accessible = db.Column(db.String(100))
-    service_days = db.Column(db.String(255))
+    service_days = db.Column(ARRAY(db.String(50)))
 
     def to_dict(self):
         return {
