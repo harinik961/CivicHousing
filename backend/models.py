@@ -96,6 +96,8 @@ class Housing(db.Model):
 
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
+
+    street_view_image = db.Column(db.Text)
     
 
     transportation = db.relationship(
@@ -119,6 +121,7 @@ class Housing(db.Model):
             "council_district": self.council_district,
             "latitude": self.latitude,
             "longitude": self.longitude,
+            "street_view_image": self.street_view_image,
 
             # relationship references
             "community_ids": [c.id for c in self.communities],

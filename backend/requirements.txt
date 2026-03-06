@@ -1,7 +1,10 @@
 flask
 flask-cors
 flask-sqlalchemy
+flask-migrate
 sqlalchemy
 pymysql
 python-dotenv
+requests
+pandas
 pytest
