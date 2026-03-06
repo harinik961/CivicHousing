@@ -155,6 +155,7 @@ def extract_data():
       # Data Point 2: Routes Serving This Stop
       routes_at_stop = stop_routes.get(stop_id, set())
       route_names = [str(route_name_map.get(r, r)) for r in routes_at_stop]
+      routes_str = ", ".join(sorted(route_names)) if route_names else "None"
 
       # Data Point 3: Service Frequency
       service_frequencies = stop_trip_times_by_service.get(stop_id, {})
@@ -170,6 +171,7 @@ def extract_data():
 
       # Data Point 6: Service Days
       days_served = sorted(list(stop_service_days.get(stop_id, [])), key=lambda d: DAY_ORDER[d])
+      days_served_str = ", ".join(days_served) if days_served else "Unknown"
       
       if wheelchair_boarding == 1 or wheelchair_trip_accessible:
         disability_services = "Wheelchair Accessible"
@@ -192,11 +194,11 @@ def extract_data():
         "street_view_url": f"https://maps.googleapis.com/maps/api/streetview?size=400x300&location={lat},{lon}&key={GOOGLE_MAPS_API_KEY}",
 
         "transport_type": transport_type,           # Data Point 1
-        "routes": sorted(route_names),                       # Data Point 2
+        "routes": routes_str,                       # Data Point 2
         "frequency": frequency_str,                 # Data Point 3
         "num_routes": num_routes,                   # Data Point 4
         "wheelchair_accessible": disability_services,  # Data Point 5
-        "service_days": days_served,            # Daya Point 6
+        "service_days": days_served_str,            # Daya Point 6
       })
 
     return transportation_data
