@@ -19,7 +19,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, data }) {
         const formatted = raw.map(h => ({
           id: h.id,
           name: h.project_name || "Housing Project",
-          image: "/housing.jpg",
+          image: h.street_view_image,
           attributes: [
             { title: "Address", value: h.address },
             { title: "Zip Code", value: h.zip_code },
@@ -55,7 +55,7 @@ if (loading) {
       <p>Loading housing data...</p>
     </div>
   );
-  
+
 }  return (
     <div className="container mt-4">
 

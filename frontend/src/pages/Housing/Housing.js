@@ -1,5 +1,4 @@
 import ModelPage from "../../components/ModelPage";
-
 export default function Housing() {
 
   return (
