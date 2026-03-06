@@ -96,6 +96,8 @@ class Housing(db.Model):
 
 
 
+    street_view_image = db.Column(db.Text)
+
 
     transportation = db.relationship(
         "Transportation",
@@ -119,6 +121,7 @@ class Housing(db.Model):
             "latitude": self.latitude,
             "longitude": self.longitude,
             "street_view_image": self.street_view_image,
+            "street_view_image": self.street_view_image,
 
             # relationship references
             "community_ids": [c.id for c in self.communities],
@@ -134,7 +137,7 @@ class Transportation(db.Model):
     __tablename__ = "transportation"
 
     id = db.Column(db.Integer, primary_key=True)
-    stop_id = db.Column(db.String(50), unique=True, nullable=True)
+    stop_id = db.Column(db.String(50), unique=True, nullable=True, index=True)
     stop_name = db.Column(db.String(255), nullable=False)
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)

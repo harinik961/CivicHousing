@@ -65,7 +65,7 @@ function TeamMemberCard({name, image, bio, responsibilities, commits, issues, te
   {
     name: "Alexander Nguyen", 
     username: "alexandernguyen1504",
-    email: ["alexandernguyen@alexanders-macbook-air.local"],
+    email: ["alexandernguyen@alexanders-macbook-air.local", "alexandernguyen@wireless-10-154-160-87.public.utexas.edu", "alexandernguyen@wireless-10-145-5-207.public.utexas.edu"],
     image: alexImage, 
     bio: "I'm a Junior studying computer science at UT Austin. I enjoy sports, hanging out with friends, and trying new food spots in my free time.", 
     responsibilities: "Models and Instances",
