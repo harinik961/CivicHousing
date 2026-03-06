@@ -41,6 +41,7 @@ class Community(db.Model):
     population = db.Column(db.Integer)
     crime_index = db.Column(db.Float)
     park_count = db.Column(db.Integer)
+    health_count = db.Column(db.Integer)
     map_embed_url = db.Column(db.Text)
     street_view_url = db.Column(db.Text)
 
@@ -67,6 +68,7 @@ class Community(db.Model):
             "population": self.population,
             "crime_index": self.crime_index,
             "park_count": self.park_count,
+            "health_count": self.health_count,
             "map_embed_url": self.map_embed_url,
             "street_view_url": self.street_view_url,
             
@@ -153,8 +155,8 @@ class Transportation(db.Model):
     frequency = db.Column(db.String(100))
     num_routes = db.Column(db.Integer)
     wheelchair_accessible = db.Column(db.String(100))
-    routes = db.Column(db.String(500))
-    service_days = db.Column(db.String(200))
+    routes = db.Column(db.String(100))
+    service_days = db.Column(db.String(50))
 
 
     def to_dict(self):

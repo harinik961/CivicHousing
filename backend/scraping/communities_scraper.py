@@ -3,23 +3,21 @@ import pandas as pd
 import os
 import sys
 from dotenv import load_dotenv
+from flask import Flask
 
-load_dotenv()
-
-##IS THIS RIGHT##
-
+# Add backend folder to path so we can import models
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from dotenv import load_dotenv
-from flask import Flask
 from models import db, Community
 
-load_dotenv(os.path.join(os.path.dirname(__file__), "../.env"))
+load_dotenv(os.path.join(os.path.dirname(__file__), "../../.env"))
+
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
+
 ##IS THIS RIGHT##
 
 #census data 
@@ -39,6 +37,7 @@ census_data = census_response.json()
 
 census_df = pd.DataFrame(census_data[1:], columns=census_data[0])
 census_df = census_df[['zip code tabulation area', 'B01003_001E' ]]
+census_df['B01003_001E'] = census_df['B01003_001E'].astype(int)
 print(census_df.head())
 # austin data 
 response = requests.get(austin_url)
@@ -61,6 +60,7 @@ zillow_df = zillow_df[['RegionName', zillow_df.columns[-1]]]
 zillow_df.columns = ['zip', 'median_housing_price']
 zillow_df['zip'] = zillow_df['zip'].astype(str)
 merged_df = merged_df.merge(zillow_df, on='zip', how='left')
+merged_df['median_housing_price'] = merged_df['median_housing_price'].round(2)
 print(merged_df.head())
 
 print(len(merged_df))
@@ -79,6 +79,7 @@ for zip_code in crime_df['zip_code']:
     else:
         crime_counts[zip_code] = 1
 
+
 crime_counts = pd.DataFrame(list(crime_counts.items()), columns=['zip', 'crime_count'])
 
 crime_counts = crime_counts.merge(merged_df[['zip', 'population']], on='zip', how='left')
@@ -90,6 +91,7 @@ crime_counts['crime_index'] = (
     (crime_counts['crime_rate'] - crime_counts['crime_rate'].min()) /
     (crime_counts['crime_rate'].max() - crime_counts['crime_rate'].min()) * 100
 ).round(2)
+crime_counts['crime_index'] = crime_counts['crime_index'].fillna(0)
 # put in merged data 
 merged_df = merged_df.merge(crime_counts[['zip', 'crime_index']], on='zip', how='left')
 print(merged_df.head())
@@ -113,8 +115,25 @@ for zip_code in parks_df['zipcode']:
 park_counts = pd.DataFrame(list(park_counts.items()), columns=['zip', 'park_count'])
 
 merged_df = merged_df.merge(park_counts[['zip', 'park_count']], on='zip', how='left')
+merged_df['park_count'] = merged_df['park_count'].fillna(0).astype(int)
 print(merged_df[['zip', 'park_count']].head())
 
+#healthcare per zipcode
+health_params = {
+    "get": "ESTAB,NAICS2017",
+    "for": "zipcode:*",
+    "NAICS2017": "62",
+    "key": CENSUS_KEY
+}
+health_response = requests.get("https://api.census.gov/data/2023/cbp", params=health_params)
+health_data = health_response.json()
+
+health_df = pd.DataFrame(health_data[1:], columns=health_data[0])
+health_df = health_df.rename(columns={'zip code': 'zip', 'ESTAB': 'health_count'})
+health_df['health_count'] = health_df['health_count'].astype(int)
+
+merged_df = merged_df.merge(health_df[['zip', 'health_count']], on='zip', how='left')
+merged_df['health_count'] = merged_df['health_count'].fillna(0).astype(int)
 
 # google maps street view images and map embed 
 map_urls = []
@@ -137,7 +156,6 @@ print(merged_df.columns.tolist())
 print(merged_df.head())
 
 
-
 # IS THIS RIGHT??????????
 def seed_communities(df):
     inserted = 0
@@ -156,8 +174,10 @@ def seed_communities(df):
             existing.population = row['population']
             existing.median_housing_price = row['median_housing_price']
             existing.crime_index = row['crime_index']
-            existing.latitude = row['latitude']
-            existing.longitude = row['longitude']
+            existing.park_count = row['park_count']
+            existing.health_count = row['health_count'] 
+            existing.map_embed_url = row['map_embed_url']
+            existing.street_view_url = row['street_view_url']
             updated += 1
         else: 
             community = Community(
@@ -167,12 +187,14 @@ def seed_communities(df):
                 median_housing_price=row['median_housing_price'],
                 crime_index=row['crime_index'],
                 park_count=row['park_count'],
+                health_count = row['health_count'], #health count 
                 map_embed_url=row['map_embed_url'], 
                 street_view_url=row['street_view_url'],
             )
+            db.session.add(community)
+            inserted += 1
 
-        db.session.add(community)
-        inserted += 1
+
 
     db.session.commit()
     print(f"Inserted {inserted} communities, skipped {skipped}")
