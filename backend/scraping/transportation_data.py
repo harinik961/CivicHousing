@@ -10,6 +10,7 @@ import json
 
 load_dotenv()
 GTFS_URL = os.getenv("GTFS_URL")
+GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 DAY_ORDER = {
   "Monday": 0, 
   "Tuesday": 1, 
@@ -179,14 +180,19 @@ def extract_data():
       else:
         disability_services = "No Information Available"
 
+      lat = stop["stop_lat"]
+      lon = stop["stop_lon"]
+
       # Append to Results
       transportation_data.append({
         "stop_id": stop_id,
         "stop_name": stop["stop_name"],
-        "latitude": stop["stop_lat"],
-        "longitude": stop["stop_lon"],
+        "latitude": lat,
+        "longitude": lon,
         "stop_url": stop.get("stop_url", ""),
-        
+        "map_embed_url": f"https://www.google.com/maps/embed/v1/place?q={lat},{lon}&key={GOOGLE_MAPS_API_KEY}",
+        "street_view_url": f"https://maps.googleapis.com/maps/api/streetview?size=400x300&location={lat},{lon}&key={GOOGLE_MAPS_API_KEY}",
+
         "transport_type": transport_type,           # Data Point 1
         "routes": routes_str,                       # Data Point 2
         "frequency": frequency_str,                 # Data Point 3
