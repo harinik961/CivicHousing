@@ -5,6 +5,7 @@ import os
 
 from models import db, Housing, Community, Transportation
 from flask_migrate import Migrate
+from sqlalchemy.orm import selectinload
 
 load_dotenv()
 
@@ -95,14 +96,22 @@ def create_app():
     @app.route("/api/transportation", methods=["GET"])
     def get_transportation():
 
-        transportation = Transportation.query.all()
+        transportation = (
+            Transportation.query
+            .options(selectinload(Transportation.communities))
+            .all()
+        )
 
         return jsonify([t.to_dict() for t in transportation])
 
     @app.route("/api/transportation/<int:id>", methods=["GET"])
     def get_one_transportation(id):
 
-        transportation = Transportation.query.get_or_404(id)
+        transportation = (
+            Transportation.query
+            .options(selectinload(Transportation.communities))
+            .get_or_404(id)
+        )
 
         return jsonify(transportation.to_dict())
 
@@ -110,11 +119,12 @@ def create_app():
 
 
 app = create_app()
+application = app
 
 
 if __name__ == "__main__":
-
-    with app.app_context():
-        db.create_all()
+    if os.getenv("FLASK_ENV") != "production":
+        with app.app_context():
+            db.create_all()
 
     app.run(host="0.0.0.0", port=5000, debug=True)
