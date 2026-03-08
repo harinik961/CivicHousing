@@ -15,9 +15,6 @@ def create_app():
     app = Flask(__name__)
     CORS(app)
 
-    # -----------------------------
-    # Database Config
-    # -----------------------------
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -27,7 +24,7 @@ def create_app():
     # -----------------------------
     # Root Routes
     # -----------------------------
-    @app.route("/" )
+    @app.route("/")
     def index():
         return {"message": "CivicHousing API is running."}
 
@@ -42,14 +39,13 @@ def create_app():
     def get_housing():
 
         page = request.args.get("page", 1, type=int)
-        per_page = request.args.get("per_page", 80, type=int)
+        per_page = 50
 
         zip_code = request.args.get("zip")
         district = request.args.get("district")
 
         query = Housing.query
 
-        # Filtering
         if zip_code:
             query = query.filter(Housing.zip_code == zip_code)
 
@@ -62,7 +58,6 @@ def create_app():
             "data": [h.to_dict() for h in pagination.items],
             "total": pagination.total,
             "page": page,
-            "per_page": per_page,
             "pages": pagination.pages
         })
 
@@ -79,9 +74,19 @@ def create_app():
     @app.route("/api/community", methods=["GET"], strict_slashes=False)
     def get_communities():
 
-        communities = Community.query.all()
+        page = request.args.get("page", 1, type=int)
+        per_page = 50
 
-        return jsonify([c.to_dict() for c in communities])
+        query = Community.query
+
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+
+        return jsonify({
+            "data": [c.to_dict() for c in pagination.items],
+            "total": pagination.total,
+            "page": page,
+            "pages": pagination.pages
+        })
 
     @app.route("/api/community/<int:id>", methods=["GET"], strict_slashes=False)
     def get_community(id):
@@ -96,13 +101,21 @@ def create_app():
     @app.route("/api/transportation", methods=["GET"], strict_slashes=False)
     def get_transportation():
 
-        transportation = (
-            Transportation.query
-            .options(selectinload(Transportation.communities))
-            .all()
+        page = request.args.get("page", 1, type=int)
+        per_page = 50
+
+        query = Transportation.query.options(
+            selectinload(Transportation.communities)
         )
 
-        return jsonify([t.to_dict() for t in transportation])
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+
+        return jsonify({
+            "data": [t.to_dict() for t in pagination.items],
+            "total": pagination.total,
+            "page": page,
+            "pages": pagination.pages
+        })
 
     @app.route("/api/transportation/<int:id>", methods=["GET"], strict_slashes=False)
     def get_one_transportation(id):

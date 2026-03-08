@@ -8,8 +8,8 @@ export default function InstancePage({ apiEndpoint, fields, attributeDescription
   const [item, setItem] = useState(null);
 
   useEffect(() => {
-    fetch(`http://civichousing-api-env.eba-s8frw4hm.us-east-1.elasticbeanstalk.com${apiEndpoint}/${id}`)
-      .then(res => res.json())
+  fetch(`http://localhost:5000${apiEndpoint}/${id}`)     
+ .then(res => res.json())
       .then(res => setItem(res))
       .catch(err => console.error("Error loading instance:", err));
   }, [id, apiEndpoint]);
@@ -17,13 +17,13 @@ export default function InstancePage({ apiEndpoint, fields, attributeDescription
   if (!item) return <h2>Loading...</h2>;
 
   const attributes = fields
-    .filter(key => key !== "street_view_image" && item[key] !== undefined)
+    .filter(key => (key !== "street_view_image" || key !== "street_view_url")  && item[key] !== undefined)
     .map(key => [key, item[key]]);
 
   return (
     <div className="container-fluid mt-4">
       <h1 className="instance-title">
-        {item.project_name || item.line || item.county || `Item ${item.id}`}
+        {item.project_name || item.stop_name || item.zip_code || `Item ${item.id}`}
       </h1>
 
       <div className="masonry">
@@ -43,7 +43,7 @@ export default function InstancePage({ apiEndpoint, fields, attributeDescription
                   <h5 className="attribute-key">{label}</h5>
 
                   {/* Show image inside the Project Name card */}
-                  {key === "project_name" && getImage && getImage(item) && (
+                  {(key === "project_name" ||key === "stop_name" || key === "zip_code") && getImage && getImage(item) && (
                     <img
                       src={getImage(item)}
                       alt={item.project_name}
