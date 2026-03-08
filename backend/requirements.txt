@@ -3,8 +3,9 @@ flask-cors
 flask-sqlalchemy
 flask-migrate
 sqlalchemy
-pymysql
 python-dotenv
 requests
 pandas
 pytest
+gunicorn
+psycopg2-binary

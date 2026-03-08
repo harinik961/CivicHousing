@@ -1,0 +1,7 @@
+scraping/
+data/
+.env
+__pycache__/
+*.pyc
+.git/
+venv/

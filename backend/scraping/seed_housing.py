@@ -15,7 +15,6 @@ load_dotenv(os.path.join(os.path.dirname(__file__), "../.env"))
 # ----------------------------------------
 # CONFIGURATION
 # ----------------------------------------
-APP_TOKEN = "eB6v7DTNNhE5gKWwdRFK2Dzl0"
 BASE_URL = "https://data.austintexas.gov/resource/ifzc-3xz8.json"
 
 # ----------------------------------------
@@ -27,6 +26,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 
 GOOGLE_MAPS_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+APP_TOKEN = os.getenv("APP_TOKEN_HOUSING")
 
 def fetch_street_view(address):
     try:
