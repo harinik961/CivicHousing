@@ -10,7 +10,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, data }) {
 
     if (!apiEndpoint) return;
 
-    fetch(`http://localhost:5000${apiEndpoint}`)
+    fetch(`${apiEndpoint}`)
       .then(res => res.json())
       .then(res => {
 

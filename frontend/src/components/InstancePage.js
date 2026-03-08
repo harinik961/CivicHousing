@@ -8,7 +8,7 @@ export default function InstancePage({ apiEndpoint, fields, attributeDescription
   const [item, setItem] = useState(null);
 
   useEffect(() => {
-    fetch(`http://localhost:5000${apiEndpoint}/${id}`)
+    fetch(`${apiEndpoint}/${id}`)
       .then(res => res.json())
       .then(res => setItem(res))
       .catch(err => console.error("Error loading instance:", err));
