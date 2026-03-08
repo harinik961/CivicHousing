@@ -2,6 +2,9 @@ import requests
 import os
 import sys
 import base64
+from datetime import datetime
+import timezone
+
 
 # Add backend folder to path so we can import models
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
@@ -58,6 +61,7 @@ def fetch_housing_data():
     params = {
         "$limit": limit,
         "$where": "affordable_units > 0 AND development_status = 'Project Completed'",
+        "$select": "*, :updated_at"
     }
 
     print("Fetching housing data from API...")
@@ -169,6 +173,8 @@ def seed_housing(records):
             existing.longitude = longitude
             if street_view:
                 existing.street_view_image = street_view
+            existing.last_synced_at = datetime.now(timezone.utc)
+
             updated += 1
         else:
             # Insert new record
@@ -185,6 +191,8 @@ def seed_housing(records):
                 latitude=latitude,
                 longitude=longitude,
                 street_view_image=street_view,
+                last_synced_at=datetime.now(timezone.utc)
+
             )
             db.session.add(housing)
             inserted += 1
