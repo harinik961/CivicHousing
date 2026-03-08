@@ -10,7 +10,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, data }) {
 
     if (!apiEndpoint) return;
 
-    fetch(`http://civichousing-api-env.eba-s8frw4hm.us-east-1.elasticbeanstalk.com${apiEndpoint}`)
+    fetch(`https://api.civichousing.me/${apiEndpoint}`)
       .then(res => res.json())
       .then(res => {
 
