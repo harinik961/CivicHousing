@@ -156,7 +156,7 @@ class Transportation(db.Model):
     num_routes = db.Column(db.Integer)
     wheelchair_accessible = db.Column(db.String(100))
     routes = db.Column(db.String(100))
-    service_days = db.Column(db.String(50))
+    service_days = db.Column(db.String(1000))
 
 
     def to_dict(self):
