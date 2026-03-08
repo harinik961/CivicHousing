@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import ARRAY
 
@@ -112,6 +113,7 @@ class Housing(db.Model):
         backref="housing",
         lazy=True
     )
+    last_synced_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
         return {

@@ -16,7 +16,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes })
 
     setLoading(true);
 
-    fetch(`http://localhost:5000${apiEndpoint}?page=${page}`)
+    fetch(`https://api.civichousing.me/${apiEndpoint}`)
       .then(res => res.json())
       .then(data => {
 
