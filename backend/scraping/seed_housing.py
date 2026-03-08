@@ -61,7 +61,6 @@ def fetch_housing_data():
     params = {
         "$limit": limit,
         "$where": "affordable_units > 0 AND development_status = 'Project Completed'",
-        "$select": "*, :updated_at"
     }
 
     print("Fetching housing data from API...")
