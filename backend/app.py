@@ -26,7 +26,7 @@ def create_app():
     # -----------------------------
     # Root Routes
     # -----------------------------
-    @app.route("/")
+    @app.route("/" )
     def index():
         return {"message": "CivicHousing API is running."}
 
@@ -37,7 +37,7 @@ def create_app():
     # -----------------------------
     # HOUSING
     # -----------------------------
-    @app.route("/api/housing", methods=["GET"])
+    @app.route("/api/housing", methods=["GET"], strict_slashes=False)
     def get_housing():
 
         page = request.args.get("page", 1, type=int)
@@ -65,7 +65,7 @@ def create_app():
             "pages": pagination.pages
         })
 
-    @app.route("/api/housing/<int:id>", methods=["GET"])
+    @app.route("/api/housing/<int:id>", methods=["GET"], strict_slashes=False)
     def get_one_housing(id):
 
         housing = Housing.query.get_or_404(id)
@@ -75,14 +75,14 @@ def create_app():
     # -----------------------------
     # COMMUNITY
     # -----------------------------
-    @app.route("/api/community", methods=["GET"])
+    @app.route("/api/community", methods=["GET"], strict_slashes=False)
     def get_communities():
 
         communities = Community.query.all()
 
         return jsonify([c.to_dict() for c in communities])
 
-    @app.route("/api/community/<int:id>", methods=["GET"])
+    @app.route("/api/community/<int:id>", methods=["GET"], strict_slashes=False)
     def get_community(id):
 
         community = Community.query.get_or_404(id)
@@ -92,14 +92,14 @@ def create_app():
     # -----------------------------
     # TRANSPORTATION
     # -----------------------------
-    @app.route("/api/transportation", methods=["GET"])
+    @app.route("/api/transportation", methods=["GET"], strict_slashes=False)
     def get_transportation():
 
         transportation = Transportation.query.all()
 
         return jsonify([t.to_dict() for t in transportation])
 
-    @app.route("/api/transportation/<int:id>", methods=["GET"])
+    @app.route("/api/transportation/<int:id>", methods=["GET"], strict_slashes=False)
     def get_one_transportation(id):
 
         transportation = Transportation.query.get_or_404(id)
