@@ -93,7 +93,7 @@ crime_counts['crime_index'] = (
 ).round(2)
 crime_counts['crime_index'] = crime_counts['crime_index'].fillna(0)
 # put in merged data 
-merged_df = merged_df.merge(crime_counts[['zip', 'crime_index']], on='zip', how='left')
+merged_df = merged_df.merge(crime_counts[['zip', 'crime_index']], on='zip', how='left').fillna(0)
 print(merged_df.head())
 #print(crime_df.columns.tolist())
 #print(crime_df.head(2))
