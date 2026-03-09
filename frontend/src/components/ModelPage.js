@@ -20,7 +20,9 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes })
       .then(res => res.json())
       .then(data => {
 
-        const raw = data.data || [];
+        const raw = Array.isArray(data) ? data : (data.data || []);
+          setTotal(data.total || raw.length);
+          setPages(data.pages || 1);
 
         const formatted = raw.map(item => ({
           id: item.id,

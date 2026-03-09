@@ -2,11 +2,11 @@ import InstancePage from "../../components/InstancePage";
 const getImage = (item) => item.street_view_url;
 
 const transportFields = [
-   "transport_type",
-   "route",
-    "frequency",
+    "transport_type",
+    "routes",
+     "frequency",
     "service_days",
-    "routes",    
+    "num_routes",    
     "wheelchair_accessible",
     "stop_name",
     "stop_id"
