@@ -72,11 +72,6 @@ class Community(db.Model):
             "health_count": self.health_count,
             "map_embed_url": self.map_embed_url,
             "street_view_url": self.street_view_url,
-            
-
-            # return only IDs to avoid recursion
-            "housing_ids": [h.id for h in self.housing],
-            "transportation_ids": [t.id for t in self.transportation]
         }
 
 
@@ -130,11 +125,6 @@ class Housing(db.Model):
             "latitude": self.latitude,
             "longitude": self.longitude,
             "street_view_image": self.street_view_image,
-            "street_view_image": self.street_view_image,
-
-            # relationship references
-            "community_ids": [c.id for c in self.communities],
-            "transportation_ids": [t.id for t in self.transportation],
         }
 
 
@@ -178,8 +168,4 @@ class Transportation(db.Model):
             "wheelchair_accessible": self.wheelchair_accessible,
             "service_days": self.service_days,
             "stop_id": self.stop_id,
-            
-
-            "community_ids": [c.id for c in self.communities],
-            "housing_ids": [h.id for h in self.housing],
         }

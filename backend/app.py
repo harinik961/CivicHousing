@@ -5,7 +5,6 @@ import os
 
 from models import db, Housing, Community, Transportation
 from flask_migrate import Migrate
-from sqlalchemy.orm import selectinload
 
 load_dotenv()
 
@@ -104,9 +103,7 @@ def create_app():
         page = request.args.get("page", 1, type=int)
         per_page = 50
 
-        query = Transportation.query.options(
-            selectinload(Transportation.communities)
-        )
+        query = Transportation.query
 
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
@@ -120,11 +117,7 @@ def create_app():
     @app.route("/api/transportation/<int:id>", methods=["GET"], strict_slashes=False)
     def get_one_transportation(id):
 
-        transportation = (
-            Transportation.query
-            .options(selectinload(Transportation.communities))
-            .get_or_404(id)
-        )
+        transportation = Transportation.query.get_or_404(id)
 
         return jsonify(transportation.to_dict())
 
