@@ -207,7 +207,7 @@ for _, row in merged_df.iterrows():
     map_urls.append({
         "zip": zip_code,
         "map_embed_url": f"https://www.google.com/maps/embed/v1/place?q={lat},{lon}&key={GOOGLE_MAPS_API_KEY}",
-        "street_view_url": f"https://maps.googleapis.com/maps/api/streetview?size=400x300&location={lat},{lon}&key={GOOGLE_MAPS_API_KEY}",
+        "street_view_url": f"https://maps.googleapis.com/maps/api/streetview?size=400x300&location={zip_code}+Austin+TX&key={GOOGLE_MAPS_API_KEY}",
     })
 
 map_urls_df = pd.DataFrame(map_urls)
