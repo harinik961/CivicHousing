@@ -54,9 +54,25 @@ const housingDescriptions = {
     `${item.project_name} has a walkability Score of ${value}. This score reflects how walkable the surrounding area is, 
     based on the proximity of amenities like grocery stores, schools, parks, and public transit. A higher score indicates a more walkable environment.`,
 
-  last_synced_at: (value, item) =>
-    `The information for ${item.project_name} was last updated on ${value}. This indicates the most recent date when 
-    the housing data was synchronized with the source system.`
+  last_synced_at: (value, item) => {
+    const parsed = new Date(value);
+    const centralTime = Number.isNaN(parsed.getTime())
+      ? value
+      : new Intl.DateTimeFormat("en-US", {
+          timeZone: "America/Chicago",
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+          timeZoneName: "short"
+        }).format(parsed);
+
+    return `The information for ${item.project_name} was last updated on ${centralTime}. This indicates the most recent date when 
+    the housing data was synchronized with the source system.`;
+  }
 
 };
 export default function HousingInstance() {

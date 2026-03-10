@@ -11,7 +11,8 @@ export default function Housing() {
     { title: "Zip Code", key: "zip_code" },
     { title: "Affordable Units", key: "total_affordable_units" },
     { title: "Unit Type", key: "unit_type" },
-    { title: "Housing Tenure", key: "housing_tenure" }
+    { title: "Housing Tenure", key: "housing_tenure" },
+    { title: "Walkability Score", key: "walk_score" }
   ]}
 />
   );
