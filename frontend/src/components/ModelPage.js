@@ -39,14 +39,12 @@ function formatItem(item, attributes) {
 
 export default function ModelPage({ title, apiEndpoint, modelName, attributes }) {
 
-  const [allData, setAllData] = useState(null); // Cache full dataset
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
-  const [isPaginated, setIsPaginated] = useState(false);
 
   const PER_PAGE = 50;
 
