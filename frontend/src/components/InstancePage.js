@@ -21,6 +21,10 @@ export default function InstancePage({ apiEndpoint, fields, attributeDescription
     .map(key => [key, item[key]]);
 
   const displayName = item.project_name || item.stop_name || item.zip_code || `Item ${item.id}`;
+  const labelOverrides = {
+    walk_score: "Walkability Score",
+    last_synced_at: "Last Updated"
+  };
 
   function normalizeImage(value) {
     if (!value || typeof value !== "string") return null;
@@ -63,6 +67,24 @@ export default function InstancePage({ apiEndpoint, fields, attributeDescription
   }
 
   function renderAttributeValue(key, value) {
+    if (key === "last_synced_at" && typeof value === "string") {
+      const parsed = new Date(value);
+
+      if (!Number.isNaN(parsed.getTime())) {
+        return new Intl.DateTimeFormat("en-US", {
+          timeZone: "America/Chicago",
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+          timeZoneName: "short"
+        }).format(parsed);
+      }
+    }
+
     if (key === "map_embed_url" && typeof value === "string") {
       return (
         <iframe
@@ -124,7 +146,7 @@ export default function InstancePage({ apiEndpoint, fields, attributeDescription
 
         {attributes.map(([key, value], i) => {
 
-          const label = key
+          const label = labelOverrides[key] || key
             .replace(/_/g, " ")
             .replace(/\b\w/g, c => c.toUpperCase());
 
