@@ -151,6 +151,14 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes })
         <button
           className="btn btn-primary"
           disabled={page === 1}
+          onClick={() => setPage(1)}
+        >
+          First
+        </button>
+
+        <button
+          className="btn btn-primary"
+          disabled={page === 1}
           onClick={() => setPage(page - 1)}
         >
           Previous
@@ -166,6 +174,14 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes })
           onClick={() => setPage(page + 1)}
         >
           Next
+        </button>
+
+        <button
+          className="btn btn-primary"
+          disabled={page === pages}
+          onClick={() => setPage(pages)}
+        >
+          Last
         </button>
 
       </div>
