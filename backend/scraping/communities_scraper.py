@@ -72,7 +72,9 @@ response = requests.get(austin_url)
 data = response.json()
 austin_df = pd.DataFrame(data) 
 austin_df = austin_df[['zip', 'latitude', 'longitude']]
-austin_df = austin_df.drop_duplicates(subset='zip')
+austin_df['latitude'] = pd.to_numeric(austin_df['latitude'])
+austin_df['longitude'] = pd.to_numeric(austin_df['longitude'])
+austin_df = austin_df.groupby('zip')[['latitude', 'longitude']].mean().reset_index()
 print(austin_df.head())
 
 merged_df = austin_df.merge(census_df, left_on='zip',right_on='zip code tabulation area', how='left')
