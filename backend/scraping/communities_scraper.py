@@ -60,15 +60,13 @@ def get_street_url(zip_code):
     
     options = [
         f"{zip_code}+Austin+TX",
-        f"{zip_code}+Austin+TX+park",
-        f"{zip_code}+Austin+TX+shopping+center",
-        f"{zip_code}+Austin+TX+restaurant",
+        f"{lat},{lon}",
     ]
     
     for location in options:
-        response = requests.get(metadata_url, params={"location": location, "key": GOOGLE_MAPS_API_KEY})
+        response = requests.get(metadata_url, params={"location": location, "radius": "5000", "key": GOOGLE_MAPS_API_KEY})
         if response.json().get("status") == "OK":
-            return f"{base}?size=400x300&location={location}&key={GOOGLE_MAPS_API_KEY}"
+            return f"{base}?size=400x300&location={location}&radius=5000&key={GOOGLE_MAPS_API_KEY}"
     
     return None
 
@@ -226,7 +224,7 @@ for _, row in merged_df.iterrows():
     map_urls.append({
         "zip": zip_code,
         "map_embed_url": f"https://www.google.com/maps/embed/v1/place?q={zip_code}+Austin+TX&key={GOOGLE_MAPS_API_KEY}",
-        "street_view_url": get_street_url(zip_code)
+        "street_view_url": get_street_url(zip_code, lat, lon)
     })
 
 map_urls_df = pd.DataFrame(map_urls)
