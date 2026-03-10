@@ -60,9 +60,9 @@ def get_street_url(zip_code):
     
     options = [
         f"{zip_code}+Austin+TX",
-        f"{zip_code}+Austin+TX+main+street",
-        f"{zip_code}+Austin+TX+east+avenue",
-        f"{zip_code}+Austin+TX+shopping+center"
+        f"{zip_code}+Austin+TX+park",
+        f"{zip_code}+Austin+TX+shopping+center",
+        f"{zip_code}+Austin+TX+restaurant",
     ]
     
     for location in options:
