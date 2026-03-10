@@ -1,9 +1,7 @@
 import requests
 import os
 import sys
-import base64
-from datetime import datetime
-import timezone
+from datetime import datetime, timezone
 
 
 # Add backend folder to path so we can import models
@@ -31,19 +29,26 @@ db.init_app(app)
 GOOGLE_MAPS_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 APP_TOKEN = os.getenv("APP_TOKEN_HOUSING")
 
-def fetch_street_view(address):
+def fetch_street_view(address=None, latitude=None, longitude=None):
+    """
+    Return HTTPS Street View image URL.
+    Prefers lat/lon when provided (e.g. location=47.5763831,-122.4211769); otherwise uses address.
+    """
+    if not GOOGLE_MAPS_KEY:
+        return None
     try:
-        url = "https://maps.googleapis.com/maps/api/streetview"
-        params = {
-            "size": "600x400",
-            "location": address,
-            "key": GOOGLE_MAPS_KEY
-        }
-        response = requests.get(url, params=params, timeout=10)
-        if response.status_code == 200 and response.headers.get("content-type", "").startswith("image"):
-            return base64.b64encode(response.content).decode("utf-8")
+        if latitude is not None and longitude is not None:
+            location = f"{latitude},{longitude}"
+        elif address:
+            location = f"{address}, Austin, TX".replace(" ", "+")
+        else:
+            return None
+        return (
+            f"https://maps.googleapis.com/maps/api/streetview?"
+            f"size=600x400&location={location}&fov=80&heading=70&pitch=0&key={GOOGLE_MAPS_KEY}"
+        )
     except Exception as e:
-        print(f"Street view fetch failed for {address}: {e}")
+        print(f"Street view URL failed: {e}")
     return None
 
 # ----------------------------------------
@@ -86,7 +91,48 @@ def fetch_housing_data():
     return all_records
 
 # ----------------------------------------
-# STEP 2: Helper for income restriction
+# STEP 2: Merge records by project_name before sending to DB
+# ----------------------------------------
+def merge_records_by_project_name(records):
+    """
+    Combine all records with the same project_name into one record.
+    - total_affordable_units (affordable_units) = sum across group
+    - total_ada_units = sum across group
+    - address (and zip, etc.) = from first record in group that has address+zip, else first record
+    """
+    from collections import defaultdict
+    groups = defaultdict(list)
+    for r in records:
+        key = (r.get("project_name") or "").strip() or "Unknown"
+        groups[key].append(r)
+
+    merged = []
+    for project_name, group in groups.items():
+        # Prefer first record that has both address and zip for address/zip
+        first_with_address = next((r for r in group if r.get("address") and r.get("zip")), group[0])
+        first = first_with_address
+
+        try:
+            total_affordable = sum(int(r.get("affordable_units", 0) or 0) for r in group)
+        except (TypeError, ValueError):
+            total_affordable = 0
+        try:
+            total_ada = sum(int(r.get("total_ada_units", 0) or 0) for r in group)
+        except (TypeError, ValueError):
+            total_ada = 0
+
+        merged_record = dict(first)
+        merged_record["project_name"] = project_name
+        merged_record["affordable_units"] = total_affordable
+        merged_record["total_ada_units"] = total_ada
+        merged_record["address"] = first.get("address")
+        merged_record["zip"] = first.get("zip")
+        merged.append(merged_record)
+    return merged
+
+
+# ----------------------------------------
+# STEP 3: Helper for income restriction
 # ----------------------------------------
 def get_income_restriction(record):
     mfi_fields = {
@@ -112,7 +158,7 @@ def get_income_restriction(record):
     return ", ".join(levels) if levels else "Not Specified"
 
 # ----------------------------------------
-# STEP 3: Load data into database (Upsert)
+# STEP 4: Load data into database (Upsert)
 # ----------------------------------------
 def seed_housing(records):
     """
@@ -153,7 +199,11 @@ def seed_housing(records):
         address = record.get("address", "")
         seen_addresses.add(address)
 
-        street_view = fetch_street_view(f"{address}, Austin, TX")
+        street_view = fetch_street_view(
+            address=f"{address}, Austin, TX",
+            latitude=latitude,
+            longitude=longitude,
+        )
 
         # Check if housing with this address already exists
         existing = Housing.query.filter_by(address=address).first()
@@ -202,13 +252,50 @@ def seed_housing(records):
     db.session.commit()
     print(f"Inserted {inserted} new records, updated {updated}, deleted {deleted} stale records, skipped {skipped}")
 
+
+# ----------------------------------------
+# Refresh street view images only (no API pull, no merge)
+# ----------------------------------------
+def refresh_street_views():
+    """Re-fetch street view images for all existing Housing rows. Does not touch other data."""
+    print("Refreshing street view images for all housing records...")
+    rows = Housing.query.all()
+    updated = 0
+    failed = 0
+    for i, housing in enumerate(rows):
+        if not housing.address and (housing.latitude is None or housing.longitude is None):
+            failed += 1
+            continue
+        full_address = f"{housing.address}, Austin, TX" if housing.address else None
+        img = fetch_street_view(
+            address=full_address,
+            latitude=housing.latitude,
+            longitude=housing.longitude,
+        )
+        if img:
+            housing.street_view_image = img
+            housing.last_synced_at = datetime.now(timezone.utc)
+            updated += 1
+        else:
+            failed += 1
+        if (i + 1) % 10 == 0:
+            print(f"  Processed {i + 1}/{len(rows)}...")
+    db.session.commit()
+    print(f"Done. Updated {updated} images, {failed} skipped or failed.")
+
+
 # ----------------------------------------
 # MAIN
 # ----------------------------------------
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-        records = fetch_housing_data()
-        seed_housing(records)
+        if "--refresh-street-view" in sys.argv:
+            refresh_street_views()
+        else:
+            records = fetch_housing_data()
+            records = merge_records_by_project_name(records)
+            print(f"Merged to {len(records)} records by project_name")
+            seed_housing(records)
         print("Done!")
         
