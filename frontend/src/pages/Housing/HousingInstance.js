@@ -11,6 +11,8 @@ const housingFields = [
   "total_affordable_units",
   "total_ada_units",
   "council_district",
+  "walk_score",
+  "last_synced_at",
 ];
 
 const housingDescriptions = {
@@ -46,7 +48,15 @@ const housingDescriptions = {
   council_district: (value, item) =>
     `${item.project_name} is located in Austin City Council District ${value}. 
     This district determines the local elected representative responsible for 
-    policies and planning decisions affecting this area.`
+    policies and planning decisions affecting this area.`,
+
+  walk_score: (value, item) =>
+    `${item.project_name} has a Walk Score of ${value}. This score reflects how walkable the surrounding area is, 
+    based on the proximity of amenities like grocery stores, schools, parks, and public transit. A higher score indicates a more walkable environment.`,
+
+  last_synced_at: (value, item) =>
+    `The information for ${item.project_name} was last updated on ${value}. This indicates the most recent date when 
+    the housing data was synchronized with the source system.`
 
 };
 export default function HousingInstance() {
