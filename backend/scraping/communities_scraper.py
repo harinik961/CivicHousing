@@ -11,7 +11,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from models import db, Community
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "../../.env"))
-
+load_dotenv()
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
@@ -188,6 +188,7 @@ for _, row in merged_df.iterrows():
             "bike_score": None
         })
 walk_scores_df = pd.DataFrame(walk_scores)
+walk_scores_df = walk_scores_df.fillna(0)
 merged_df = merged_df.merge(walk_scores_df, on="zip", how="left")
 
 # google maps street view images and map embed 
@@ -250,7 +251,7 @@ def seed_communities(df):
             inserted += 1
 
     db.session.commit()
-    print(f"Inserted {inserted} communities, skipped {skipped}")
+    print(f"Inserted {inserted} communities, skipped {skipped}")   
 
 if __name__ == "__main__":
     with app.app_context():

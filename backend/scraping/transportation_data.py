@@ -328,6 +328,9 @@ def extract_data():
         "num_routes": num_routes,                   # Data Point 4
         "wheelchair_accessible": disability_services,  # Data Point 5
         "service_days": days_served_str,            # Daya Point 6
+        "travel_time_ut": travel_time_ut, 
+        "travel_time_downtown": travel_time_downtown, 
+        "travel_time_domain": travel_time_domain,
       })
 
     return transportation_data

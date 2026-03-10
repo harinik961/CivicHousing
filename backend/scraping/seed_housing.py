@@ -17,6 +17,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), "../.env"))
 # CONFIGURATION
 # ----------------------------------------
 BASE_URL = "https://data.austintexas.gov/resource/ifzc-3xz8.json"
+WALKABILITY_URL = "https://api.walkscore.com/score"
 WALK_SCORE_API_KEY = os.getenv("WALK_SCORE_API_KEY")
 
 def fetch_walkability_score(address, lat, lon): 
