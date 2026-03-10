@@ -51,7 +51,7 @@ const housingDescriptions = {
     policies and planning decisions affecting this area.`,
 
   walk_score: (value, item) =>
-    `${item.project_name} has a Walk Score of ${value}. This score reflects how walkable the surrounding area is, 
+    `${item.project_name} has a walkability Score of ${value}. This score reflects how walkable the surrounding area is, 
     based on the proximity of amenities like grocery stores, schools, parks, and public transit. A higher score indicates a more walkable environment.`,
 
   last_synced_at: (value, item) =>
