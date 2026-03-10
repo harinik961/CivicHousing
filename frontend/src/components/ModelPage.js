@@ -3,48 +3,85 @@ import ModelCard from "./ModelCard";
 
 export default function ModelPage({ title, apiEndpoint, modelName, attributes }) {
 
+  const [allData, setAllData] = useState(null); // Cache full dataset
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
+  const [isPaginated, setIsPaginated] = useState(false);
 
   const PER_PAGE = 50;
 
+  function normalizeImage(item) {
+    const candidate = item.street_view_url || item.street_view_image || null;
+
+    if (!candidate) return null;
+
+    if (
+      candidate.startsWith("http://") ||
+      candidate.startsWith("https://") ||
+      candidate.startsWith("data:image")
+    ) {
+      return candidate;
+    }
+
+    // Backend sometimes returns raw base64 without a data URI prefix
+    return `data:image/jpeg;base64,${candidate}`;
+  }
+
+  // Helper function to format items
+  function formatItem(item) {
+    return {
+      id: item.id,
+      name:
+        item.project_name ||
+        item.stop_name ||
+        item.zip_code ||
+        item.name ||
+        `Item ${item.id}`,
+      image: normalizeImage(item),
+      attributes: attributes.map(attr => ({
+        title: attr.title,
+        value: item[attr.key]
+      }))
+    };
+  }
+
+  // Fetch data only when apiEndpoint or attributes change
   useEffect(() => {
 
     setLoading(true);
+    setPage(1); // Reset to page 1 on new data source
 
-    fetch(`https://api.civichousing.me/${apiEndpoint}`)
+    fetch(`https://api.civichousing.me/${apiEndpoint}?page=1&per_page=${PER_PAGE}`)
       .then(res => res.json())
       .then(data => {
 
-        const raw = Array.isArray(data) ? data : (data.data || []);
-          setTotal(data.total || raw.length);
-          setPages(data.pages || 1);
-
-        const formatted = raw.map(item => ({
-          id: item.id,
-
-          name:
-            item.project_name ||
-            item.stop_name ||
-            item.zip_code ||
-            item.name ||
-            `Item ${item.id}`,
-
-          image: item.street_view_url || item.street_view_image || null,
-
-          attributes: attributes.map(attr => ({
-            title: attr.title,
-            value: item[attr.key]
-          }))
-        }));
-
-        setItems(formatted);
-        setTotal(data.total || raw.length);
-        setPages(data.pages || 1);
+        if (Array.isArray(data)) {
+          // Old API: returns full array, cache it
+          setAllData(data);
+          setTotal(data.length);
+          setPages(Math.ceil(data.length / PER_PAGE));
+          setIsPaginated(false);
+          
+          // Format and show first page immediately
+          const firstPage = data.slice(0, PER_PAGE);
+          const formatted = firstPage.map(item => formatItem(item));
+          setItems(formatted);
+        } else {
+          // New API: server-side pagination
+          setAllData(null);
+          setTotal(data.total ?? 0);
+          setPages(data.pages ?? 1);
+          setIsPaginated(true);
+          
+          // Format and show data from response
+          const raw = data.data || [];
+          const formatted = raw.map(item => formatItem(item));
+          setItems(formatted);
+        }
 
         setLoading(false);
 
@@ -54,9 +91,39 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes })
         setLoading(false);
       });
 
-  }, [apiEndpoint, attributes, page]);
+  }, [apiEndpoint, attributes]);
 
+  // Handle page changes (client-side slice or server fetch)
+  useEffect(() => {
 
+    if (loading) return;
+    if (!isPaginated && !allData) return;
+
+    if (isPaginated) {
+      // Server-side pagination: fetch new page
+      setLoading(true);
+      fetch(`https://api.civichousing.me/${apiEndpoint}?page=${page}&per_page=${PER_PAGE}`)
+        .then(res => res.json())
+        .then(data => {
+          const raw = data.data || [];
+          const formatted = raw.map(item => formatItem(item));
+          setItems(formatted);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error("Error loading page:", err);
+          setLoading(false);
+        });
+    } else if (allData) {
+      // Client-side pagination: slice cached data
+      const start = (page - 1) * PER_PAGE;
+      const end = start + PER_PAGE;
+      const raw = allData.slice(start, end);
+      const formatted = raw.map(item => formatItem(item));
+      setItems(formatted);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, allData, isPaginated]);
 
   const cards = items.map(item => (
     <div className="col-lg-4 col-md-6 col-sm-12 mb-4" key={item.id}>

@@ -6,15 +6,33 @@ export default function ModelCard({ item, modelName }) {
 
       {/* IMAGE HEADER */}
       <div style={{ height: "300px", overflow: "hidden" , padding: "20px"}}>
-        <img
-          src={item.image}
-          alt={item.name}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover"
-          }}
-        />
+        {item.image ? (
+          <img
+            src={item.image}
+            alt={item.name}
+            loading="lazy"
+            decoding="async"
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover"
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#f5f5f5",
+              color: "#777"
+            }}
+          >
+            No image
+          </div>
+        )}
       </div>
 
       {/* ATTRIBUTE SECTION */}
