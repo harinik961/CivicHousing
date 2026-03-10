@@ -70,14 +70,17 @@ print(census_df.head())
 # austin data 
 response = requests.get(austin_url)
 data = response.json()
-austin_df = pd.DataFrame(data) 
-austin_df = austin_df[['zip', 'latitude', 'longitude']]
-austin_df['latitude'] = pd.to_numeric(austin_df['latitude'])
-austin_df['longitude'] = pd.to_numeric(austin_df['longitude'])
-austin_df = austin_df.groupby('zip')[['latitude', 'longitude']].mean().reset_index()
+austin_df = pd.DataFrame(data)
+austin_df = austin_df[['zip']].drop_duplicates()
+
+zip_geo = pd.read_csv("https://gist.githubusercontent.com/erichurst/7882666/raw/5bdc46db47d9515269ab12ed6fb2850377fd869e/US%20Zip%20Codes%20from%202013%20Government%20Data")
+zip_geo.columns = ['zip', 'latitude', 'longitude']
+zip_geo['zip'] = zip_geo['zip'].astype(str)
+
+austin_df = austin_df.merge(zip_geo, on='zip', how='left')
 print(austin_df.head())
 
-merged_df = austin_df.merge(census_df, left_on='zip',right_on='zip code tabulation area', how='left')
+merged_df = austin_df.merge(census_df, left_on='zip', right_on='zip code tabulation area', how='left')
 merged_df = merged_df.drop(columns=['zip code tabulation area'])
 merged_df = merged_df.rename(columns={'B01003_001E': 'population'})
 
