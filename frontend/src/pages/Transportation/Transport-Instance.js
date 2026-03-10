@@ -9,7 +9,10 @@ const transportFields = [
     "num_routes",    
     "wheelchair_accessible",
     "stop_name",
-    "stop_id"
+    "stop_id",
+    "travel_time_ut",
+    "travel_time_downtown",
+    "travel_time_domain"
 ];
 
 const transportDescriptions = {
@@ -31,7 +34,16 @@ const transportDescriptions = {
     This number reflects the level of connectivity and accessibility provided by this stop, as more routes typically indicate greater options for residents to reach various destinations across the city.`,
   wheelchair_accessible: (value, item) =>
     `The transportation stop is ${value ? "wheelchair accessible" : "not wheelchair accessible"}. 
-    This information is crucial for residents with mobility challenges, as it indicates whether they can access transportation services at this stop using a wheelchair or other mobility aids.`
+    This information is crucial for residents with mobility challenges, as it indicates whether they can access transportation services at this stop using a wheelchair or other mobility aids.`,
+
+  travel_time_ut: (value, item) =>
+    `From this stop, it takes approximately ${value} to reach the UT Austin campus. This estimate helps students understand how long their commute to class will take using this route.`,
+
+  travel_time_downtown: (value, item) =>
+    `From this stop, it takes approximately ${value} to reach downtown Austin. This gives riders a sense of how convenient this stop is for accessing jobs, entertainment, and other activities in the city center.`,
+
+  travel_time_domain: (value, item) =>
+    `From this stop, it takes approximately ${value} to reach The Domain area. This helps riders gauge how practical this stop is for reaching major shopping, dining, and employment destinations in North Austin.`
 };
 export default function TransportationInstance() {
   return (
