@@ -23,7 +23,10 @@ export default function InstancePage({ apiEndpoint, fields, attributeDescription
   const displayName = item.project_name || item.stop_name || item.zip_code || `Item ${item.id}`;
   const labelOverrides = {
     walk_score: "Walkability Score",
-    last_synced_at: "Last Updated"
+    last_synced_at: "Last Updated",
+    map_embed_url: "Map View",
+    street_view_url: "Street View",
+    street_view_image: "Street View"
   };
 
   function normalizeImage(value) {

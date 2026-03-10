@@ -10,6 +10,8 @@ const transportFields = [
     "wheelchair_accessible",
     "stop_name",
     "stop_id",
+  "map_embed_url",
+  "street_view_url",
     "travel_time_ut",
     "travel_time_downtown",
     "travel_time_domain"

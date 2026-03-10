@@ -43,10 +43,24 @@ export default function ModelCard({ item, modelName }) {
         {item.attributes.map((attr, index) => (
           <div
             key={index}
-            className="d-flex justify-content-between border-bottom py-1"
+            className="border-bottom py-2"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "130px 1fr",
+              columnGap: "16px",
+              alignItems: "start"
+            }}
           >
             <span className="text-muted">{attr.title}</span>
-            <span className="fw-semibold">{attr.value}</span>
+            <span
+              className="fw-semibold"
+              style={{
+                textAlign: "right",
+                wordBreak: "break-word"
+              }}
+            >
+              {attr.value}
+            </span>
           </div>
         ))}
 
