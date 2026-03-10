@@ -59,33 +59,14 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes })
     fetch(`https://api.civichousing.me/${apiEndpoint}?page=1&per_page=${PER_PAGE}`)
       .then(res => res.json())
       .then(data => {
-
-        if (Array.isArray(data)) {
-          // Old API: returns full array, cache it
-          setAllData(data);
-          setTotal(data.length);
-          setPages(Math.ceil(data.length / PER_PAGE));
-          setIsPaginated(false);
-          
-          // Format and show first page immediately
-          const firstPage = data.slice(0, PER_PAGE);
-          const formatted = firstPage.map(item => formatItem(item, attributes));
-          setItems(formatted);
-        } else {
-          // New API: server-side pagination
-          setAllData(null);
-          setTotal(data.total ?? 0);
-          setPages(data.pages ?? 1);
-          setIsPaginated(true);
-          
-          // Format and show data from response
-          const raw = data.data || [];
-          const formatted = raw.map(item => formatItem(item, attributes));
-          setItems(formatted);
-        }
-
+        // All endpoints now return paginated format: {data: [...], total: X, page: Y, pages: Z}
+        const raw = data.data || [];
+        const formatted = raw.map(item => formatItem(item, attributes));
+        
+        setTotal(data.total ?? 0);
+        setPages(data.pages ?? 1);
+        setItems(formatted);
         setLoading(false);
-
       })
       .catch(err => {
         console.error("Error loading model data:", err);
@@ -94,40 +75,31 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes })
 
   }, [apiEndpoint, attributes]);
 
-  // Handle page changes (client-side slice or server fetch)
+  // Handle page changes - fetch new page from server
   useEffect(() => {
 
-    if (loading) return;
-    if (!isPaginated && !allData) return;
+    if (page === 1) return; // Skip initial load (handled by first useEffect)
 
     // Scroll to top when page changes
     window.scrollTo(0, 0);
 
-    if (isPaginated) {
-      // Server-side pagination: fetch new page
-      setLoading(true);
-      fetch(`https://api.civichousing.me/${apiEndpoint}?page=${page}&per_page=${PER_PAGE}`)
-        .then(res => res.json())
-        .then(data => {
-          const raw = data.data || [];
-          const formatted = raw.map(item => formatItem(item, attributes));
-          setItems(formatted);
-          setLoading(false);
-        })
-        .catch(err => {
-          console.error("Error loading page:", err);
-          setLoading(false);
-        });
-    } else if (allData) {
-      // Client-side pagination: slice cached data
-      const start = (page - 1) * PER_PAGE;
-      const end = start + PER_PAGE;
-      const raw = allData.slice(start, end);
-      const formatted = raw.map(item => formatItem(item, attributes));
-      setItems(formatted);
-    }
+    // Fetch new page from server
+    setLoading(true);
+    fetch(`https://api.civichousing.me/${apiEndpoint}?page=${page}&per_page=${PER_PAGE}`)
+      .then(res => res.json())
+      .then(data => {
+        const raw = data.data || [];
+        const formatted = raw.map(item => formatItem(item, attributes));
+        setItems(formatted);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Error loading page:", err);
+        setLoading(false);
+      });
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, allData, isPaginated]);
+  }, [page]);
 
   const cards = items.map(item => (
     <div className="col-lg-4 col-md-6 col-sm-12 mb-4" key={item.id}>
