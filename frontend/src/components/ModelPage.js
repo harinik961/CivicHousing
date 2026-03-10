@@ -1,6 +1,42 @@
 import { useEffect, useState } from "react";
 import ModelCard from "./ModelCard";
 
+// Helper function to normalize image URLs/base64 data
+function normalizeImage(item) {
+  const candidate = item.street_view_url || item.street_view_image || null;
+
+  if (!candidate) return null;
+
+  if (
+    candidate.startsWith("http://") ||
+    candidate.startsWith("https://") ||
+    candidate.startsWith("data:image")
+  ) {
+    return candidate;
+  }
+
+  // Backend sometimes returns raw base64 without a data URI prefix
+  return `data:image/jpeg;base64,${candidate}`;
+}
+
+// Helper function to format items
+function formatItem(item, attributes) {
+  return {
+    id: item.id,
+    name:
+      item.project_name ||
+      item.stop_name ||
+      item.zip_code ||
+      item.name ||
+      `Item ${item.id}`,
+    image: normalizeImage(item),
+    attributes: attributes.map(attr => ({
+      title: attr.title,
+      value: item[attr.key]
+    }))
+  };
+}
+
 export default function ModelPage({ title, apiEndpoint, modelName, attributes }) {
 
   const [allData, setAllData] = useState(null); // Cache full dataset
@@ -13,41 +49,6 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes })
   const [isPaginated, setIsPaginated] = useState(false);
 
   const PER_PAGE = 50;
-
-  function normalizeImage(item) {
-    const candidate = item.street_view_url || item.street_view_image || null;
-
-    if (!candidate) return null;
-
-    if (
-      candidate.startsWith("http://") ||
-      candidate.startsWith("https://") ||
-      candidate.startsWith("data:image")
-    ) {
-      return candidate;
-    }
-
-    // Backend sometimes returns raw base64 without a data URI prefix
-    return `data:image/jpeg;base64,${candidate}`;
-  }
-
-  // Helper function to format items
-  function formatItem(item) {
-    return {
-      id: item.id,
-      name:
-        item.project_name ||
-        item.stop_name ||
-        item.zip_code ||
-        item.name ||
-        `Item ${item.id}`,
-      image: normalizeImage(item),
-      attributes: attributes.map(attr => ({
-        title: attr.title,
-        value: item[attr.key]
-      }))
-    };
-  }
 
   // Fetch data only when apiEndpoint or attributes change
   useEffect(() => {
@@ -68,7 +69,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes })
           
           // Format and show first page immediately
           const firstPage = data.slice(0, PER_PAGE);
-          const formatted = firstPage.map(item => formatItem(item));
+          const formatted = firstPage.map(item => formatItem(item, attributes));
           setItems(formatted);
         } else {
           // New API: server-side pagination
@@ -79,7 +80,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes })
           
           // Format and show data from response
           const raw = data.data || [];
-          const formatted = raw.map(item => formatItem(item));
+          const formatted = raw.map(item => formatItem(item, attributes));
           setItems(formatted);
         }
 
@@ -99,6 +100,9 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes })
     if (loading) return;
     if (!isPaginated && !allData) return;
 
+    // Scroll to top when page changes
+    window.scrollTo(0, 0);
+
     if (isPaginated) {
       // Server-side pagination: fetch new page
       setLoading(true);
@@ -106,7 +110,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes })
         .then(res => res.json())
         .then(data => {
           const raw = data.data || [];
-          const formatted = raw.map(item => formatItem(item));
+          const formatted = raw.map(item => formatItem(item, attributes));
           setItems(formatted);
           setLoading(false);
         })
@@ -119,7 +123,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes })
       const start = (page - 1) * PER_PAGE;
       const end = start + PER_PAGE;
       const raw = allData.slice(start, end);
-      const formatted = raw.map(item => formatItem(item));
+      const formatted = raw.map(item => formatItem(item, attributes));
       setItems(formatted);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
