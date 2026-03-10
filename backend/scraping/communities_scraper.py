@@ -53,6 +53,25 @@ def fetch_walkability_score(address, lat, lon):
         print(f"Walk Score fetch failed for {address}: {e}")
     return None, None, None
 
+
+def get_street_url(zip_code):
+    base = "https://maps.googleapis.com/maps/api/streetview"
+    metadata_url = "https://maps.googleapis.com/maps/api/streetview/metadata"
+    
+    options = [
+        f"{zip_code}+Austin+TX",
+        f"{zip_code}+Austin+TX+main+street",
+        f"{zip_code}+Austin+TX+east+avenue",
+        f"{zip_code}+Austin+TX+shopping+center"
+    ]
+    
+    for location in options:
+        response = requests.get(metadata_url, params={"location": location, "key": GOOGLE_MAPS_API_KEY})
+        if response.json().get("status") == "OK":
+            return f"{base}?size=400x300&location={location}&key={GOOGLE_MAPS_API_KEY}"
+    
+    return None
+
 austin_url = "https://data.austintexas.gov/resource/ifzc-3xz8.json"
 census_url = "https://api.census.gov/data/2024/acs/acs5"
 params = {
@@ -206,8 +225,8 @@ for _, row in merged_df.iterrows():
 
     map_urls.append({
         "zip": zip_code,
-        "map_embed_url": f"https://www.google.com/maps/embed/v1/place?q={lat},{lon}&key={GOOGLE_MAPS_API_KEY}",
-        "street_view_url": f"https://maps.googleapis.com/maps/api/streetview?size=400x300&location={zip_code}+Austin+TX&key={GOOGLE_MAPS_API_KEY}",
+        "map_embed_url": f"https://www.google.com/maps/embed/v1/place?q={zip_code}+Austin+TX&key={GOOGLE_MAPS_API_KEY}",
+        "street_view_url": get_street_url(zip_code)
     })
 
 map_urls_df = pd.DataFrame(map_urls)
