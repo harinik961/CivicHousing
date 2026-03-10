@@ -36,6 +36,35 @@ DAY_ORDER = {
   "Saturday": 5, 
   "Sunday": 6, 
 }
+DESTINATIONS = {
+  "ut": (30.2849, -97.7341), 
+  "downtown": (30.2672, -97.7431), 
+  "domain": (30.4015968, -97.7269361),
+}
+
+# ----------------------------------------
+# HELPER FUNCTIONS
+# ----------------------------------------
+
+def get_transit_time(origin_lat, origin_lon, dest_lat, dest_lon):
+  try:
+    url = "https://maps.googleapis.com/maps/api/directions/json"
+    params = {
+      "origin": f"{origin_lat},{origin_lon}",
+      "destination": f"{dest_lat},{dest_lon}",
+      "mode": "transit",
+      "key": GOOGLE_MAPS_API_KEY
+    }
+    response = requests.get(url, params=params, timeout=10)
+    if response.status_code == 200:
+      data = response.json()
+      if data["routes"]:
+        duration = data["routes"][0]["legs"][0]["duration"]["text"]
+        return duration
+
+  except Exception as e:
+    print("Transit lookup failed:", e)
+  return None
 
 # ----------------------------------------
 # SEED FUNCTION - UPSERT LOGIC
@@ -80,6 +109,9 @@ def seed_transportation(transportation_data):
             existing.num_routes = record.get("num_routes", 0)
             existing.wheelchair_accessible = record.get("wheelchair_accessible", "")
             existing.service_days = record.get("service_days", "")
+            existing.travel_time_ut = record.get("travel_time_ut", "")
+            existing.travel_time_downtown = record.get("travel_time_downtown", "")
+            existing.travel_time_domain = record.get("travel_time_domain", "")
             updated += 1
         else:
             # Insert new record
@@ -96,7 +128,10 @@ def seed_transportation(transportation_data):
                 frequency=record.get("frequency", ""),
                 num_routes=record.get("num_routes", 0),
                 wheelchair_accessible=record.get("wheelchair_accessible", ""),
-                service_days=record.get("service_days", "")
+                service_days=record.get("service_days", ""),
+                travel_time_ut=record.get("travel_time_ut", ""),
+                travel_time_downtown=record.get("travel_time_downtown", ""),
+                travel_time_domain=record.get("travel_time_domain", ""),
             )
             db.session.add(transportation)
             inserted += 1
@@ -272,6 +307,10 @@ def extract_data():
 
       lat = stop["stop_lat"]
       lon = stop["stop_lon"]
+
+      travel_time_ut = get_transit_time(lat, lon, *DESTINATIONS["ut"])
+      travel_time_downtown = get_transit_time(lat, lon, *DESTINATIONS["downtown"])
+      travel_time_domain = get_transit_time(lat, lon, *DESTINATIONS["domain"])
 
       # Append to Results
       transportation_data.append({

@@ -17,6 +17,36 @@ load_dotenv(os.path.join(os.path.dirname(__file__), "../.env"))
 # CONFIGURATION
 # ----------------------------------------
 BASE_URL = "https://data.austintexas.gov/resource/ifzc-3xz8.json"
+WALK_SCORE_API_KEY = os.getenv("WALK_SCORE_API_KEY")
+
+def fetch_walkability_score(address, lat, lon): 
+    """
+    Fetches walkability score, transit score, and bike score of a given
+    location using the Walk Score API. 
+    Returns None, None, None upon failure.
+    """
+    try: 
+        url = WALKABILITY_URL
+        params = {
+            "format": "json", 
+            "address": address, 
+            "lat": lat, 
+            "lon": lon, 
+            "transit": 1, 
+            "bike": 1, 
+            "wsapikey": WALK_SCORE_API_KEY
+        }
+        response = requests.get(url, params=params, timeout=10)
+        if response.status_code == 200: 
+            data = response.json()
+            if data.get("status") == 1: 
+                walk_score = data.get("walkscore")
+                transit_score = data.get("transit", {}).get("score")
+                bike_score = data.get("bike", {}).get("score")
+                return walk_score, transit_score, bike_score
+    except Exception as e: 
+        print(f"Walk Score fetch failed for {address}: {e}")
+    return None, None, None
 
 # ----------------------------------------
 # SETUP FLASK APP AND DB CONNECTION
@@ -204,6 +234,8 @@ def seed_housing(records):
             latitude=latitude,
             longitude=longitude,
         )
+        walk_score, transit_score, bike_score = fetch_walkability_score(
+            f"{address}, Austin, TX", latitude, longitude)
 
         # Check if housing with this address already exists
         existing = Housing.query.filter_by(address=address).first()
@@ -223,6 +255,7 @@ def seed_housing(records):
             if street_view:
                 existing.street_view_image = street_view
             existing.last_synced_at = datetime.now(timezone.utc)
+            existing.walk_score = walk_score
 
             updated += 1
         else:
@@ -240,8 +273,8 @@ def seed_housing(records):
                 latitude=latitude,
                 longitude=longitude,
                 street_view_image=street_view,
-                last_synced_at=datetime.now(timezone.utc)
-
+                last_synced_at=datetime.now(timezone.utc),
+                walk_score=walk_score,
             )
             db.session.add(housing)
             inserted += 1

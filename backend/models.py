@@ -45,6 +45,7 @@ class Community(db.Model):
     health_count = db.Column(db.Integer)
     map_embed_url = db.Column(db.Text)
     street_view_url = db.Column(db.Text)
+    transit_score = db.Column(db.Integer)
 
     housing = db.relationship(
         "Housing",
@@ -72,6 +73,7 @@ class Community(db.Model):
             "health_count": self.health_count,
             "map_embed_url": self.map_embed_url,
             "street_view_url": self.street_view_url,
+            "transit_score": self.transit_score,
         }
 
 
@@ -96,11 +98,8 @@ class Housing(db.Model):
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
     street_view_image = db.Column(db.Text)
-
-
-
-    street_view_image = db.Column(db.Text)
-
+    last_synced_at = db.Column(db.DateTime, default=datetime.utcnow)
+    walk_score = db.Column(db.Integer, default=0)
 
     transportation = db.relationship(
         "Transportation",
@@ -108,7 +107,6 @@ class Housing(db.Model):
         backref="housing",
         lazy=True
     )
-    last_synced_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
         return {
@@ -125,8 +123,9 @@ class Housing(db.Model):
             "latitude": self.latitude,
             "longitude": self.longitude,
             "street_view_image": self.street_view_image,
+            "last_synced_at": self.last_synced_at, 
+            "walk_score": self.walk_score,
         }
-
 
 # -------------------------
 # Transportation Model
@@ -149,7 +148,9 @@ class Transportation(db.Model):
     wheelchair_accessible = db.Column(db.String(100))
     routes = db.Column(db.String(100))
     service_days = db.Column(db.String(1000))
-
+    travel_time_ut = db.Column(db.String(1000))
+    travel_time_downtown = db.Column(db.String(1000))
+    travel_time_domain = db.Column(db.String(1000))
 
     def to_dict(self):
         return {
@@ -168,4 +169,7 @@ class Transportation(db.Model):
             "wheelchair_accessible": self.wheelchair_accessible,
             "service_days": self.service_days,
             "stop_id": self.stop_id,
+            "travel_time_ut": self.travel_time_ut, 
+            "travel_time_downtown": self.travel_time_downtown, 
+            "travel_time_domain": self.travel_time_domain,
         }

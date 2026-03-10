@@ -18,11 +18,40 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 
-##IS THIS RIGHT##
-
 #census data 
 CENSUS_KEY = os.getenv("CENSUS_KEY")
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+WALK_SCORE_API_KEY = os.getenv("WALK_SCORE_API_KEY")
+WALKABILITY_URL = "https://api.walkscore.com/score"
+
+def fetch_walkability_score(address, lat, lon): 
+    """
+    Fetches walkability score, transit score, and bike score of a given
+    location using the Walk Score API. 
+    Returns None, None, None upon failure.
+    """
+    try: 
+        url = WALKABILITY_URL
+        params = {
+            "format": "json", 
+            "address": address, 
+            "lat": lat, 
+            "lon": lon, 
+            "transit": 1, 
+            "bike": 1, 
+            "wsapikey": WALK_SCORE_API_KEY
+        }
+        response = requests.get(url, params=params, timeout=10)
+        if response.status_code == 200: 
+            data = response.json()
+            if data.get("status") == 1: 
+                walk_score = data.get("walkscore")
+                transit_score = data.get("transit", {}).get("score")
+                bike_score = data.get("bike", {}).get("score")
+                return walk_score, transit_score, bike_score
+    except Exception as e: 
+        print(f"Walk Score fetch failed for {address}: {e}")
+    return None, None, None
 
 austin_url = "https://data.austintexas.gov/resource/ifzc-3xz8.json"
 census_url = "https://api.census.gov/data/2024/acs/acs5"
@@ -33,7 +62,6 @@ params = {
 }
 census_response = requests.get(census_url, params=params)
 census_data = census_response.json()
-
 
 census_df = pd.DataFrame(census_data[1:], columns=census_data[0])
 census_df = census_df[['zip code tabulation area', 'B01003_001E' ]]
@@ -135,6 +163,33 @@ health_df['health_count'] = health_df['health_count'].astype(int)
 merged_df = merged_df.merge(health_df[['zip', 'health_count']], on='zip', how='left')
 merged_df['health_count'] = merged_df['health_count'].fillna(0).astype(int)
 
+# transit score
+walk_scores = []
+
+for _, row in merged_df.iterrows():
+    lat = row["latitude"]
+    lon = row["longitude"]
+    zip_code = row["zip"]
+
+    if pd.notna(lat) and pd.notna(lon):
+        address = f"{zip_code}, Austin, TX"
+        walk, transit, bike = fetch_walkability_score(address, lat, lon)
+        walk_scores.append({
+            "zip": zip_code,
+            "walk_score": walk,
+            "transit_score": transit,
+            "bike_score": bike
+        })
+    else:
+        walk_scores.append({
+            "zip": zip_code,
+            "walk_score": None,
+            "transit_score": None,
+            "bike_score": None
+        })
+walk_scores_df = pd.DataFrame(walk_scores)
+merged_df = merged_df.merge(walk_scores_df, on="zip", how="left")
+
 # google maps street view images and map embed 
 map_urls = []
 
@@ -155,8 +210,6 @@ merged_df = merged_df.merge(map_urls_df, on='zip', how='left')
 print(merged_df.columns.tolist())
 print(merged_df.head())
 
-
-# IS THIS RIGHT??????????
 def seed_communities(df):
     inserted = 0
     updated = 0
@@ -178,6 +231,7 @@ def seed_communities(df):
             existing.health_count = row['health_count'] 
             existing.map_embed_url = row['map_embed_url']
             existing.street_view_url = row['street_view_url']
+            existing.transit_score = row['transit_score']
             updated += 1
         else: 
             community = Community(
@@ -190,11 +244,10 @@ def seed_communities(df):
                 health_count = row['health_count'], #health count 
                 map_embed_url=row['map_embed_url'], 
                 street_view_url=row['street_view_url'],
+                transit_score=row['transit_score'],
             )
             db.session.add(community)
             inserted += 1
-
-
 
     db.session.commit()
     print(f"Inserted {inserted} communities, skipped {skipped}")
