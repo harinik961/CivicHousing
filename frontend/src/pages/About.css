@@ -41,6 +41,9 @@
   margin: 0 auto;
   text-align: left;
   line-height: 1.5;
+  padding: 0 16px;
+  margin-left: 16px auto; 
+  margin-right: 16px auto;
 }
 
 .text-section strong {
