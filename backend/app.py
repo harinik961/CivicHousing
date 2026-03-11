@@ -3,6 +3,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 import math
+import requests
 
 from models import db, Housing, Community, Transportation
 from flask_migrate import Migrate
@@ -50,6 +51,45 @@ def nearest_transport_stop_for_housing(housing):
             t.longitude,
         ),
     )
+
+
+def get_google_walking_distance_miles(origin_lat, origin_lng, dest_lat, dest_lng, api_key):
+    if not api_key:
+        return None
+
+    try:
+        response = requests.get(
+            "https://maps.googleapis.com/maps/api/directions/json",
+            params={
+                "origin": f"{origin_lat},{origin_lng}",
+                "destination": f"{dest_lat},{dest_lng}",
+                "mode": "walking",
+                "key": api_key,
+            },
+            timeout=6,
+        )
+        response.raise_for_status()
+
+        body = response.json()
+        if body.get("status") != "OK":
+            return None
+
+        routes = body.get("routes") or []
+        if not routes:
+            return None
+
+        legs = routes[0].get("legs") or []
+        if not legs:
+            return None
+
+        distance_info = legs[0].get("distance") or {}
+        distance_meters = distance_info.get("value")
+        if distance_meters is None:
+            return None
+
+        return float(distance_meters) / 1609.344
+    except Exception:
+        return None
 
 
 def create_app():
@@ -156,6 +196,13 @@ def create_app():
 
             maps_key = os.getenv("GOOGLE_MAPS_API_KEY")
             walking_map_embed_url = None
+            walking_distance_miles = get_google_walking_distance_miles(
+                housing.latitude,
+                housing.longitude,
+                nearest_stop.latitude,
+                nearest_stop.longitude,
+                maps_key,
+            )
 
             if maps_key:
                 walking_map_embed_url = (
@@ -166,9 +213,11 @@ def create_app():
                     "&mode=walking"
                 )
 
+            distance_miles = walking_distance_miles if walking_distance_miles is not None else approx_miles
+
             payload.update({
                 "closest_stop_frequency": nearest_stop.frequency,
-                "walking_distance": f"~{round(approx_miles, 2)} miles (approx)",
+                "walking_distance": f"~{round(distance_miles, 2)} miles (walking route)",
                 "walking_map_embed_url": walking_map_embed_url,
                 "transportation": [nearest_stop.to_dict()],
             })

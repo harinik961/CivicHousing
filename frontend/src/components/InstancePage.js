@@ -15,7 +15,7 @@ export default function InstancePage({
   const [item, setItem] = useState(null);
 
   useEffect(() => {
-    fetch(`https://api.civichousing.me/${apiEndpoint}/${id}`)
+    fetch(`http://localhost:5050/${apiEndpoint}/${id}`)
       .then(res => res.json())
       .then(res => setItem(res))
       .catch(err => console.error("Error loading instance:", err));
@@ -59,6 +59,25 @@ export default function InstancePage({
     return `data:image/jpeg;base64,${value}`;
   }
 
+  function withStreetViewRadius(value, fallbackRadius = "500") {
+    if (!value || typeof value !== "string") return null;
+
+    const trimmed = value.trim();
+    if (!trimmed.includes("/maps/api/streetview")) {
+      return trimmed;
+    }
+
+    try {
+      const parsed = new URL(trimmed);
+      if (!parsed.searchParams.get("radius")) {
+        parsed.searchParams.set("radius", fallbackRadius);
+      }
+      return parsed.toString();
+    } catch (error) {
+      return trimmed;
+    }
+  }
+
   function getStreetViewEmbedUrl(value) {
     if (!value || typeof value !== "string") return null;
 
@@ -70,13 +89,22 @@ export default function InstancePage({
       const parsed = new URL(value);
       const location = parsed.searchParams.get("location");
       const key = parsed.searchParams.get("key");
+      const radius = parsed.searchParams.get("radius") || "500";
+      const heading = parsed.searchParams.get("heading") || "210";
+      const pitch = parsed.searchParams.get("pitch") || "10";
+      const fov = parsed.searchParams.get("fov") || "80";
 
       if (location && key) {
-        return `https://www.google.com/maps/embed/v1/streetview?key=${encodeURIComponent(
-          key
-        )}&location=${encodeURIComponent(
-          location
-        )}&heading=210&pitch=10&fov=80`;
+        const embed = new URL("https://www.google.com/maps/embed/v1/streetview");
+        embed.searchParams.set("key", key);
+        embed.searchParams.set("location", location);
+        embed.searchParams.set("heading", heading);
+        embed.searchParams.set("pitch", pitch);
+        embed.searchParams.set("fov", fov);
+
+        embed.searchParams.set("radius", radius);
+
+        return embed.toString();
       }
 
       if (location) {
@@ -89,6 +117,34 @@ export default function InstancePage({
     }
 
     return null;
+  }
+
+  function getStaticStreetViewImageUrl(value) {
+    if (!value || typeof value !== "string") return null;
+
+      const trimmed = withStreetViewRadius(value);
+
+    try {
+      const parsed = new URL(trimmed);
+      const location = parsed.searchParams.get("location");
+      const key = parsed.searchParams.get("key");
+        const radius = parsed.searchParams.get("radius") || "500";
+
+      if (!location || !key) return trimmed;
+
+      const rebuilt = new URL("https://maps.googleapis.com/maps/api/streetview");
+      rebuilt.searchParams.set("size", "600x400");
+      rebuilt.searchParams.set("location", location);
+      rebuilt.searchParams.set("key", key);
+
+      if (radius) {
+        rebuilt.searchParams.set("radius", radius);
+      }
+
+      return rebuilt.toString();
+    } catch (error) {
+      return trimmed;
+    }
   }
 
   function renderAttributeValue(key, value) {
@@ -131,8 +187,12 @@ export default function InstancePage({
       typeof value === "string"
     ) {
 
-      const streetViewEmbedUrl = getStreetViewEmbedUrl(value);
-      const imageSrc = normalizeImage(value);
+      const cleanValue = value.trim();
+      const streetReadyValue = withStreetViewRadius(cleanValue);
+      const streetViewEmbedUrl = getStreetViewEmbedUrl(streetReadyValue);
+      const imageSrc = streetReadyValue.includes("/maps/api/streetview")
+        ? getStaticStreetViewImageUrl(streetReadyValue)
+        : normalizeImage(streetReadyValue);
 
       return (
         <>
@@ -195,7 +255,7 @@ export default function InstancePage({
                     getImage &&
                     getImage(item) && (
                       <img
-                        src={getImage(item)}
+                        src={normalizeImage(withStreetViewRadius(getImage(item)))}
                         alt={displayName}
                         className="instance-image"
                         style={{

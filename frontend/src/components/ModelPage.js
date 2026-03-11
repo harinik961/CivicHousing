@@ -1,6 +1,23 @@
 import { useEffect, useState } from "react";
 import ModelCard from "./ModelCard";
 
+// Inject radius=500 into Google Static Street View URLs that are missing a radius,
+// so images resolve for locations where an exact-point panorama doesn't exist.
+function withStreetViewRadius(url, fallbackRadius = "500") {
+  if (!url || typeof url !== "string") return url;
+  if (!url.includes("/maps/api/streetview")) return url;
+
+  try {
+    const parsed = new URL(url.trim());
+    if (!parsed.searchParams.get("radius")) {
+      parsed.searchParams.set("radius", fallbackRadius);
+    }
+    return parsed.toString();
+  } catch (e) {
+    return url;
+  }
+}
+
 // Helper function to normalize image URLs/base64 data
 function normalizeImage(item) {
   const candidate = item.street_view_url || item.street_view_image || null;
@@ -12,7 +29,7 @@ function normalizeImage(item) {
     candidate.startsWith("https://") ||
     candidate.startsWith("data:image")
   ) {
-    return candidate;
+    return withStreetViewRadius(candidate);
   }
 
   // Backend sometimes returns raw base64 without a data URI prefix
@@ -54,7 +71,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
     setLoading(true);
     setPage(1); // Reset to page 1 on new data source
 
-    fetch(`https://api.civichousing.me/${apiEndpoint}?page=1&per_page=${PER_PAGE}`)
+    fetch(`http://localhost:5050/${apiEndpoint}?page=1&per_page=${PER_PAGE}`)
       .then(res => res.json())
       .then(data => {
         // All endpoints now return paginated format: {data: [...], total: X, page: Y, pages: Z}
@@ -83,7 +100,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
 
     // Fetch new page from server
     setLoading(true);
-    fetch(`https://api.civichousing.me/${apiEndpoint}?page=${page}&per_page=${PER_PAGE}`)
+    fetch(`http://localhost:5050/${apiEndpoint}?page=${page}&per_page=${PER_PAGE}`)
       .then(res => res.json())
       .then(data => {
         const raw = data.data || [];
