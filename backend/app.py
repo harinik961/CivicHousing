@@ -162,8 +162,7 @@ def create_app():
 app = create_app()
 application = app
 
-
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     if os.getenv("FLASK_ENV") != "production":
         with app.app_context():
             db.create_all()

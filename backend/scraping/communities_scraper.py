@@ -223,8 +223,6 @@ for _, row in merged_df.iterrows():
 
     map_urls.append({
         "zip": zip_code,
-        "latitude": lat, 
-        "longitude": lon,
         "map_embed_url": f"https://www.google.com/maps/embed/v1/place?q={lat},{lon}&key={GOOGLE_MAPS_API_KEY}",
         "street_view_url": get_street_url(zip_code, lat, lon)
     })
@@ -281,6 +279,7 @@ def seed_communities(df):
     db.session.commit()
     print(f"Inserted {inserted} communities, skipped {skipped}")   
 
+# pragma: no cover
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()

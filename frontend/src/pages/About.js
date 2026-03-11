@@ -37,7 +37,7 @@ function TeamMemberCard({name, image, bio, responsibilities, commits, issues, te
     image: cocoImage, 
     bio: "I'm a Junior studying Computer Science and Mathematics at UT Austin. I enjoy sleeping, reading, and playing Minecraft in my free time.", 
     responsibilities: "Fullstack: Data Scrape, Server Hosting, About Page, Navbar",
-    tests: 0
+    tests: 6
   }, 
   {
     name: "Matthew Pham", 
@@ -64,7 +64,7 @@ function TeamMemberCard({name, image, bio, responsibilities, commits, issues, te
     image: hariniImage, 
     bio: "I'm a Sophomore studying computer science and entreprenuership at UT Austin. I enjoy art, photography, and reading in my free time .", 
     responsibilities: "Fullstack: Data Scrape, Models and Instances",
-    tests: 0
+    tests: 12
   }, 
   {
     name: "Alexander Nguyen", 
