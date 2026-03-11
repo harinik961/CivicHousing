@@ -1,4 +1,5 @@
 import InstancePage from "../../components/InstancePage";
+import { MODEL_ATTRIBUTES } from "../../config/modelAttributes";
 const getImage = (item) => item.street_view_image;
 
 const housingFields = [
@@ -82,6 +83,23 @@ export default function HousingInstance() {
       fields={housingFields}
       attributeDescriptions={housingDescriptions}
       getImage={getImage}
+      relatedModels={[
+
+          {
+            key: "transportation",
+            title: "Transportation Nearby",
+            modelName: "transportation",
+            attributes: MODEL_ATTRIBUTES.transportation
+          },
+
+          {
+            key : "community",
+            title: "Community Information",
+            modelName: "community",
+            attributes: MODEL_ATTRIBUTES.community
+          }
+
+        ]}
 
     />
   );

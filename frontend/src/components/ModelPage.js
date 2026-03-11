@@ -37,7 +37,7 @@ function formatItem(item, attributes) {
   };
 }
 
-export default function ModelPage({ title, apiEndpoint, modelName, attributes }) {
+export default function ModelPage({ title, apiEndpoint, modelName, attributes, query}) {
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);

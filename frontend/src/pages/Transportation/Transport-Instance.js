@@ -1,14 +1,15 @@
 import InstancePage from "../../components/InstancePage";
+import { MODEL_ATTRIBUTES } from "../../config/modelAttributes";
 const getImage = (item) => item.street_view_url;
 
 const transportFields = [
+    "stop_name",
     "transport_type",
     "routes",
      "frequency",
     "service_days",
     "num_routes",    
     "wheelchair_accessible",
-    "stop_name",
     "stop_id",
   "map_embed_url",
   "street_view_url",
@@ -54,6 +55,20 @@ export default function TransportationInstance() {
       fields={transportFields}
       attributeDescriptions={transportDescriptions}
       getImage={getImage}
+      relatedModels={[
+          {
+            key: "communities",
+            title: "Community Information",
+            modelName: "community",
+            attributes: MODEL_ATTRIBUTES.community
+          },
+          {
+            key: "housing",
+            title: "Housing Nearby",  
+            modelName: "housing",
+            attributes: MODEL_ATTRIBUTES.housing
+          }
+        ]}
 
     />
   );

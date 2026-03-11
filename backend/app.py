@@ -65,7 +65,7 @@ def create_app():
 
         housing = Housing.query.get_or_404(id)
 
-        return jsonify(housing.to_dict())
+        return jsonify(housing.to_dict(include_relations=True))
 
     # -----------------------------
     # COMMUNITY
@@ -81,7 +81,7 @@ def create_app():
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
         return jsonify({
-            "data": [c.to_dict() for c in pagination.items],
+            "data": [c.to_dict(include_relations=True) for c in pagination.items],
             "total": pagination.total,
             "page": page,
             "pages": pagination.pages
@@ -92,7 +92,7 @@ def create_app():
 
         community = Community.query.get_or_404(id)
 
-        return jsonify(community.to_dict())
+        return jsonify(community.to_dict(include_relations=True))
 
     # -----------------------------
     # TRANSPORTATION
@@ -119,7 +119,7 @@ def create_app():
 
         transportation = Transportation.query.get_or_404(id)
 
-        return jsonify(transportation.to_dict())
+        return jsonify(transportation.to_dict(include_relations=True))
 
     return app
 

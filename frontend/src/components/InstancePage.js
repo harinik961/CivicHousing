@@ -1,8 +1,15 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import InstanceCard from "./InstanceCard";
+import ModelCard from "./ModelCard";
 
-export default function InstancePage({ apiEndpoint, fields, attributeDescriptions, getImage }) {
+export default function InstancePage({
+  apiEndpoint,
+  fields,
+  attributeDescriptions,
+  getImage,
+  relatedModels = []
+}) {
 
   const { id } = useParams();
   const [item, setItem] = useState(null);
@@ -20,7 +27,13 @@ export default function InstancePage({ apiEndpoint, fields, attributeDescription
     .filter(key => item[key] !== undefined)
     .map(key => [key, item[key]]);
 
-  const displayName = item.project_name || item.stop_name || item.zip_code || `Item ${item.id}`;
+  const displayName =
+    item.project_name ||
+    item.stop_name ||
+    item.zip_code ||
+    item.name ||
+    `Item ${item.id}`;
+
   const labelOverrides = {
     walk_score: "Walkability Score",
     last_synced_at: "Last Updated",
@@ -56,11 +69,17 @@ export default function InstancePage({ apiEndpoint, fields, attributeDescription
       const key = parsed.searchParams.get("key");
 
       if (location && key) {
-        return `https://www.google.com/maps/embed/v1/streetview?key=${encodeURIComponent(key)}&location=${encodeURIComponent(location)}&heading=210&pitch=10&fov=80`;
+        return `https://www.google.com/maps/embed/v1/streetview?key=${encodeURIComponent(
+          key
+        )}&location=${encodeURIComponent(
+          location
+        )}&heading=210&pitch=10&fov=80`;
       }
 
       if (location) {
-        return `https://www.google.com/maps?q=&layer=c&cbll=${encodeURIComponent(location)}`;
+        return `https://www.google.com/maps?q=&layer=c&cbll=${encodeURIComponent(
+          location
+        )}`;
       }
     } catch (error) {
       return null;
@@ -70,6 +89,7 @@ export default function InstancePage({ apiEndpoint, fields, attributeDescription
   }
 
   function renderAttributeValue(key, value) {
+
     if (key === "last_synced_at" && typeof value === "string") {
       const parsed = new Date(value);
 
@@ -103,7 +123,11 @@ export default function InstancePage({ apiEndpoint, fields, attributeDescription
       );
     }
 
-    if ((key === "street_view_url" || key === "street_view_image") && typeof value === "string") {
+    if (
+      (key === "street_view_url" || key === "street_view_image") &&
+      typeof value === "string"
+    ) {
+
       const streetViewEmbedUrl = getStreetViewEmbedUrl(value);
       const imageSrc = normalizeImage(value);
 
@@ -141,62 +165,119 @@ export default function InstancePage({ apiEndpoint, fields, attributeDescription
 
   return (
     <div className="container-fluid mt-4">
-      <h1 className="instance-title">
-        {displayName}
-      </h1>
 
+      <h1 className="instance-title">{displayName}</h1>
+
+      {/* ATTRIBUTE CARDS */}
       <div className="masonry">
 
-        {attributes.map(([key, value], i) => {
+        {(attributes|| []).map(([key, value], i) => {
 
-          const label = labelOverrides[key] || key
-            .replace(/_/g, " ")
-            .replace(/\b\w/g, c => c.toUpperCase());
+          const label =
+            labelOverrides[key] ||
+            key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
           return (
             <div className="masonry-item" key={i}>
+
               <InstanceCard>
 
                 <div className="card-body">
 
                   <h5 className="attribute-key">{label}</h5>
 
-                  {/* Show image inside the Project Name card */}
-                  {(key === "project_name" ||key === "stop_name" || key === "zip_code") && getImage && getImage(item) && (
-                    <img
-                      src={getImage(item)}
-                      alt={item.project_name}
-                      className="instance-image"
-                      style={{
-                        width: "100%",
-                        borderRadius: "10px",
-                        marginBottom: "15px"
-                      }}
-                    />
-                  )}
+                  {(key === "project_name" ||
+                    key === "stop_name" ||
+                    key === "zip_code") &&
+                    getImage &&
+                    getImage(item) && (
+                      <img
+                        src={getImage(item)}
+                        alt={displayName}
+                        className="instance-image"
+                        style={{
+                          width: "100%",
+                          borderRadius: "10px",
+                          marginBottom: "15px"
+                        }}
+                      />
+                    )}
 
                   <div className="attribute-value">
                     {renderAttributeValue(key, value)}
                   </div>
 
-                  {attributeDescriptions && attributeDescriptions[key] && (
-                    <p className="description">
-                      {typeof attributeDescriptions[key] === "function"
-                        ? attributeDescriptions[key](value, item)
-                        : attributeDescriptions[key]}
-                    </p>
-                  )}
+                  {attributeDescriptions &&
+                    attributeDescriptions[key] && (
+                      <p className="description">
+                        {typeof attributeDescriptions[key] === "function"
+                          ? attributeDescriptions[key](value, item)
+                          : attributeDescriptions[key]}
+                      </p>
+                    )}
 
                 </div>
 
               </InstanceCard>
+
+            </div>
+          );
+        })}
+
+       {/* RELATED MODELS */}
+        {relatedModels.map(relation => {
+
+          if (!item[relation.key] || item[relation.key].length === 0) return null;
+
+          const relatedItem = item[relation.key][0];
+
+          const formatted = {
+            id: relatedItem.id,
+            name:
+              relatedItem.project_name ||
+              relatedItem.stop_name ||
+              relatedItem.zip_code ||
+              relatedItem.name ||
+              `Item ${relatedItem.id}`,
+            image: normalizeImage(
+              relatedItem.street_view_image ||
+              relatedItem.street_view_url
+            ),
+            attributes: relation.attributes.map(attr => ({
+              title: attr.title,
+              value: relatedItem[attr.key]
+            }))
+          };
+
+          return (
+            <div key={relation.key} className="masonry-item">
+
+              <InstanceCard>
+
+                <div className="card-body">
+
+                  <h5 className="attribute-key text-center mb-3">
+                    {relation.title}
+                  </h5>
+
+                  <ModelCard
+                    item={formatted}
+                    modelName={relation.modelName}
+                  />
+
+                </div>
+
+              </InstanceCard>
+
             </div>
           );
 
         })}
-
       </div>
 
+
     </div>
+
+    
   );
 }

@@ -1,12 +1,11 @@
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import ARRAY
 
 db = SQLAlchemy()
 
-# -------------------------
+# ---------------------------------------------------------
 # Association Tables
-# -------------------------
+# ---------------------------------------------------------
 
 community_housing = db.Table(
     "community_housing",
@@ -26,10 +25,9 @@ housing_transportation = db.Table(
     db.Column("transportation_id", db.Integer, db.ForeignKey("transportation.id"), primary_key=True)
 )
 
-
-# -------------------------
+# ---------------------------------------------------------
 # Community Model
-# -------------------------
+# ---------------------------------------------------------
 
 class Community(db.Model):
     __tablename__ = "communities"
@@ -51,18 +49,19 @@ class Community(db.Model):
         "Housing",
         secondary=community_housing,
         backref="communities",
-        lazy=True
+        lazy="selectin"
     )
 
     transportation = db.relationship(
         "Transportation",
         secondary=community_transportation,
         backref="communities",
-        lazy=True
+        lazy="selectin"
     )
 
-    def to_dict(self):
-        return {
+    def to_dict(self, include_relations=False):
+
+        data = {
             "id": self.id,
             "county": self.county,
             "zip_code": self.zip_code,
@@ -73,13 +72,19 @@ class Community(db.Model):
             "health_count": self.health_count,
             "map_embed_url": self.map_embed_url,
             "street_view_url": self.street_view_url,
-            "transit_score": self.transit_score,
+            "transit_score": self.transit_score
         }
 
+        if include_relations:
+            data["housing"] = [h.to_dict() for h in self.housing[:1]]
+            data["transportation"] = [t.to_dict() for t in self.transportation[:1]]
 
-# -------------------------
+        return data
+
+
+# ---------------------------------------------------------
 # Housing Model
-# -------------------------
+# ---------------------------------------------------------
 
 class Housing(db.Model):
     __tablename__ = "housing"
@@ -92,24 +97,31 @@ class Housing(db.Model):
     unit_type = db.Column(db.String(100))
     housing_tenure = db.Column(db.String(100))
     income_restriction_level = db.Column(db.String(255))
+
     total_ada_units = db.Column(db.Integer, default=0)
     total_affordable_units = db.Column(db.Integer, default=0)
+
     council_district = db.Column(db.String(10))
+
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
+
     street_view_image = db.Column(db.Text)
+
     last_synced_at = db.Column(db.DateTime, default=datetime.utcnow)
+
     walk_score = db.Column(db.Integer, default=0)
 
     transportation = db.relationship(
         "Transportation",
         secondary=housing_transportation,
         backref="housing",
-        lazy=True
+        lazy="selectin"
     )
 
-    def to_dict(self):
-        return {
+    def to_dict(self, include_relations=False):
+
+        data = {
             "id": self.id,
             "project_name": self.project_name,
             "address": self.address,
@@ -123,37 +135,54 @@ class Housing(db.Model):
             "latitude": self.latitude,
             "longitude": self.longitude,
             "street_view_image": self.street_view_image,
-            "last_synced_at": self.last_synced_at, 
-            "walk_score": self.walk_score,
+            "last_synced_at": self.last_synced_at,
+            "walk_score": self.walk_score
         }
 
-# -------------------------
+        if include_relations:
+            data["communities"] = [c.to_dict() for c in self.communities[:1]]
+            data["transportation"] = [t.to_dict() for t in self.transportation[:1]]
+
+        return data
+
+
+# ---------------------------------------------------------
 # Transportation Model
-# -------------------------
+# ---------------------------------------------------------
 
 class Transportation(db.Model):
     __tablename__ = "transportation"
 
     id = db.Column(db.Integer, primary_key=True)
-    stop_id = db.Column(db.String(50), unique=True, nullable=True, index=True)
-    stop_name = db.Column(db.String(255), nullable=False)
+
+    stop_id = db.Column(db.String(50), unique=True)
+    stop_name = db.Column(db.String(255))
+
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
+
     stop_url = db.Column(db.String(500))
+
     map_embed_url = db.Column(db.String(1000))
     street_view_url = db.Column(db.String(1000))
+
     transport_type = db.Column(db.String(50))
-    frequency = db.Column(db.String(100))
-    num_routes = db.Column(db.Integer)
-    wheelchair_accessible = db.Column(db.String(100))
     routes = db.Column(db.String(100))
+    frequency = db.Column(db.String(100))
+
+    num_routes = db.Column(db.Integer)
+
+    wheelchair_accessible = db.Column(db.String(100))
+
     service_days = db.Column(db.String(1000))
+
     travel_time_ut = db.Column(db.String(1000))
     travel_time_downtown = db.Column(db.String(1000))
     travel_time_domain = db.Column(db.String(1000))
 
-    def to_dict(self):
-        return {
+    def to_dict(self, include_relations=False):
+
+        data = {
             "id": self.id,
             "stop_id": self.stop_id,
             "stop_name": self.stop_name,
@@ -168,8 +197,13 @@ class Transportation(db.Model):
             "num_routes": self.num_routes,
             "wheelchair_accessible": self.wheelchair_accessible,
             "service_days": self.service_days,
-            "stop_id": self.stop_id,
-            "travel_time_ut": self.travel_time_ut, 
-            "travel_time_downtown": self.travel_time_downtown, 
-            "travel_time_domain": self.travel_time_domain,
+            "travel_time_ut": self.travel_time_ut,
+            "travel_time_downtown": self.travel_time_downtown,
+            "travel_time_domain": self.travel_time_domain
         }
+
+        if include_relations:
+            data["communities"] = [c.to_dict() for c in self.communities[:1]]
+            data["housing"] = [h.to_dict() for h in self.housing[:1]]
+
+        return data

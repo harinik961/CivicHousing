@@ -1,4 +1,5 @@
 import ModelPage from "../../components/ModelPage";
+import { MODEL_ATTRIBUTES } from "../../config/modelAttributes";
 export default function Housing() {
 
   return (
@@ -6,14 +7,7 @@ export default function Housing() {
   title="Housing"
   apiEndpoint="/api/housing"
   modelName="housing"
-  attributes={[
-    { title: "Address", key: "address" },
-    { title: "Zip Code", key: "zip_code" },
-    { title: "Affordable Units", key: "total_affordable_units" },
-    { title: "Unit Type", key: "unit_type" },
-    { title: "Housing Tenure", key: "housing_tenure" },
-    { title: "Walkability Score", key: "walk_score" }
-  ]}
+  attributes={MODEL_ATTRIBUTES.housing}
 />
   );
 

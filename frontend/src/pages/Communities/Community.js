@@ -1,5 +1,6 @@
 
 import ModelPage from "../../components/ModelPage";
+import { MODEL_ATTRIBUTES } from "../../config/modelAttributes";
 export default function Community() {
 
   return (
@@ -7,15 +8,7 @@ export default function Community() {
       title="Communities"
       apiEndpoint="/api/community"
       modelName="community"
-      attributes={[
-        { title: "Zipcode", key: "zip_code" },
-        { title: " County", key: "county" },
-        { title: "Median Housing Price", key: "median_housing_price" },
-        { title: "Population", key: "population" },
-        { title: "Crime Index", key: "crime_index" },
-        { title: "Num Parks", key: "park_count" },
-        { title: "Num Healthcare Facilities", key: "health_count" }
-      ]}
+      attributes={MODEL_ATTRIBUTES.community}
     />
   );
 
