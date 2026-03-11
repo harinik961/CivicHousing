@@ -44,10 +44,6 @@ function aggregateHousingStats(housingList) {
     0
   );
   const count = housingList.length;
-  const totalUnits = (housingList || []).reduce(
-    (sum, h) => sum + (Number(h.total_affordable_units) || 0) + (Number(h.total_ada_units) || 0),
-    0
-  );
   
   return {
     community_total_affordable_units: totalAffordable,
