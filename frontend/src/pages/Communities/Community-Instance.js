@@ -48,9 +48,7 @@ function aggregateHousingStats(housingList) {
     (sum, h) => sum + (Number(h.total_affordable_units) || 0) + (Number(h.total_ada_units) || 0),
     0
   );
-  const ratio = totalUnits > 0
-    ? (totalAffordable / totalUnits).toFixed(2)
-    : "—";
+  
   return {
     community_total_affordable_units: totalAffordable,
     community_housing_count: count
