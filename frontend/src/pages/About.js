@@ -37,7 +37,7 @@ function TeamMemberCard({name, image, bio, responsibilities, commits, issues, te
     image: cocoImage, 
     bio: "I'm a Junior studying Computer Science and Mathematics at UT Austin. I enjoy sleeping, reading, and playing Minecraft in my free time.", 
     responsibilities: "Fullstack: Data Scrape, Server Hosting, About Page, Navbar",
-    tests: 6
+    tests: 16
   }, 
   {
     name: "Matthew Pham", 

@@ -22,7 +22,6 @@ function App() {
         <Route path="/housing" element={<Housing />} />
         <Route path="/transportation" element={<Transportation />} />
         <Route path="/about" element={<About />} />
-        <Route path="/housing" element={<Housing />} />
         <Route path="/housing/:id" element={<HousingInstance />} />
         <Route path="/community/:id" element={<CommunityInstance />} />
         <Route path="/transportation/:id" element={<TransportationInstance />} />

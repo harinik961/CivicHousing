@@ -4,4 +4,7 @@
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 !.elasticbeanstalk/config.yml
+
+# Coverage Related Files
 .coverage
+htmlcover
