@@ -110,7 +110,6 @@
               {
                 "listen": "test",
                 "script": {
-                  "type": "text/javascript",
                   "exec": [
                     "pm.test('Status code is 200', function () {",
                     "    pm.response.to.have.status(200);",
@@ -129,7 +128,10 @@
                     "    var json = pm.response.json();",
                     "    pm.expect(json).to.have.property('zip_code').that.is.a('string');",
                     "})"
-                  ]
+                  ],
+                  "type": "text/javascript",
+                  "packages": {},
+                  "requests": {}
                 }
               }
             ],
@@ -137,7 +139,7 @@
               "method": "GET",
               "header": [],
               "url": {
-                "raw": "https://civichousing.me/api/community/33",
+                "raw": "https://civichousing.me/api/community/1",
                 "protocol": "https",
                 "host": [
                   "civichousing",
@@ -146,10 +148,10 @@
                 "path": [
                   "api",
                   "community",
-                  "33"
+                  "1"
                 ]
               },
-              "description": "# Get Community by ID\n\n## Overview\n\nThis endpoint retrieves a **single Community** instance by its `id` from the CivicHousing database. Communities represent Austin-area **ZIP-code communities** and include demographics, housing economics, safety, amenities, health access, mobility/accessibility metrics, and map/media links.\n\n## Endpoint Details\n\n- **Method:** `GET`\n    \n- **URL:** `https://api.civichousing.me/api/community/:id`\n    \n\n## Path Parameter\n\n| Parameter | Type | Required | Description |\n| --- | --- | --- | --- |\n| `id` | integer | Yes | Unique identifier of the community to retrieve |\n\n## Example Request\n\n`GET https://api.civichousing.me/api/community/1`\n\n## Response Format\n\nReturns a **single JSON object** representing the community.\n\n### Response Fields (typical)\n\n- **id** (integer): Unique identifier\n    \n- **zip_code** (string): ZIP code for the community\n    \n- **county** (string): County (currently seeded as Travis County)\n    \n- **population** (integer): Population estimate\n    \n- **median_housing_price** (number): Median housing price/value\n    \n- **crime_index** (number): Normalized crime index\n    \n- **park_count** (integer): Parks count\n    \n- **health_count** (integer): Healthcare establishments count\n    \n- **walk_score** (number): Walk Score\n    \n- **transit_score** (number): Transit Score\n    \n- **bike_score** (number): Bike Score\n    \n- **latitude** (number): ZIP centroid latitude\n    \n- **longitude** (number): ZIP centroid longitude\n    \n- **map_embed_url** (string): Google Maps embed URL\n    \n- **street_view_url** (string): Google Street View image URL\n    \n\n## Related models included\n\n- **housing (array)**: Housing records associated with this community.\n    \n- **transportation (array)**: Transportation stop records associated with this community.\n    \n\n## Related Endpoints\n\n- `GET /api/community` - Get all communities (paginated)\n    \n- `GET /api/housing` - Get all housing listings (paginated)\n    \n- `GET /api/transportation` - Get all transit stops (paginated)\n    \n\n## Use Cases\n\n- **Compare ZIP communities**: Evaluate areas by walk/transit/bike scores, safety, and amenities\n    \n- **Accessibility planning**: Identify communities with weaker transit or walkability\n    \n- **Market + demographic snapshots**: Use median housing price and population to compare Austin ZIP areas\n    \n- **Map-based exploration**: Use embed/street-view links for quick geographic context"
+              "description": "# Get Community by ID\n\n## Overview\n\nThis endpoint retrieves a **single Community** instance by its `id` from the CivicHousing database. Communities represent Austin-area **ZIP-code communities** and include demographics, housing economics, safety, amenities, health access, transit score, and map/media links.\n\n## Endpoint Details\n\n- **Method:** `GET`\n    \n- **URL:** `https://api.civichousing.me/api/community/:id`\n    \n\n## Path Parameter\n\n| Parameter | Type | Required | Description |\n| --- | --- | --- | --- |\n| `id` | integer | Yes | Unique identifier of the community to retrieve |\n\n## Example Request\n\n`GET https://api.civichousing.me/api/community/1`\n\n## Response Format\n\nReturns a **single JSON object** representing the community.\n\n### Response Fields (typical)\n\n- **id** (integer): Unique identifier\n    \n- **zip_code** (string): ZIP code for the community\n    \n- **county** (string): County (currently seeded as Travis County)\n    \n- **population** (integer): Population estimate\n    \n- **median_housing_price** (number): Median housing price/value\n    \n- **crime_index** (number): Normalized crime index\n    \n- **park_count** (integer): Parks count\n    \n- **health_count** (integer): Healthcare establishments count\n    \n- **transit_score** (integer): Transit Score\n    \n- **latitude** (number): ZIP centroid latitude\n    \n- **longitude** (number): ZIP centroid longitude\n    \n- **map_embed_url** (string): Google Maps embed URL\n    \n- **street_view_url** (string): Google Street View image URL\n    \n\n## Related models included\n\n- **housing** (array): Up to one sample housing record associated with this community.\n    \n- **transportation** (array): Up to one sample transportation stop associated with this community.\n    \n\n## Related Endpoints\n\n- `GET /api/community` - Get all communities (paginated)\n    \n- `GET /api/housing` - Get all housing listings (paginated)\n    \n- `GET /api/transportation` - Get all transit stops (paginated)\n    \n\n## Use Cases\n\n- **Compare ZIP communities**: Evaluate areas by transit score, safety, and amenities\n    \n- **Accessibility planning**: Identify communities with weaker transit access\n    \n- **Market + demographic snapshots**: Use median housing price and population to compare Austin ZIP areas\n    \n- **Map-based exploration**: Use embed/street-view links for quick geographic context"
             },
             "response": [
               {
@@ -158,7 +160,7 @@
                   "method": "GET",
                   "header": [],
                   "url": {
-                    "raw": "https://civichousing.me/api/community/33",
+                    "raw": "https://civichousing.me/api/community/1",
                     "protocol": "https",
                     "host": [
                       "civichousing",
@@ -167,7 +169,7 @@
                     "path": [
                       "api",
                       "community",
-                      "33"
+                      "1"
                     ]
                   }
                 },
@@ -350,7 +352,7 @@
                   "method": "GET",
                   "header": [],
                   "url": {
-                    "raw": "https://civichousing.me/api/housing/26",
+                    "raw": "https://civichousing.me/api/housing/1",
                     "protocol": "https",
                     "host": [
                       "civichousing",
@@ -359,7 +361,7 @@
                     "path": [
                       "api",
                       "housing",
-                      "26"
+                      "1"
                     ]
                   }
                 },
@@ -520,7 +522,7 @@
               "method": "GET",
               "header": [],
               "url": {
-                "raw": "https://civichousing.me/api/transportation/2346",
+                "raw": "https://civichousing.me/api/transportation/1",
                 "protocol": "https",
                 "host": [
                   "civichousing",
@@ -529,7 +531,7 @@
                 "path": [
                   "api",
                   "transportation",
-                  "2346"
+                  "1"
                 ]
               },
               "description": "# Get One Transit Stop\n\n## Overview\n\nThis endpoint retrieves a single Transportation (transit stop) instance by its `id` from the CivicHousing database. The stop represents a real CapMetro GTFS stop and includes service details (routes, days, frequency), accessibility labeling, location, map/street-view links, and estimated transit travel times to key destinations.\n\n## Endpoint Details\n\n- **Method:** `GET`\n    \n- **URL:** `https://api.civichousing.me/api/transportation/:id`\n    \n\n## Path Parameter\n\n| Parameter | Type | Required | Description |\n| --- | --- | --- | --- |\n| `id` | integer | Yes | Unique identifier of the transit stop |\n\n## Example Request\n\n`GET https://api.civichousing.me/api/transportation/1`\n\n## Response Format\n\nReturns a **single JSON object** representing one transit stop.\n\n### Response Fields (typical)\n\n- **id** (integer): Unique identifier\n    \n- **stop_id** (string): CapMetro GTFS stop identifier\n    \n- **stop_name** (string): Stop name\n    \n- **stop_url** (string): CapMetro stop detail URL\n    \n- **transport_type** (string): `Bus`, `Rail`, or `Rail and Bus`\n    \n- **routes** (string): Comma-separated route short names serving the stop\n    \n- **num_routes** (integer): Number of distinct routes serving the stop\n    \n- **frequency** (string): Estimated average frequency (e.g., `Every 28 Minutes`)\n    \n- **service_days** (string): Days with active service\n    \n- **wheelchair_accessible** (string): Accessibility label (e.g., `Wheelchair Accessible`)\n    \n- **latitude** (number): Stop latitude\n    \n- **longitude** (number): Stop longitude\n    \n- **map_embed_url** (string): Google Maps embed URL\n    \n- **street_view_url** (string): Google Street View URL\n    \n- **travel_time_ut** (string|null): Transit travel time to UT\n    \n- **travel_time_downtown** (string|null): Transit travel time to Downtown\n    \n- **travel_time_domain** (string|null): Transit travel time to The Domain\n    \n\n## Related Endpoints\n\n- `GET /api/transportation` - Get all transit stops (paginated)\n    \n- `GET /api/community` - Get all communities (paginated)\n    \n- `GET /api/housing` - Get all housing listings (paginated)"
@@ -541,7 +543,7 @@
                   "method": "GET",
                   "header": [],
                   "url": {
-                    "raw": "https://civichousing.me/api/transportation/2346",
+                    "raw": "https://civichousing.me/api/transportation/1",
                     "protocol": "https",
                     "host": [
                       "civichousing",
@@ -550,7 +552,7 @@
                     "path": [
                       "api",
                       "transportation",
-                      "2346"
+                      "1"
                     ]
                   }
                 },
