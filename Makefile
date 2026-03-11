@@ -36,3 +36,7 @@ build:
 # removes temporary files
 clean:
 	rm -f git-log.txt
+
+# run docker-compose up
+docker-compose:
+	docker compose up --build

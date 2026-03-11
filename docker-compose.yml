@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    container_name: backend
+    ports:
+      - "5000:5000" # host:container
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "3000:80" # host:container
+    depends_on:
+      - backend
+
