@@ -26,6 +26,32 @@ def haversine_miles(lat1, lon1, lat2, lon2):
     return radius_miles * c
 
 
+def nearest_transport_stop_for_housing(housing):
+    if housing.latitude is None or housing.longitude is None:
+        return None
+
+    transport_candidates = [
+        t
+        for t in Transportation.query.filter(
+            Transportation.latitude.isnot(None),
+            Transportation.longitude.isnot(None),
+        ).all()
+    ]
+
+    if not transport_candidates:
+        return None
+
+    return min(
+        transport_candidates,
+        key=lambda t: haversine_miles(
+            housing.latitude,
+            housing.longitude,
+            t.latitude,
+            t.longitude,
+        ),
+    )
+
+
 def create_app():
 
     app = Flask(__name__)
@@ -118,21 +144,7 @@ def create_app():
         housing = Housing.query.get_or_404(id)
         payload = housing.to_dict(include_relations=True)
 
-        transport_candidates = [
-            t for t in housing.transportation
-            if t.latitude is not None and t.longitude is not None
-        ]
-
-        nearest_stop = None
-        if (
-            housing.latitude is not None
-            and housing.longitude is not None
-            and transport_candidates
-        ):
-            nearest_stop = min(
-                transport_candidates,
-                key=lambda t: (housing.latitude - t.latitude) ** 2 + (housing.longitude - t.longitude) ** 2,
-            )
+        nearest_stop = nearest_transport_stop_for_housing(housing)
 
         if nearest_stop:
             approx_miles = haversine_miles(
@@ -158,6 +170,7 @@ def create_app():
                 "closest_stop_frequency": nearest_stop.frequency,
                 "walking_distance": f"~{round(approx_miles, 2)} miles (approx)",
                 "walking_map_embed_url": walking_map_embed_url,
+                "transportation": [nearest_stop.to_dict()],
             })
 
         return jsonify(payload)
