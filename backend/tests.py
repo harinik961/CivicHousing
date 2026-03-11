@@ -52,7 +52,7 @@ class TestRoutes(unittest.TestCase):
         self.assertIn("page", data)
         self.assertIn("pages", data)
     def test_community_by_id(self):
-        response = self.client.get("/api/community/35")
+        response = self.client.get("/api/community/18")
         self.assertEqual(response.status_code, 200)
         data = response.get_json()
         self.assertIn("county", data)
