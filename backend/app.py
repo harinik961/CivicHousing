@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, redirect
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
@@ -23,13 +23,48 @@ def create_app():
     # -----------------------------
     # Root Routes
     # -----------------------------
-    @app.route("/")
+    @app.route("/", methods=["GET"])
     def index():
-        return {"message": "CivicHousing API is running."}
+        return jsonify({
+            "message": "CivicHousing API is running.",
+            "api": "/api",
+            "docs": "/docs",
+            "health": "/health"
+        })
 
-    @app.route("/health")
+    @app.route("/health", methods=["GET"])
     def health():
         return {"status": "ok"}
+
+    @app.route("/api", methods=["GET"])
+    def api_info():
+        return jsonify({
+            "name": "CivicHousing API",
+            "version": "1.0",
+            "description": "API for CivicHousing housing, community, and transportation data.",
+            "resources": {
+                "housing": {
+                    "list": "/api/housing",
+                    "detail": "/api/housing/<id>"
+                },
+                "community": {
+                    "list": "/api/community",
+                    "detail": "/api/community/<id>"
+                },
+                "transportation": {
+                    "list": "/api/transportation",
+                    "detail": "/api/transportation/<id>"
+                }
+            },
+            "system": {
+                "health": "/health"
+            },
+            "documentation": "/docs"
+        })
+        
+    @app.route("/docs", methods=["GET"])
+    def docs():
+        return redirect("https://documenter.getpostman.com/view/52514232/2sBXcDHMyK", code=302)
 
     # -----------------------------
     # HOUSING
