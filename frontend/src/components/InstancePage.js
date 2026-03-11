@@ -15,7 +15,7 @@ export default function InstancePage({
   const [item, setItem] = useState(null);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/${apiEndpoint}/${id}`)
+    fetch(`https://api.civichousing.me/${apiEndpoint}/${id}`)
       .then(res => res.json())
       .then(res => setItem(res))
       .catch(err => console.error("Error loading instance:", err));

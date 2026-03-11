@@ -54,7 +54,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
     setLoading(true);
     setPage(1); // Reset to page 1 on new data source
 
-    fetch(`http://localhost:5000/${apiEndpoint}?page=1&per_page=${PER_PAGE}`)
+    fetch(`https://api.civichousing.me/${apiEndpoint}?page=1&per_page=${PER_PAGE}`)
       .then(res => res.json())
       .then(data => {
         // All endpoints now return paginated format: {data: [...], total: X, page: Y, pages: Z}
@@ -83,7 +83,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
 
     // Fetch new page from server
     setLoading(true);
-    fetch(`http://localhost:5000/${apiEndpoint}?page=${page}&per_page=${PER_PAGE}`)
+    fetch(`https://api.civichousing.me/${apiEndpoint}?page=${page}&per_page=${PER_PAGE}`)
       .then(res => res.json())
       .then(data => {
         const raw = data.data || [];
