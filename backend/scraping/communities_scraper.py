@@ -279,6 +279,7 @@ def seed_communities(df):
     db.session.commit()
     print(f"Inserted {inserted} communities, skipped {skipped}")   
 
+# pragma: no cover
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()

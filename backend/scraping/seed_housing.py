@@ -321,6 +321,7 @@ def refresh_street_views():
 # ----------------------------------------
 # MAIN
 # ----------------------------------------
+# pragma: no cover
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()

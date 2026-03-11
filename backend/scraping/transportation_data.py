@@ -338,7 +338,8 @@ def extract_data():
   except requests.exceptions.RequestException as error: 
     print(f"An error occurred: {error}")
 
-if __name__ == "__main__": 
+# pragma: no cover
+if __name__ == "__main__":
   data = extract_data()
   print(f"\nSuccessfully processed {len(data)} stops\n")
   print("Sample of first 5 stops:")

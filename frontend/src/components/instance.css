@@ -23,6 +23,7 @@
 
 .masonry {
   column-count: 3;
+  column-width: 300px;
   column-gap: 20px;
 }
 
