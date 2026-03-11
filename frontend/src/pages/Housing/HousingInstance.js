@@ -6,6 +6,7 @@ const housingFields = [
   "project_name",
   "street_view_image",
   "address",
+  "walking_map_embed_url",
   "unit_type",
   "housing_tenure",
   "income_restriction_level",
@@ -22,6 +23,9 @@ const housingDescriptions = {
     `${item.project_name} is a housing development located at ${value}. 
     This property provides affordable housing opportunities for residents in the Austin area. 
     The location allows residents to access nearby transportation, services, and community resources.`,
+
+  walking_map_embed_url: (value, item) =>
+    `This map shows the walking route from this housing location to the nearest associated transit stop. Estimated distance: ${item.walking_distance || "Unavailable"}. Service frequency at that stop: ${item.closest_stop_frequency || "Unavailable"}.`,
 
   unit_type: (value, item) =>
     `The unit type at ${item.project_name} is categorized as ${value}. 

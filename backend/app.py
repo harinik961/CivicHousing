@@ -2,11 +2,28 @@ from flask import Flask, jsonify, request, redirect
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
+import math
 
 from models import db, Housing, Community, Transportation
 from flask_migrate import Migrate
 
 load_dotenv()
+
+
+def haversine_miles(lat1, lon1, lat2, lon2):
+    radius_miles = 3958.8
+
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+
+    a = (
+        math.sin(delta_phi / 2) ** 2
+        + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
+    )
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return radius_miles * c
 
 
 def create_app():
@@ -99,8 +116,51 @@ def create_app():
     def get_one_housing(id):
 
         housing = Housing.query.get_or_404(id)
+        payload = housing.to_dict(include_relations=True)
 
-        return jsonify(housing.to_dict(include_relations=True))
+        transport_candidates = [
+            t for t in housing.transportation
+            if t.latitude is not None and t.longitude is not None
+        ]
+
+        nearest_stop = None
+        if (
+            housing.latitude is not None
+            and housing.longitude is not None
+            and transport_candidates
+        ):
+            nearest_stop = min(
+                transport_candidates,
+                key=lambda t: (housing.latitude - t.latitude) ** 2 + (housing.longitude - t.longitude) ** 2,
+            )
+
+        if nearest_stop:
+            approx_miles = haversine_miles(
+                housing.latitude,
+                housing.longitude,
+                nearest_stop.latitude,
+                nearest_stop.longitude,
+            )
+
+            maps_key = os.getenv("GOOGLE_MAPS_API_KEY")
+            walking_map_embed_url = None
+
+            if maps_key:
+                walking_map_embed_url = (
+                    "https://www.google.com/maps/embed/v1/directions"
+                    f"?key={maps_key}"
+                    f"&origin={housing.latitude},{housing.longitude}"
+                    f"&destination={nearest_stop.latitude},{nearest_stop.longitude}"
+                    "&mode=walking"
+                )
+
+            payload.update({
+                "closest_stop_frequency": nearest_stop.frequency,
+                "walking_distance": f"~{round(approx_miles, 2)} miles (approx)",
+                "walking_map_embed_url": walking_map_embed_url,
+            })
+
+        return jsonify(payload)
 
     # -----------------------------
     # COMMUNITY

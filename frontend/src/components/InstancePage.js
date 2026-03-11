@@ -38,6 +38,9 @@ export default function InstancePage({
     walk_score: "Walkability Score",
     last_synced_at: "Last Updated",
     map_embed_url: "Map View",
+    walking_map_embed_url: "Walking Route to Transit",
+    walking_distance: "Distance to Transit",
+    closest_stop_frequency: "Transit Frequency",
     street_view_url: "Street View",
     street_view_image: "Street View"
   };
@@ -108,7 +111,7 @@ export default function InstancePage({
       }
     }
 
-    if (key === "map_embed_url" && typeof value === "string") {
+    if ((key === "map_embed_url" || key === "walking_map_embed_url") && typeof value === "string") {
       return (
         <iframe
           src={value}
