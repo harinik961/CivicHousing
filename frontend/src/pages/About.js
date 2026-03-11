@@ -160,11 +160,12 @@ export default function About() {
       <div>
         <h2 className="subtitle">Disparate Data Result</h2>
         <p className="text-section">
-          By integrating disparate data on affordable housing, public transportation routes, walkability metrics, and community-level indicators, 
-          our platform reveals patterns that are difficult to observe when examining each dataset separately. 
-          One notable result is that many affordable housing locations in Austin are situated in areas with fewer nearby transit routes
-          and lower walkability scores. This suggests a potential gap between housing affordability and transportation accessibility, 
-          meaning residents in lower-cost housing may still face barriers to reaching jobs, services, and amenities.
+          By integrating disparate data on affordable housing, public transit routes, walkability, and community indicators, 
+          our platform reveals patterns that are hard to see when looking at each dataset alone. 
+          We found that many higher-cost neighborhoods in Austin have few transit options, and some areas don’t even have 
+          nearby affordable housing or transit stops. In these cases, we had to use the closest available housing or transit points. 
+          This shows that Austin’s public transportation doesn’t fully connect all neighborhoods, which can make it especially 
+          hard for residents in lower-cost housing to access jobs, services, and amenities.
         </p>
       </div>
 
