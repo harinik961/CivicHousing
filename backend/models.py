@@ -44,6 +44,8 @@ class Community(db.Model):
     map_embed_url = db.Column(db.Text)
     street_view_url = db.Column(db.Text)
     transit_score = db.Column(db.Integer)
+    latitude = db.Column(db.Float)
+    longitude = db.Column(db.Float)
 
     housing = db.relationship(
         "Housing",
@@ -72,7 +74,9 @@ class Community(db.Model):
             "health_count": self.health_count,
             "map_embed_url": self.map_embed_url,
             "street_view_url": self.street_view_url,
-            "transit_score": self.transit_score
+            "transit_score": self.transit_score, 
+            "latitude": self.latitude,
+            "longitude": self.longitude,
         }
 
         if include_relations:
