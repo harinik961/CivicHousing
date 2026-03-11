@@ -1,7 +1,7 @@
-
 image: node:20
 stages:
   - build
+  - test
 
 build_website:
   stage: build
@@ -11,3 +11,12 @@ build_website:
     - npm run build
   only:
     - main
+
+postman_api_tests:
+  stage: test
+  image:
+    name: postman/newman:alpine
+    entrypoint: [""]
+  script:
+    - newman --version
+    - newman run postman/collection.json --reporters cli

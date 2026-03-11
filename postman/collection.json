@@ -1,0 +1,583 @@
+{
+    "info": {
+      "_postman_id": "973a85ce-f6a6-4930-9477-046fe66b530a",
+      "name": "Civic Housing API",
+      "description": "## Overview\n\nThe CivicHousing API provides access to affordable housing, community, and transportation data across Austin, Texas. This API is designed to help residents, planners, and policymakers explore where affordability and transit accessibility intersect — or fail to.\n\n## About CivicHousing\n\nCivicHousing is a data-driven web platform that highlights affordable housing availability and transportation accessibility gaps across Austin, Texas. It integrates public housing inventory data, transit infrastructure data, sidewalk and walkability metrics, and community-level indicators to reveal where affordability and mobility intersect.\n\n## Models\n\n- **Community** — Austin neighborhoods with demographic, economic, and accessibility data\n    \n- **Housing** — Affordable housing units including apartments and rentals across Austin\n    \n- **Transportation** — CapMetro bus and train stops with accessibility and service data\n    \n\n## Base URL\n\n`https://civichousing.me/api`\n\n## Available Endpoints\n\n| Method | Endpoint | Description |\n| --- | --- | --- |\n| GET | `/community` | Get all communities |\n| GET | `/community/:id` | Get a specific community |\n| GET | `/housing` | Get all housing listings |\n| GET | `/housing/:id` | Get a specific housing listing |\n| GET | `/transportation` | Get all transit stops |\n| GET | `/transportation/:id` | Get a specific transit stop |\n\n## Data Sources\n\n- [Austin Affordable Housing Inventory](https://data.austintexas.gov/Housing-and-Real-Estate/Affordable-Housing-Inventory/ifzc-3xz8/about_data)\n    \n- [CapMetro GTFS Data](https://data.texas.gov/dataset/CapMetro-GTFS/r4v4-vz24/about_data)\n    \n- [U.S. Census API](https://www.census.gov/data/developers/data-sets.html)\n    \n- [Google Maps API](https://mapsplatform.google.com/lp/maps-apis/)\n    \n\n## Website\n\n[civichousing.me](https://civichousing.me)",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+      "_exporter_id": "52514232",
+      "_collection_link": "https://go.postman.co/collection/52514232-973a85ce-f6a6-4930-9477-046fe66b530a?source=collection_link"
+    },
+    "item": [
+      {
+        "name": "Community",
+        "item": [
+          {
+            "name": "GetAllCommunity",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test('Response is JSON', function () {",
+                    "    pm.response.to.be.json;",
+                    "})",
+                    "",
+                    "pm.test('Response has pagination fields', function () {",
+                    "    var json = pm.response.json();",
+                    "    pm.expect(json).to.have.property('data').that.is.an('array');",
+                    "    pm.expect(json).to.have.property('total').that.is.a('number');",
+                    "    pm.expect(json).to.have.property('page').that.is.a('number');",
+                    "    pm.expect(json).to.have.property('pages').that.is.a('number');",
+                    "})",
+                    "",
+                    "pm.test('Data array is not empty', function () {",
+                    "    var json = pm.response.json();",
+                    "    pm.expect(json.data).to.have.length.above(0);",
+                    "})",
+                    "",
+                    "pm.test('Each item in data has an id field', function () {",
+                    "    var json = pm.response.json();",
+                    "    json.data.forEach(function (item) {",
+                    "        pm.expect(item).to.have.property('id');",
+                    "    });",
+                    "})"
+                  ]
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://civichousing.me/api/community",
+                "protocol": "https",
+                "host": [
+                  "civichousing",
+                  "me"
+                ],
+                "path": [
+                  "api",
+                  "community"
+                ]
+              },
+              "description": "## Get All Communities\n\n## Overview\n\nThis endpoint retrieves **paginated** Community instances from the CivicHousing database. Each community corresponds to an Austin-area **ZIP code** and includes demographic, housing-market, safety, amenities, health-access, and mobility/accessibility metrics, plus map/media links.\n\n## Endpoint Details\n\n- **Method:** `GET`\n    \n- **URL:** `https://api.civichousing.me/api/community`\n    \n\n## Query Parameters\n\n- **page** (integer, optional): Page number (default `1`)\n    \n\n## Response Format\n\nReturns a **paginated object** (not a raw array):\n\n- **data** (array): List of community objects\n    \n- **total** (integer): Total number of communities\n    \n- **page** (integer): Current page\n    \n- **pages** (integer): Total pages available\n    \n\nEach community object includes (typical fields):\n\n- **id** (integer): Unique identifier\n    \n- **zip_code** (string): ZIP code for the community\n    \n- **county** (string): County (currently seeded as Travis County)\n    \n- **population** (integer): Population estimate\n    \n- **median_housing_price** (number): Median housing price/value\n    \n- **crime_index** (number): Normalized crime index\n    \n- **park_count** (integer): Parks count\n    \n- **health_count** (integer): Healthcare establishments count\n    \n- **walk_score** (number): Walk Score\n    \n- **transit_score** (number): Transit Score\n    \n- **bike_score** (number): Bike Score\n    \n- **latitude** (number): ZIP centroid latitude\n    \n- **longitude** (number): ZIP centroid longitude\n    \n- **map_embed_url** (string): Google Maps embed URL\n    \n- **street_view_url** (string): Google Street View image URL\n    \n\n## Related models included\n\n- **housing (array)**: Housing records associated with this community.\n    \n- **transportation (array)**: Transportation stop records associated with this community.\n    \n\n## Related Endpoints\n\n- `GET /api/community/:id` - Get a specific community by ID\n    \n- `GET /api/housing` - Get all housing listings (paginated)\n    \n- `GET /api/transportation` - Get all transit stops (paginated)"
+            },
+            "response": [
+              {
+                "name": "GetAllCommunity",
+                "originalRequest": {
+                  "method": "GET",
+                  "header": [],
+                  "url": {
+                    "raw": "https://civichousing.me/api/community",
+                    "protocol": "https",
+                    "host": [
+                      "civichousing",
+                      "me"
+                    ],
+                    "path": [
+                      "api",
+                      "community"
+                    ]
+                  }
+                },
+                "status": "OK",
+                "code": 200,
+                "_postman_previewlanguage": "json",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "description": "",
+                    "type": "text"
+                  }
+                ],
+                "cookie": [
+                  {
+                    "expires": "Invalid Date",
+                    "domain": "",
+                    "path": ""
+                  }
+                ],
+                "body": "{\r\n  \"data\": [\r\n         {\r\n            \"county\": \"Travis County\",\r\n            \"crime_index\": 11.51,\r\n            \"health_count\": 335,\r\n            \"housing\": [\r\n                {\r\n                    \"address\": \"10400 Research Blvd\",\r\n                    \"council_district\": \"10\",\r\n                    \"housing_tenure\": \"Rental\",\r\n                    \"id\": 215,\r\n                    \"income_restriction_level\": \"80% AMI\",\r\n                    \"last_synced_at\": \"Tue, 10 Mar 2026 03:23:18 GMT\",\r\n                    \"latitude\": 30.39659,\r\n                    \"longitude\": -97.74743,\r\n                    \"project_name\": \"Arboretum VMU\",\r\n                    \"street_view_image\": \"https://maps.googleapis.com/maps/api/streetview?size=600x400&location=30.39659,-97.74743&fov=80&heading=70&pitch=0&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n                    \"total_ada_units\": 0,\r\n                    \"total_affordable_units\": 26,\r\n                    \"unit_type\": \"Multifamily\",\r\n                    \"walk_score\": 68,\r\n                    \"zip_code\": \"78759\"\r\n                }\r\n            ],\r\n            \"id\": 31,\r\n            \"latitude\": 30.402665,\r\n            \"longitude\": -97.761062,\r\n            \"map_embed_url\": \"https://www.google.com/maps/embed/v1/place?q=30.402665,-97.761062&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n            \"median_housing_price\": 632301.92,\r\n            \"park_count\": 12,\r\n            \"population\": 43182,\r\n            \"street_view_url\": \"https://maps.googleapis.com/maps/api/streetview?size=400x300&location=30.402665,-97.761062&radius=5000&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n            \"transit_score\": 26,\r\n            \"transportation\": [\r\n                {\r\n                    \"frequency\": \"Every 28 Minutes\",\r\n                    \"id\": 1917,\r\n                    \"latitude\": 30.396981,\r\n                    \"longitude\": -97.750138,\r\n                    \"map_embed_url\": \"https://www.google.com/maps/embed/v1/place?q=30.396981,-97.750138&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n                    \"num_routes\": 3,\r\n                    \"routes\": \"3, 383, 982\",\r\n                    \"service_days\": \"Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday\",\r\n                    \"stop_id\": \"6093\",\r\n                    \"stop_name\": \"10300 Jollyville/Great Hills\",\r\n                    \"stop_url\": \"https://www.capmetro.org/stopdetail/index.php?stop=6093\",\r\n                    \"street_view_url\": \"https://maps.googleapis.com/maps/api/streetview?size=400x300&location=30.396981,-97.750138&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n                    \"transport_type\": \"Bus\",\r\n                    \"travel_time_domain\": \"26 mins\",\r\n                    \"travel_time_downtown\": \"58 mins\",\r\n                    \"travel_time_ut\": \"53 mins\",\r\n                    \"wheelchair_accessible\": \"Wheelchair Accessible\"\r\n                }\r\n            ],\r\n            \"zip_code\": \"78759\"\r\n        }\r\n    ],\r\n    \"page\": 1,\r\n    \"pages\": 1,\r\n    \"total\": 1\r\n}"
+              }
+            ]
+          },
+          {
+            "name": "GetOneCommunity",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test('Status code is 200', function () {",
+                    "    pm.response.to.have.status(200);",
+                    "})",
+                    "",
+                    "pm.test('Response is JSON', function () {",
+                    "    pm.response.to.be.json;",
+                    "})",
+                    "",
+                    "pm.test('Response has an id field', function () {",
+                    "    var json = pm.response.json();",
+                    "    pm.expect(json).to.have.property('id');",
+                    "})",
+                    "",
+                    "pm.test('Response has a zip_code field (string)', function () {",
+                    "    var json = pm.response.json();",
+                    "    pm.expect(json).to.have.property('zip_code').that.is.a('string');",
+                    "})"
+                  ]
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://civichousing.me/api/community/33",
+                "protocol": "https",
+                "host": [
+                  "civichousing",
+                  "me"
+                ],
+                "path": [
+                  "api",
+                  "community",
+                  "33"
+                ]
+              },
+              "description": "# Get Community by ID\n\n## Overview\n\nThis endpoint retrieves a **single Community** instance by its `id` from the CivicHousing database. Communities represent Austin-area **ZIP-code communities** and include demographics, housing economics, safety, amenities, health access, mobility/accessibility metrics, and map/media links.\n\n## Endpoint Details\n\n- **Method:** `GET`\n    \n- **URL:** `https://api.civichousing.me/api/community/:id`\n    \n\n## Path Parameter\n\n| Parameter | Type | Required | Description |\n| --- | --- | --- | --- |\n| `id` | integer | Yes | Unique identifier of the community to retrieve |\n\n## Example Request\n\n`GET https://api.civichousing.me/api/community/1`\n\n## Response Format\n\nReturns a **single JSON object** representing the community.\n\n### Response Fields (typical)\n\n- **id** (integer): Unique identifier\n    \n- **zip_code** (string): ZIP code for the community\n    \n- **county** (string): County (currently seeded as Travis County)\n    \n- **population** (integer): Population estimate\n    \n- **median_housing_price** (number): Median housing price/value\n    \n- **crime_index** (number): Normalized crime index\n    \n- **park_count** (integer): Parks count\n    \n- **health_count** (integer): Healthcare establishments count\n    \n- **walk_score** (number): Walk Score\n    \n- **transit_score** (number): Transit Score\n    \n- **bike_score** (number): Bike Score\n    \n- **latitude** (number): ZIP centroid latitude\n    \n- **longitude** (number): ZIP centroid longitude\n    \n- **map_embed_url** (string): Google Maps embed URL\n    \n- **street_view_url** (string): Google Street View image URL\n    \n\n## Related models included\n\n- **housing (array)**: Housing records associated with this community.\n    \n- **transportation (array)**: Transportation stop records associated with this community.\n    \n\n## Related Endpoints\n\n- `GET /api/community` - Get all communities (paginated)\n    \n- `GET /api/housing` - Get all housing listings (paginated)\n    \n- `GET /api/transportation` - Get all transit stops (paginated)\n    \n\n## Use Cases\n\n- **Compare ZIP communities**: Evaluate areas by walk/transit/bike scores, safety, and amenities\n    \n- **Accessibility planning**: Identify communities with weaker transit or walkability\n    \n- **Market + demographic snapshots**: Use median housing price and population to compare Austin ZIP areas\n    \n- **Map-based exploration**: Use embed/street-view links for quick geographic context"
+            },
+            "response": [
+              {
+                "name": "GetOneCommunity",
+                "originalRequest": {
+                  "method": "GET",
+                  "header": [],
+                  "url": {
+                    "raw": "https://civichousing.me/api/community/33",
+                    "protocol": "https",
+                    "host": [
+                      "civichousing",
+                      "me"
+                    ],
+                    "path": [
+                      "api",
+                      "community",
+                      "33"
+                    ]
+                  }
+                },
+                "status": "OK",
+                "code": 200,
+                "_postman_previewlanguage": "json",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "description": "",
+                    "type": "text"
+                  }
+                ],
+                "cookie": [
+                  {
+                    "expires": "Invalid Date",
+                    "domain": "",
+                    "path": ""
+                  }
+                ],
+                "body": "{\r\n    \"county\": \"Travis County\",\r\n    \"crime_index\": 8.95,\r\n    \"health_count\": 245,\r\n    \"housing\": [\r\n        {\r\n            \"address\": \"6212 Crow Lane\",\r\n            \"council_district\": \"2\",\r\n            \"housing_tenure\": \"Rental\",\r\n            \"id\": 232,\r\n            \"income_restriction_level\": \"30% AMI, 50% AMI, 80% AMI, 120% AMI\",\r\n            \"last_synced_at\": \"Tue, 10 Mar 2026 03:23:31 GMT\",\r\n            \"latitude\": 30.197646,\r\n            \"longitude\": -97.771981,\r\n            \"project_name\": \"Retreat at North Bluff\",\r\n            \"street_view_image\": \"https://maps.googleapis.com/maps/api/streetview?size=600x400&location=30.197646,-97.771981&fov=80&heading=70&pitch=0&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n            \"total_ada_units\": 0,\r\n            \"total_affordable_units\": 176,\r\n            \"unit_type\": \"Multifamily\",\r\n            \"walk_score\": 40,\r\n            \"zip_code\": \"78745\"\r\n        }\r\n    ],\r\n    \"id\": 33,\r\n    \"latitude\": 30.206851,\r\n    \"longitude\": -97.797384,\r\n    \"map_embed_url\": \"https://www.google.com/maps/embed/v1/place?q=30.206851,-97.797384&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n    \"median_housing_price\": 409819.4,\r\n    \"park_count\": 22,\r\n    \"population\": 61219,\r\n    \"street_view_url\": \"https://maps.googleapis.com/maps/api/streetview?size=400x300&location=30.206851,-97.797384&radius=5000&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n    \"transit_score\": 40,\r\n    \"transportation\": [\r\n        {\r\n            \"frequency\": \"Every 17 Minutes\",\r\n            \"id\": 235,\r\n            \"latitude\": 30.197445,\r\n            \"longitude\": -97.7875,\r\n            \"map_embed_url\": \"https://www.google.com/maps/embed/v1/place?q=30.197445,-97.7875&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n            \"num_routes\": 1,\r\n            \"routes\": \"10\",\r\n            \"service_days\": \"Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday\",\r\n            \"stop_id\": \"1540\",\r\n            \"stop_name\": \"6594 1st/William Cannon\",\r\n            \"stop_url\": \"https://www.capmetro.org/stopdetail/index.php?stop=1540\",\r\n            \"street_view_url\": \"https://maps.googleapis.com/maps/api/streetview?size=400x300&location=30.197445,-97.7875&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n            \"transport_type\": \"Bus\",\r\n            \"travel_time_domain\": \"1 hour 29 mins\",\r\n            \"travel_time_downtown\": \"23 mins\",\r\n            \"travel_time_ut\": \"29 mins\",\r\n            \"wheelchair_accessible\": \"Wheelchair Accessible\"\r\n        }\r\n    ],\r\n    \"zip_code\": \"78745\"\r\n}"
+              }
+            ]
+          }
+        ],
+        "description": "## Overview\n\nThe Community model represents **Austin communities**. Each instance aggregates demographic, housing-cost, safety, access-to-amenities, and map-based accessibility indicators to help users evaluate neighborhood context around affordable housing and transit.\n\n## Attributes\n\n- **Zip Code** (string): ZIP code for the community\n    \n- **County** (string): County the ZIP code is located in (e.g., Travis County)\n    \n- **Population** (integer): Estimated population for the ZIP code\n    \n- **Median Housing Price** (number): Estimated median housing value for the ZIP code (USD)\n    \n- **Crime Index** (number): Normalized crime indicator (derived from Austin crime incidents per-capita)\n    \n- **Park Count** (integer): Number of parks in/near the ZIP code (from Austin parks dataset)\n    \n- **Health Count** (integer): Count of healthcare establishments in the ZIP code (Census CBP NAICS 62)\n    \n- **Walk Score** (number): Walkability score for the ZIP code area\n    \n- **Transit Score** (number): Public transit accessibility score for the ZIP code area\n    \n- **Bike Score** (number): Bikeability score for the ZIP code area\n    \n- **Latitude** (number): Representative latitude for the ZIP code\n    \n- **Longitude** (number): Representative longitude for the ZIP code\n    \n- **Map Embed URL** (string): Google Maps embed link for the ZIP code location\n    \n- **Street View URL** (string): Google Street View image URL for the ZIP code location\n    \n\n## Connected Models\n\n- **Housing** — Communities link to affordable housing entries in the same area\n    \n- **Transportation** — Communities link to nearby transit stops\n    \n\n## Available Endpoints\n\n- `GET /api/community` - Retrieve all communities (paginated)\n    \n- `GET /api/community/` - Retrieve a specific community by ID\n    \n\n## Data Sources\n\n- [U.S. Census API (ACS)](https://www.census.gov/data/developers/data-sets/acs-5year.html)\n    \n- [U.S. Census API (CBP)](https://www.census.gov/data/developers/data-sets/cbp-nonemp-zbp/cbp-api.html)\n    \n- [City of Austin Open Data](https://data.austintexas.gov/)\n    \n- [Google Maps Platform](https://mapsplatform.google.com/)\n    \n- [Walk Score API](https://www.walkscore.com/professional/api.php)\n    \n- [Zillow Research Data](https://www.zillow.com/research/data/)"
+      },
+      {
+        "name": "Housing",
+        "item": [
+          {
+            "name": "GetAllHousing",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test('Status code is 200', function () {",
+                    "    pm.response.to.have.status(200);",
+                    "})",
+                    "",
+                    "pm.test('Response is JSON', function () {",
+                    "    pm.response.to.be.json;",
+                    "})",
+                    "",
+                    "pm.test('Response has pagination fields', function () {",
+                    "    var json = pm.response.json();",
+                    "    pm.expect(json).to.have.property('data').that.is.an('array');",
+                    "    pm.expect(json).to.have.property('total').that.is.a('number');",
+                    "    pm.expect(json).to.have.property('page').that.is.a('number');",
+                    "    pm.expect(json).to.have.property('pages').that.is.a('number');",
+                    "})",
+                    "",
+                    "pm.test('Data array is not empty', function () {",
+                    "    var json = pm.response.json();",
+                    "    pm.expect(json.data).to.have.length.above(0);",
+                    "})",
+                    "",
+                    "pm.test('Each item in data has an id field', function () {",
+                    "    var json = pm.response.json();",
+                    "    json.data.forEach(function (item) {",
+                    "        pm.expect(item).to.have.property('id');",
+                    "    });",
+                    "})"
+                  ]
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://civichousing.me/api/housing",
+                "protocol": "https",
+                "host": [
+                  "civichousing",
+                  "me"
+                ],
+                "path": [
+                  "api",
+                  "housing"
+                ]
+              },
+              "description": "# Get All Housing Listings\n\n## Overview\n\nThis endpoint retrieves **paginated** Housing instances from the CivicHousing database. Each housing record represents an affordable housing development/entry in Austin, TX and includes location + program metadata, affordability totals, and accessibility context (Walk Score + Street View when available).\n\n## Endpoint Details\n\n- **Method:** `GET`\n    \n- **URL:** `https://api.civichousing.me/api/housing`\n    \n\n## Query Parameters\n\n- **page** (integer, optional): Page number (default `1`)\n    \n- **zip** (string, optional): Filter results by ZIP code\n    \n- **district** (string, optional): Filter results by council district\n    \n\n## Response Format\n\nReturns a **paginated object** (not a raw array):\n\n- **data** (array): List of housing objects\n    \n- **total** (integer): Total number of housing records matching the query\n    \n- **page** (integer): Current page\n    \n- **pages** (integer): Total pages available\n    \n\nEach housing object includes (typical fields):\n\n- **id** (integer): Unique identifier\n    \n- **project_name** (string): Housing project/development name\n    \n- **address** (string): Street address\n    \n- **zip_code** (string): ZIP code\n    \n- **council_district** (string): Austin council district\n    \n- **unit_type** (string): e.g., Multifamily\n    \n- **housing_tenure** (string): e.g., Rental\n    \n- **income_restriction_level** (string): AMI restriction labels present (e.g., `80% AMI`)\n    \n- **total_affordable_units** (integer): Total affordable units\n    \n- **total_ada_units** (integer): Total ADA-accessible units\n    \n- **latitude** (number|null): Latitude (if available)\n    \n- **longitude** (number|null): Longitude (if available)\n    \n- **street_view_image** (string|null): Google Street View image URL (if available)\n    \n- **walk_score** (number|null): Walk Score (if available)\n    \n- **last_synced_at** (string datetime): Last time the record was synced/updated\n    \n\n## Related models included\n\n- **community (array)**: Community records associated with this housing.\n    \n- **transportation (array)**: Transportation stop records associated with this housing.\n    \n\n## Related Endpoints\n\n- `GET /api/housing/:id` - Get a specific housing listing by ID (includes relations + nearest-transit extras when available)\n    \n- `GET /api/community` - Get all communities (paginated)\n    \n- `GET /api/transportation` - Get all transit stops (paginated)"
+            },
+            "response": [
+              {
+                "name": "GetAllHousing",
+                "originalRequest": {
+                  "method": "GET",
+                  "header": [],
+                  "url": {
+                    "raw": "https://civichousing.me/api/housing",
+                    "protocol": "https",
+                    "host": [
+                      "civichousing",
+                      "me"
+                    ],
+                    "path": [
+                      "api",
+                      "housing"
+                    ]
+                  }
+                },
+                "status": "OK",
+                "code": 200,
+                "_postman_previewlanguage": "json",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "description": "",
+                    "type": "text"
+                  }
+                ],
+                "cookie": [
+                  {
+                    "expires": "Invalid Date",
+                    "domain": "",
+                    "path": ""
+                  }
+                ],
+                "body": "{\r\n  \"data\": [\r\n    {\r\n      \"address\": \"2401 Longview Street\",\r\n      \"council_district\": \"9\",\r\n      \"housing_tenure\": \"Rental\",\r\n      \"id\": 26,\r\n      \"income_restriction_level\": \"80% AMI\",\r\n      \"last_synced_at\": \"Tue, 10 Mar 2026 03:21:43 GMT\",\r\n      \"latitude\": 30.28868985,\r\n      \"longitude\": -97.75048641,\r\n      \"project_name\": \"2401 Longview\",\r\n      \"street_view_image\": \"https://maps.googleapis.com/maps/api/streetview?size=600x400&location=30.28868985,-97.75048641&fov=80&heading=70&pitch=0&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n      \"total_ada_units\": 0,\r\n      \"total_affordable_units\": 7,\r\n      \"unit_type\": \"Multifamily\",\r\n      \"walk_score\": 86,\r\n      \"zip_code\": \"78705\"\r\n    }\r\n  ],\r\n  \"page\": 1,\r\n  \"pages\": 1,\r\n  \"total\": 1\r\n}"
+              }
+            ]
+          },
+          {
+            "name": "GetOneHousing",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "pm.test('Status code is 200', function () {",
+                    "    pm.response.to.have.status(200);",
+                    "})",
+                    "",
+                    "pm.test('Response is JSON', function () {",
+                    "    pm.response.to.be.json;",
+                    "})",
+                    "",
+                    "pm.test('Response has an id field', function () {",
+                    "    var json = pm.response.json();",
+                    "    pm.expect(json).to.have.property('id');",
+                    "})",
+                    "",
+                    "pm.test('Response has a zip_code field (string)', function () {",
+                    "    var json = pm.response.json();",
+                    "    pm.expect(json).to.have.property('zip_code').that.is.a('string');",
+                    "})"
+                  ]
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://civichousing.me/api/housing/1",
+                "protocol": "https",
+                "host": [
+                  "civichousing",
+                  "me"
+                ],
+                "path": [
+                  "api",
+                  "housing",
+                  "1"
+                ]
+              },
+              "description": "# Get One Housing\n\n## Overview\n\nThis endpoint retrieves a single Housing instance by its `id` from the CivicHousing database. In addition to the housing record’s core fields, the response includes **related Community and Transportation objects** (when present) and adds **computed nearest-transit fields** such as walking distance and an optional walking directions embed URL.\n\n## Endpoint Details\n\n- **Method:** `GET`\n    \n- **URL:** `https://api.civichousing.me/api/housing/:id`\n    \n\n## Path Parameter\n\n| Parameter | Type | Required | Description |\n| --- | --- | --- | --- |\n| `id` | integer | Yes | Unique identifier of the housing listing |\n\n## Example Request\n\n`GET https://api.civichousing.me/api/housing/26`\n\n## Response Format\n\nReturns a **single JSON object** representing one housing listing.\n\n### Housing fields\n\n- **id** (integer): Unique identifier\n    \n- **project_name** (string): Housing project/development name\n    \n- **address** (string): Street address\n    \n- **zip_code** (string): ZIP code\n    \n- **council_district** (string): Austin council district\n    \n- **unit_type** (string): e.g., Multifamily\n    \n- **housing_tenure** (string): e.g., Rental\n    \n- **income_restriction_level** (string): AMI restriction label(s) (e.g., `80% AMI`)\n    \n- **total_affordable_units** (integer): Total affordable units\n    \n- **total_ada_units** (integer): Total ADA-accessible units\n    \n- **walk_score** (number|null): Walk Score (if available)\n    \n- **latitude** (number|null): Latitude (if available)\n    \n- **longitude** (number|null): Longitude (if available)\n    \n- **street_view_image** (string|null): Google Street View image URL (if available)\n    \n- **last_synced_at** (string datetime): Last time the record was synced/updated\n    \n\n### Related models included\n\n- **communities** (array): Community records associated with this housing listing.\n    \n- **transportation** (array): Transportation stop records associated with this housing listing.\n    \n\n## Related Endpoints\n\n- `GET /api/housing` - Get all housing listings (paginated, supports filters)\n    \n- `GET /api/community` - Get all communities (paginated)\n    \n- `GET /api/transportation` - Get all transit stops (paginated)"
+            },
+            "response": [
+              {
+                "name": "GetOneHousing",
+                "originalRequest": {
+                  "method": "GET",
+                  "header": [],
+                  "url": {
+                    "raw": "https://civichousing.me/api/housing/26",
+                    "protocol": "https",
+                    "host": [
+                      "civichousing",
+                      "me"
+                    ],
+                    "path": [
+                      "api",
+                      "housing",
+                      "26"
+                    ]
+                  }
+                },
+                "status": "OK",
+                "code": 200,
+                "_postman_previewlanguage": "json",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "description": "",
+                    "type": "text"
+                  }
+                ],
+                "cookie": [
+                  {
+                    "expires": "Invalid Date",
+                    "domain": "",
+                    "path": ""
+                  }
+                ],
+                "body": "{\r\n  \"address\": \"2401 Longview Street\",\r\n  \"closest_stop_frequency\": \"Every 31 Minutes\",\r\n  \"communities\": [\r\n    {\r\n      \"county\": \"Travis County\",\r\n      \"crime_index\": 3.59,\r\n      \"health_count\": 243,\r\n      \"id\": 27,\r\n      \"latitude\": 30.294333,\r\n      \"longitude\": -97.738517,\r\n      \"map_embed_url\": \"https://www.google.com/maps/embed/v1/place?q=30.294333,-97.738517&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n      \"median_housing_price\": 338728.06,\r\n      \"park_count\": 7,\r\n      \"population\": 33238,\r\n      \"street_view_url\": \"https://maps.googleapis.com/maps/api/streetview?size=400x300&location=30.294333,-97.738517&radius=5000&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n      \"transit_score\": 68,\r\n      \"zip_code\": \"78705\"\r\n    }\r\n  ],\r\n  \"council_district\": \"9\",\r\n  \"housing_tenure\": \"Rental\",\r\n  \"id\": 26,\r\n  \"income_restriction_level\": \"80% AMI\",\r\n  \"last_synced_at\": \"Tue, 10 Mar 2026 03:21:43 GMT\",\r\n  \"latitude\": 30.28868985,\r\n  \"longitude\": -97.75048641,\r\n  \"project_name\": \"2401 Longview\",\r\n  \"street_view_image\": \"https://maps.googleapis.com/maps/api/streetview?size=600x400&location=30.28868985,-97.75048641&fov=80&heading=70&pitch=0&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n  \"total_ada_units\": 0,\r\n  \"total_affordable_units\": 7,\r\n  \"transportation\": [\r\n    {\r\n      \"frequency\": \"Every 31 Minutes\",\r\n      \"id\": 1028,\r\n      \"latitude\": 30.288405,\r\n      \"longitude\": -97.752709,\r\n      \"map_embed_url\": \"https://www.google.com/maps/embed/v1/place?q=30.288405,-97.752709&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n      \"num_routes\": 1,\r\n      \"routes\": \"5\",\r\n      \"service_days\": \"Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday\",\r\n      \"stop_id\": \"4154\",\r\n      \"stop_name\": \"2327 Lamar/24th\",\r\n      \"stop_url\": \"https://www.capmetro.org/stopdetail/index.php?stop=4154\",\r\n      \"street_view_url\": \"https://maps.googleapis.com/maps/api/streetview?size=400x300&location=30.288405,-97.752709&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n      \"transport_type\": \"Bus\",\r\n      \"travel_time_domain\": \"53 mins\",\r\n      \"travel_time_downtown\": \"13 mins\",\r\n      \"travel_time_ut\": \"24 mins\",\r\n      \"wheelchair_accessible\": \"Wheelchair Accessible\"\r\n    }\r\n  ],\r\n  \"unit_type\": \"Multifamily\",\r\n  \"walk_score\": 86,\r\n  \"walking_distance\": \"~0.13 miles (approx)\",\r\n  \"walking_map_embed_url\": \"https://www.google.com/maps/embed/v1/directions?key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI&origin=30.28868985,-97.75048641&destination=30.288405,-97.752709&mode=walking\",\r\n  \"zip_code\": \"78705\"\r\n}"
+              }
+            ]
+          }
+        ],
+        "description": "## Overview\n\nThe Housing model represents **income-restricted affordable housing developments/records** across Austin, Texas (sourced from the City of Austin Affordable Housing Inventory). Each instance includes location details, unit/program metadata, affordability totals, and accessibility context (Walk Score + Street View). When retrieving a single housing record, the API can also include **related Community and Transportation data**, plus a computed “nearest transit” summary.\n\n## Attributes\n\n- **Project Name** (string): Name of the housing development/project\n    \n- **Address** (string): Street address\n    \n- **Zip Code** (string): ZIP code of the property\n    \n- **Council District** (string): Austin council district\n    \n- **Unit Type** (string): e.g., Multifamily\n    \n- **Housing Tenure** (string): e.g., Rental\n    \n- **Income Restriction Level** (string): AMI bands present (e.g., `80% AMI`, or multiple)\n    \n- **Total Affordable Units** (integer): Total affordable units (summed for a project)\n    \n- **Total ADA Units** (integer): Total ADA-accessible units (summed for a project)\n    \n- **Latitude** (number): Latitude coordinate (if available)\n    \n- **Longitude** (number): Longitude coordinate (if available)\n    \n- **Street View Image** (string): Google Street View image URL (if API key available)\n    \n- **Walk Score** (number): Walkability score from Walk Score API (if available)\n    \n- **Last Synced At** (string datetime): Last time the record was updated from the source\n    \n\n## Connected Models\n\n- **Communities** — Housing is associated with communities (ZIP-based relationship)\n    \n- **Transportation** — Housing is linked to nearby/related transit stops; the single-item endpoint computes the nearest stop summary when coordinates exist\n    \n\n## Available Endpoints\n\n- `GET /api/housing` - Retrieve all housing listings (paginated)\n    \n- `GET /api/housing/:id` - Retrieve a specific housing listing by ID (includes relations + nearest-transit extras when possible)\n    \n\n## Data Sources / APIs Used\n\n- [Austin Affordable Housing Inventory (Open Data)](https://data.austintexas.gov/Housing-and-Real-Estate/Affordable-Housing-Inventory/ifzc-3xz8/about_data)\n    \n- [Walk Score API](https://www.walkscore.com/professional/api.php)\n    \n- [Google Maps Platform (Street View / Maps Embed)](https://mapsplatform.google.com/lp/maps-apis/)"
+      },
+      {
+        "name": "Transportation",
+        "item": [
+          {
+            "name": "GetAllTransportation",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Status code is 200', function () {",
+                    "    pm.response.to.have.status(200);",
+                    "})",
+                    "",
+                    "pm.test('Response is JSON', function () {",
+                    "    pm.response.to.be.json;",
+                    "})",
+                    "",
+                    "pm.test('Response has pagination fields', function () {",
+                    "    var json = pm.response.json();",
+                    "    pm.expect(json).to.have.property('data').that.is.an('array');",
+                    "    pm.expect(json).to.have.property('total').that.is.a('number');",
+                    "    pm.expect(json).to.have.property('page').that.is.a('number');",
+                    "    pm.expect(json).to.have.property('pages').that.is.a('number');",
+                    "})",
+                    "",
+                    "pm.test('Data array is not empty', function () {",
+                    "    var json = pm.response.json();",
+                    "    pm.expect(json.data).to.have.length.above(0);",
+                    "})",
+                    "",
+                    "pm.test('Each item in data has an id field', function () {",
+                    "    var json = pm.response.json();",
+                    "    json.data.forEach(function (item) {",
+                    "        pm.expect(item).to.have.property('id');",
+                    "    });",
+                    "})"
+                  ],
+                  "type": "text/javascript",
+                  "packages": {},
+                  "requests": {}
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://civichousing.me/api/transportation",
+                "protocol": "https",
+                "host": [
+                  "civichousing",
+                  "me"
+                ],
+                "path": [
+                  "api",
+                  "transportation"
+                ]
+              },
+              "description": "# Get All Transit Stops\n\n## Overview\n\nThis endpoint retrieves **paginated** Transportation (transit stop) instances from the CivicHousing database. Each record represents a real CapMetro stop (bus/rail) and includes service information (routes, days, frequency), accessibility labeling, location, map/street-view links, and estimated transit travel times to key destinations.\n\n## Endpoint Details\n\n- **Method:** `GET`\n    \n- **URL:** `https://api.civichousing.me/api/transportation`\n    \n\n## Query Parameters\n\n- **page** (integer, optional): Page number (default `1`)\n    \n\n## Response Format\n\nReturns a **paginated object** (not a raw array):\n\n- **data** (array): List of transportation stop objects\n    \n- **total** (integer): Total number of stops\n    \n- **page** (integer): Current page\n    \n- **pages** (integer): Total pages available\n    \n\nEach transportation stop object includes (typical fields):\n\n- **id** (integer): Unique identifier\n    \n- **stop_id** (string): CapMetro GTFS stop identifier\n    \n- **stop_name** (string): Stop name\n    \n- **stop_url** (string): CapMetro stop detail URL\n    \n- **transport_type** (string): `Bus`, `Rail`, or `Rail and Bus`\n    \n- **routes** (string): Comma-separated route short names serving the stop\n    \n- **num_routes** (integer): Number of distinct routes serving the stop\n    \n- **frequency** (string): Estimated average frequency (e.g., `Every 28 Minutes`)\n    \n- **service_days** (string): Days with active service\n    \n- **wheelchair_accessible** (string): Accessibility label (e.g., `Wheelchair Accessible`)\n    \n- **latitude** (number): Stop latitude\n    \n- **longitude** (number): Stop longitude\n    \n- **map_embed_url** (string): Google Maps embed URL\n    \n- **street_view_url** (string): Google Street View URL\n    \n- **travel_time_ut** (string|null): Transit travel time to UT\n    \n- **travel_time_downtown** (string|null): Transit travel time to Downtown\n    \n- **travel_time_domain** (string|null): Transit travel time to The Domain\n    \n\n## Related Endpoints\n\n- `GET /api/transportation/:id` - Get a specific transit stop by ID\n    \n- `GET /api/community` - Get all communities (paginated)\n    \n- `GET /api/housing` - Get all housing listings (paginated)"
+            },
+            "response": [
+              {
+                "name": "GetAllTransportation",
+                "originalRequest": {
+                  "method": "GET",
+                  "header": [],
+                  "url": {
+                    "raw": "https://civichousing.me/api/transportation",
+                    "protocol": "https",
+                    "host": [
+                      "civichousing",
+                      "me"
+                    ],
+                    "path": [
+                      "api",
+                      "transportation"
+                    ]
+                  }
+                },
+                "status": "OK",
+                "code": 200,
+                "_postman_previewlanguage": "json",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "description": "",
+                    "type": "text"
+                  }
+                ],
+                "cookie": [
+                  {
+                    "expires": "Invalid Date",
+                    "domain": "",
+                    "path": ""
+                  }
+                ],
+                "body": "{\r\n  \"data\": [\r\n    {\r\n      \"frequency\": \"Every 23 Minutes\",\r\n      \"id\": 2346,\r\n      \"latitude\": 30.306697,\r\n      \"longitude\": -97.729732,\r\n      \"map_embed_url\": \"https://www.google.com/maps/embed/v1/place?q=30.306697,-97.729732&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n      \"num_routes\": 1,\r\n      \"routes\": \"656\",\r\n      \"service_days\": \"Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday\",\r\n      \"stop_id\": \"981\",\r\n      \"stop_name\": \"4300 Speedway/43rd\",\r\n      \"stop_url\": \"https://www.capmetro.org/stopdetail/index.php?stop=981\",\r\n      \"street_view_url\": \"https://maps.googleapis.com/maps/api/streetview?size=400x300&location=30.306697,-97.729732&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n      \"transport_type\": \"Bus\",\r\n      \"travel_time_domain\": \"55 mins\",\r\n      \"travel_time_downtown\": \"29 mins\",\r\n      \"travel_time_ut\": \"13 mins\",\r\n      \"wheelchair_accessible\": \"Wheelchair Accessible\"\r\n    }\r\n  ],\r\n  \"page\": 1,\r\n  \"pages\": 1,\r\n  \"total\": 1\r\n}"
+              }
+            ]
+          },
+          {
+            "name": "GetOneTransportation",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Status code is 200', function () {",
+                    "    pm.response.to.have.status(200);",
+                    "})",
+                    "",
+                    "pm.test('Response is JSON', function () {",
+                    "    pm.response.to.be.json;",
+                    "})",
+                    "",
+                    "pm.test('Response has an id field', function () {",
+                    "    var json = pm.response.json();",
+                    "    pm.expect(json).to.have.property('id');",
+                    "})"
+                  ],
+                  "type": "text/javascript",
+                  "packages": {},
+                  "requests": {}
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://civichousing.me/api/transportation/2346",
+                "protocol": "https",
+                "host": [
+                  "civichousing",
+                  "me"
+                ],
+                "path": [
+                  "api",
+                  "transportation",
+                  "2346"
+                ]
+              },
+              "description": "# Get One Transit Stop\n\n## Overview\n\nThis endpoint retrieves a single Transportation (transit stop) instance by its `id` from the CivicHousing database. The stop represents a real CapMetro GTFS stop and includes service details (routes, days, frequency), accessibility labeling, location, map/street-view links, and estimated transit travel times to key destinations.\n\n## Endpoint Details\n\n- **Method:** `GET`\n    \n- **URL:** `https://api.civichousing.me/api/transportation/:id`\n    \n\n## Path Parameter\n\n| Parameter | Type | Required | Description |\n| --- | --- | --- | --- |\n| `id` | integer | Yes | Unique identifier of the transit stop |\n\n## Example Request\n\n`GET https://api.civichousing.me/api/transportation/1`\n\n## Response Format\n\nReturns a **single JSON object** representing one transit stop.\n\n### Response Fields (typical)\n\n- **id** (integer): Unique identifier\n    \n- **stop_id** (string): CapMetro GTFS stop identifier\n    \n- **stop_name** (string): Stop name\n    \n- **stop_url** (string): CapMetro stop detail URL\n    \n- **transport_type** (string): `Bus`, `Rail`, or `Rail and Bus`\n    \n- **routes** (string): Comma-separated route short names serving the stop\n    \n- **num_routes** (integer): Number of distinct routes serving the stop\n    \n- **frequency** (string): Estimated average frequency (e.g., `Every 28 Minutes`)\n    \n- **service_days** (string): Days with active service\n    \n- **wheelchair_accessible** (string): Accessibility label (e.g., `Wheelchair Accessible`)\n    \n- **latitude** (number): Stop latitude\n    \n- **longitude** (number): Stop longitude\n    \n- **map_embed_url** (string): Google Maps embed URL\n    \n- **street_view_url** (string): Google Street View URL\n    \n- **travel_time_ut** (string|null): Transit travel time to UT\n    \n- **travel_time_downtown** (string|null): Transit travel time to Downtown\n    \n- **travel_time_domain** (string|null): Transit travel time to The Domain\n    \n\n## Related Endpoints\n\n- `GET /api/transportation` - Get all transit stops (paginated)\n    \n- `GET /api/community` - Get all communities (paginated)\n    \n- `GET /api/housing` - Get all housing listings (paginated)"
+            },
+            "response": [
+              {
+                "name": "GetOneTransportation",
+                "originalRequest": {
+                  "method": "GET",
+                  "header": [],
+                  "url": {
+                    "raw": "https://civichousing.me/api/transportation/2346",
+                    "protocol": "https",
+                    "host": [
+                      "civichousing",
+                      "me"
+                    ],
+                    "path": [
+                      "api",
+                      "transportation",
+                      "2346"
+                    ]
+                  }
+                },
+                "status": "OK",
+                "code": 200,
+                "_postman_previewlanguage": "json",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "description": "",
+                    "type": "text"
+                  }
+                ],
+                "cookie": [
+                  {
+                    "expires": "Invalid Date",
+                    "domain": "",
+                    "path": ""
+                  }
+                ],
+                "body": "{\r\n    \"communities\": [\r\n        {\r\n            \"county\": \"Travis County\",\r\n            \"crime_index\": 21.44,\r\n            \"health_count\": 67,\r\n            \"id\": 35,\r\n            \"latitude\": 30.310782,\r\n            \"longitude\": -97.722759,\r\n            \"map_embed_url\": \"https://www.google.com/maps/embed/v1/place?q=30.310782,-97.722759&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n            \"median_housing_price\": 590999.46,\r\n            \"park_count\": 5,\r\n            \"population\": 16961,\r\n            \"street_view_url\": \"https://maps.googleapis.com/maps/api/streetview?size=400x300&location=30.310782,-97.722759&radius=5000&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n            \"transit_score\": 54,\r\n            \"zip_code\": \"78751\"\r\n        }\r\n    ],\r\n    \"frequency\": \"Every 23 Minutes\",\r\n    \"housing\": [\r\n        {\r\n            \"address\": \"4209 Speedway\",\r\n            \"council_district\": \"9\",\r\n            \"housing_tenure\": \"Rental\",\r\n            \"id\": 692,\r\n            \"income_restriction_level\": \"50% AMI, 60% AMI, 80% AMI, 100% AMI, 120% AMI\",\r\n            \"last_synced_at\": \"Tue, 10 Mar 2026 03:26:19 GMT\",\r\n            \"latitude\": 30.3060707,\r\n            \"longitude\": -97.7297033,\r\n            \"project_name\": \"The Preserve Hyde Park - The Adler (fka Tom Thumb)\",\r\n            \"street_view_image\": \"https://maps.googleapis.com/maps/api/streetview?size=600x400&location=30.3060707,-97.7297033&fov=80&heading=70&pitch=0&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n            \"total_ada_units\": 0,\r\n            \"total_affordable_units\": 11,\r\n            \"unit_type\": \"Multifamily\",\r\n            \"walk_score\": 85,\r\n            \"zip_code\": \"78751\"\r\n        }\r\n    ],\r\n    \"id\": 2346,\r\n    \"latitude\": 30.306697,\r\n    \"longitude\": -97.729732,\r\n    \"map_embed_url\": \"https://www.google.com/maps/embed/v1/place?q=30.306697,-97.729732&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n    \"num_routes\": 1,\r\n    \"routes\": \"656\",\r\n    \"service_days\": \"Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday\",\r\n    \"stop_id\": \"981\",\r\n    \"stop_name\": \"4300 Speedway/43rd\",\r\n    \"stop_url\": \"https://www.capmetro.org/stopdetail/index.php?stop=981\",\r\n    \"street_view_url\": \"https://maps.googleapis.com/maps/api/streetview?size=400x300&location=30.306697,-97.729732&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n    \"transport_type\": \"Bus\",\r\n    \"travel_time_domain\": \"55 mins\",\r\n    \"travel_time_downtown\": \"29 mins\",\r\n    \"travel_time_ut\": \"13 mins\",\r\n    \"wheelchair_accessible\": \"Wheelchair Accessible\"\r\n}"
+              }
+            ]
+          }
+        ],
+        "description": "## Overview\n\nThe Transportation model represents **CapMetro transit stops** (bus and rail) across Austin, Texas. Each instance corresponds to a real stop from CapMetro’s GTFS feed and combines stop location details with service characteristics such as **routes served, service days, and estimated frequency**. The model also enriches stops with **map/street-view links** and **estimated transit travel times** from the stop to key destinations (UT, Downtown, and The Domain).\n\n## Attributes\n\n- **Stop ID** (string): CapMetro GTFS stop identifier\n    \n- **Stop Name** (string): Name of the transit stop\n    \n- **Transport Type** (string): `Bus`, `Rail`, or `Rail and Bus` (based on route types)\n    \n- **Routes** (string): Comma-separated list of route short names serving the stop\n    \n- **Route Count** (integer): Number of distinct routes serving the stop (`num_routes`)\n    \n- **Service Days** (string): Days the stop has active service (derived from GTFS calendar exceptions)\n    \n- **Frequency** (string): Estimated average arrival frequency (e.g., `Every 28 Minutes`)\n    \n- **Wheelchair Accessible** (string): Accessibility label (e.g., `Wheelchair Accessible`)\n    \n- **Stop URL** (string): CapMetro stop detail page link\n    \n- **Latitude / Longitude** (number): Stop coordinates\n    \n- **Map Embed URL** (string): Google Maps embed link for the stop\n    \n- **Street View URL** (string): Google Street View image link for the stop\n    \n- **Travel Time to UT** (string): Estimated transit time to UT (`travel_time_ut`)\n    \n- **Travel Time to Downtown** (string): Estimated transit time to Downtown (`travel_time_downtown`)\n    \n- **Travel Time to The Domain** (string): Estimated transit time to The Domain (`travel_time_domain`)\n    \n\n## Connected Models\n\n- **Communities** — Transit stops are linked to ZIP-based communities they serve\n    \n- **Housing** — Transit stops are linked to nearby/related affordable housing listings\n    \n\n## Available Endpoints\n\n- `GET /api/transportation` - Retrieve all transit stops (paginated)\n    \n- `GET /api/transportation/:id` - Retrieve a specific transit stop by ID\n    \n\n## Data Sources / APIs Used\n\n- [CapMetro GTFS Data](https://data.texas.gov/dataset/CapMetro-GTFS/r4v4-vz24/about_data)\n    \n- [Google Maps Directions API](https://mapsplatform.google.com/lp/maps-apis/)"
+      }
+    ]
+  }
