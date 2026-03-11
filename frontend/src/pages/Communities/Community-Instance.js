@@ -1,4 +1,8 @@
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import InstancePage from "../../components/InstancePage";
+
+const API_BASE = "https://api.civichousing.me";
 
 const getImage = (item) => item.street_view_url;
 
@@ -11,8 +15,47 @@ const communityFields = [
   "park_count",
   "map_embed_url",
   "street_view_url",
-  "health_count"
+  "health_count",
+  "transit_score",
+  "community_total_affordable_units",
+  "community_housing_count"
 ];
+
+async function fetchAllHousingByZip(zipCode) {
+  const all = [];
+  let page = 1;
+  let pages = 1;
+  do {
+    const res = await fetch(
+      `${API_BASE}/api/housing?zip=${encodeURIComponent(zipCode)}&page=${page}&per_page=50`
+    );
+    const data = await res.json();
+    const list = data.data || [];
+    all.push(...list);
+    pages = data.pages ?? 1;
+    page += 1;
+  } while (page <= pages);
+  return all;
+}
+
+function aggregateHousingStats(housingList) {
+  const totalAffordable = (housingList || []).reduce(
+    (sum, h) => sum + (Number(h.total_affordable_units) || 0),
+    0
+  );
+  const count = housingList.length;
+  const totalUnits = (housingList || []).reduce(
+    (sum, h) => sum + (Number(h.total_affordable_units) || 0) + (Number(h.total_ada_units) || 0),
+    0
+  );
+  const ratio = totalUnits > 0
+    ? (totalAffordable / totalUnits).toFixed(2)
+    : "—";
+  return {
+    community_total_affordable_units: totalAffordable,
+    community_housing_count: count
+  };
+}
 
 const communityDescriptions = {
 
@@ -42,10 +85,46 @@ const communityDescriptions = {
 
   health_count: (value, item) =>
     `This community has ${value} healthcare facilities, including hospitals, clinics, and medical centers. 
-    This availability of healthcare resources is crucial for the well-being and health outcomes of residents in the community.`
+    This availability of healthcare resources is crucial for the well-being and health outcomes of residents in the community.`,
+
+  transit_score: (value) =>
+    `The transit score for this community is ${value ?? "—"}. 
+    This score reflects how well the area is served by public transit, with higher values indicating better access to buses, rail, and other transit options.`,
+
+  community_total_affordable_units: (value) =>
+    `This community has ${value} affordable housing units in total across all listed housing projects in the area. 
+    This figure helps assess how much affordable housing is available for residents who need it.`,
+
+  community_housing_count: (value) =>
+    `There are ${value} housing projects in this community that are tracked in the dataset. 
+    Together with affordable unit counts, this indicates the scale of affordable housing supply in the neighborhood.`
 };
 
 export default function CommunityInstance() {
+  const { id } = useParams();
+  const [item, setItem] = useState(null);
+
+  useEffect(() => {
+    setItem(null);
+    fetch(`${API_BASE}/api/community/${id}`)
+      .then((res) => res.json())
+      .then((data) => setItem(data))
+      .catch((err) => console.error("Error loading community:", err));
+  }, [id]);
+
+  useEffect(() => {
+    if (!item?.zip_code) return;
+    fetchAllHousingByZip(item.zip_code)
+      .then((housingList) => {
+        const stats = aggregateHousingStats(housingList);
+        setItem((prev) => (prev ? { ...prev, ...stats } : prev));
+      })
+      .catch((err) => console.error("Error loading housing by zip:", err));
+  }, [item?.zip_code]);
+
+  const itemReady =
+    item &&
+    (item.community_total_affordable_units !== undefined || !item.zip_code);
 
   return (
     <InstancePage
@@ -53,7 +132,7 @@ export default function CommunityInstance() {
       fields={communityFields}
       attributeDescriptions={communityDescriptions}
       getImage={getImage}
-
+      item={itemReady ? item : undefined}
       relatedModels={[
           {
             key: "housing",

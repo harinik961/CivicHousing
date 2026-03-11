@@ -8,18 +8,22 @@ export default function InstancePage({
   fields,
   attributeDescriptions,
   getImage,
-  relatedModels = []
+  relatedModels = [],
+  item: itemProp
 }) {
 
   const { id } = useParams();
-  const [item, setItem] = useState(null);
+  const [itemState, setItemState] = useState(null);
+
+  const item = itemProp !== undefined ? itemProp : itemState;
 
   useEffect(() => {
+    if (itemProp !== undefined) return;
     fetch(`https://api.civichousing.me/${apiEndpoint}/${id}`)
       .then(res => res.json())
-      .then(res => setItem(res))
+      .then(res => setItemState(res))
       .catch(err => console.error("Error loading instance:", err));
-  }, [id, apiEndpoint]);
+  }, [id, apiEndpoint, itemProp]);
 
   if (!item) return <h2>Loading...</h2>;
 
@@ -36,13 +40,16 @@ export default function InstancePage({
 
   const labelOverrides = {
     walk_score: "Walkability Score",
+    transit_score: "Transit Score",
     last_synced_at: "Last Updated",
     map_embed_url: "Map View",
     walking_map_embed_url: "Walking Route to Transit",
     walking_distance: "Distance to Transit",
     closest_stop_frequency: "Transit Frequency",
     street_view_url: "Street View",
-    street_view_image: "Street View"
+    street_view_image: "Street View",
+    community_total_affordable_units: "Total Affordable Units (in this area)",
+    community_housing_count: "Housing Projects (in this area)"
   };
 
   function normalizeImage(value) {

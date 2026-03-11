@@ -1,17 +1,17 @@
 export const MODEL_ATTRIBUTES = {
 
   community: [
-          { title: "Zipcode", key: "zip_code" },
-          { title: " County", key: "county" },
-          { title: "Median Housing Price", key: "median_housing_price" },
-          { title: "Population", key: "population" },
-          { title: "Crime Index", key: "crime_index" },
-          { title: "Num Parks", key: "park_count" },
-          { title: "Num Healthcare Facilities", key: "health_count" }
+    { title: "Zipcode", key: "zip_code" },
+    { title: " County", key: "county" },
+    { title: "Median Housing Price", key: "median_housing_price" },
+    { title: "Population", key: "population" },
+    { title: "Crime Index", key: "crime_index" },
+    { title: "Num Parks", key: "park_count" },
+    { title: "Num Healthcare Facilities", key: "health_count" },
+    { title: "Transit Score", key: "transit_score" },
+    { title: "Total Affordable Units", key: "community_total_affordable_units" },
+    { title: "Housing Projects", key: "community_housing_count" }
   ],
-
-
-
 
   housing: [
     { title: "Address", key: "address" },

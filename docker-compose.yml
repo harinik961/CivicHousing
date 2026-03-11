@@ -5,13 +5,28 @@ services:
     build: ./backend
     container_name: backend
     ports:
-      - "5000:5000" # host:container
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./backend
+          target: /app
+        - path: ./backend/requirements.txt
+          action: rebuild
 
   frontend:
     build: ./frontend
     container_name: frontend
     ports:
-      - "3000:80" # host:container
-    depends_on:
-      - backend
-
+      - "3000:80"
+    volumes:
+      - ./frontend:/app
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./frontend
+          target: /app
+        - path: ./frontend/package.json
+          action: rebuild

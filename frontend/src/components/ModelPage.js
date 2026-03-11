@@ -54,6 +54,36 @@ function formatItem(item, attributes) {
   };
 }
 
+const API_BASE = "https://api.civichousing.me";
+
+async function fetchAllHousingPages() {
+  const all = [];
+  let page = 1;
+  let pages = 1;
+  do {
+    const res = await fetch(`${API_BASE}/api/housing?page=${page}&per_page=50`);
+    const data = await res.json();
+    const list = data.data || [];
+    all.push(...list);
+    pages = data.pages ?? 1;
+    page += 1;
+  } while (page <= pages);
+  return all;
+}
+
+function buildHousingStatsByZip(housingList) {
+  const byZip = {};
+  for (const h of housingList || []) {
+    const zip = h.zip_code ?? "";
+    if (!byZip[zip]) {
+      byZip[zip] = { community_total_affordable_units: 0, community_housing_count: 0 };
+    }
+    byZip[zip].community_total_affordable_units += Number(h.total_affordable_units) || 0;
+    byZip[zip].community_housing_count += 1;
+  }
+  return byZip;
+}
+
 export default function ModelPage({ title, apiEndpoint, modelName, attributes, query}) {
 
   const [items, setItems] = useState([]);
@@ -62,49 +92,80 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
+  const [housingStatsByZip, setHousingStatsByZip] = useState(null);
 
   const PER_PAGE = 50;
+  const isCommunity = apiEndpoint === "/api/community";
 
   // Fetch data only when apiEndpoint or attributes change
   useEffect(() => {
 
     setLoading(true);
-    setPage(1); // Reset to page 1 on new data source
+    setPage(1);
+    setHousingStatsByZip(null);
 
-    fetch(`https://api.civichousing.me/${apiEndpoint}?page=1&per_page=${PER_PAGE}`)
-      .then(res => res.json())
-      .then(data => {
-        // All endpoints now return paginated format: {data: [...], total: X, page: Y, pages: Z}
-        const raw = data.data || [];
-        const formatted = raw.map(item => formatItem(item, attributes));
-        
-        setTotal(data.total ?? 0);
-        setPages(data.pages ?? 1);
-        setItems(formatted);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Error loading model data:", err);
-        setLoading(false);
-      });
+    if (isCommunity) {
+      Promise.all([
+        fetch(`${API_BASE}${apiEndpoint}?page=1&per_page=${PER_PAGE}`).then(r => r.json()),
+        fetchAllHousingPages()
+      ])
+        .then(([data, housingList]) => {
+          const zipMap = buildHousingStatsByZip(housingList);
+          setHousingStatsByZip(zipMap);
+          const raw = data.data || [];
+          const defaults = { community_total_affordable_units: 0, community_housing_count: 0 };
+          const merged = raw.map(c => ({ ...c, ...defaults, ...(zipMap[c.zip_code] || {}) }));
+          const formatted = merged.map(item => formatItem(item, attributes));
+          setTotal(data.total ?? 0);
+          setPages(data.pages ?? 1);
+          setItems(formatted);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error("Error loading community/housing data:", err);
+          setLoading(false);
+        });
+    } else {
+      fetch(`${API_BASE}${apiEndpoint}?page=1&per_page=${PER_PAGE}`)
+        .then(res => res.json())
+        .then(data => {
+          const raw = data.data || [];
+          const formatted = raw.map(item => formatItem(item, attributes));
+          setTotal(data.total ?? 0);
+          setPages(data.pages ?? 1);
+          setItems(formatted);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error("Error loading model data:", err);
+          setLoading(false);
+        });
+    }
 
-  }, [apiEndpoint, attributes]);
+  }, [apiEndpoint, attributes, isCommunity]);
 
   // Handle page changes - fetch new page from server
   useEffect(() => {
 
-    if (page === 1) return; // Skip initial load (handled by first useEffect)
+    if (page === 1) return;
 
-    // Scroll to top when page changes
     window.scrollTo(0, 0);
-
-    // Fetch new page from server
     setLoading(true);
-    fetch(`https://civichousing.me/${apiEndpoint}?page=${page}&per_page=${PER_PAGE}`)
+
+    const mergeAndFormat = (raw) => {
+      if (isCommunity && housingStatsByZip) {
+        const defaults = { community_total_affordable_units: 0, community_housing_count: 0 };
+        const merged = raw.map(c => ({ ...c, ...defaults, ...(housingStatsByZip[c.zip_code] || {}) }));
+        return merged.map(item => formatItem(item, attributes));
+      }
+      return raw.map(item => formatItem(item, attributes));
+    };
+
+    fetch(`${API_BASE}${apiEndpoint}?page=${page}&per_page=${PER_PAGE}`)
       .then(res => res.json())
       .then(data => {
         const raw = data.data || [];
-        const formatted = raw.map(item => formatItem(item, attributes));
+        const formatted = mergeAndFormat(raw);
         setItems(formatted);
         setLoading(false);
       })
