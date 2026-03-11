@@ -37,7 +37,7 @@ function TeamMemberCard({name, image, bio, responsibilities, commits, issues, te
     image: cocoImage, 
     bio: "I'm a Junior studying Computer Science and Mathematics at UT Austin. I enjoy sleeping, reading, and playing Minecraft in my free time.", 
     responsibilities: "Fullstack: Data Scrape, Server Hosting, About Page, Navbar",
-    tests: 16
+    tests: 24
   }, 
   {
     name: "Matthew Pham", 
@@ -46,7 +46,7 @@ function TeamMemberCard({name, image, bio, responsibilities, commits, issues, te
     image: matthewImage, 
     bio: "I'm a junior studying CS with a minor in SDS and Business at UT. I love staying active, chilling with friends, and enjoying the outdoors.", 
     responsibilities: "Fullstack: Data Scrape, Home Page, Postman API",
-    tests: 0
+    tests: 25
   }, 
   {
     name: "Aarshi Khatiwada", 
@@ -64,7 +64,7 @@ function TeamMemberCard({name, image, bio, responsibilities, commits, issues, te
     image: hariniImage, 
     bio: "I'm a Sophomore studying computer science and entreprenuership at UT Austin. I enjoy art, photography, and reading in my free time .", 
     responsibilities: "Fullstack: Data Scrape, Models and Instances",
-    tests: 12
+    tests: 16
   }, 
   {
     name: "Alexander Nguyen", 
@@ -206,7 +206,7 @@ export default function About() {
           <li><strong>AWS RDS:</strong> Cloud platform used to host our database.<br /></li>
           <li><strong>Flask:</strong> Web framework for our backend server.<br /></li>
           <li><strong>Docker:</strong> Containerization platform used to package the backend application and its dependencies into reproducible environments.<br /></li>
-          <li><strong>Mocha:</strong> JavaScript testing framework used for running frontend unit tests.<br /></li>
+          <li><strong>Jest:</strong> JavaScript testing framework used for running frontend unit tests.<br /></li>
           <li><strong>unittest:</strong> Python testing framework used to write and run backend unit tests.<br /></li>
           <li><strong>Selenium:</strong> Browser automation tool used for end-to-end testing of the web application interface.<br /></li>
         </ul>

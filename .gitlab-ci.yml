@@ -12,6 +12,38 @@ build_website:
   only:
     - main
 
+jest_unit_tests: 
+  stage: test
+  script:
+    - cd frontend
+    - npm install --include=dev
+    - npm test
+  only:
+    - main
+
+selenium_acceptance_tests: 
+  stage: test
+  image: python:3.12
+  before_script:
+    - apt-get update && apt-get install -y wget gnupg unzip curl fonts-liberation libxss1 libappindicator3-1 libnss3 lsb-release xdg-utils
+    - wget -q -O /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+    - apt-get install -y /tmp/google-chrome.deb
+    - pip install -r frontend/requirements.txt
+  script:
+    - cd frontend
+    - python3 guitests.py
+  only:
+    - main
+
+backend_tests: 
+  stage: test
+  image: python:3.12
+  before_script:
+    - pip install -r backend/requirements.txt
+  script:
+    - cd backend
+    - python3 tests.py
+
 postman_api_tests:
   stage: test
   image:
@@ -20,3 +52,5 @@ postman_api_tests:
   script:
     - newman --version
     - newman run postman/collection.json --reporters cli
+  only: 
+    - main
