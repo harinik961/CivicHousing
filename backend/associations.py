@@ -5,6 +5,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from dotenv import load_dotenv
 from flask import Flask
+from sqlalchemy import text
 from models import db, Community, Housing, Transportation
 
 load_dotenv()
@@ -18,95 +19,203 @@ db.init_app(app)
 
 def seed_associations():
 
-    print("Seeding associations by zip code...")
+    print("\nStarting association seeding...")
 
-    communities = Community.query.all()
-    housings = Housing.query.all()
-    stops = Transportation.query.all()
+    try:
 
-    linked_ch = 0
-    linked_ht = 0
-    linked_ct = 0
+        print("Clearing existing associations...")
 
-    # -------------------------
-    # COMMUNITY ↔ HOUSING
-    # -------------------------
+        db.session.execute(text("DELETE FROM community_housing"))
+        db.session.execute(text("DELETE FROM housing_transportation"))
+        db.session.execute(text("DELETE FROM community_transportation"))
 
-    for community in communities:
+        # Community → nearest Housing
 
-        community_zip = str(community.zip_code).strip()
+        print("Community → nearest housing")
 
-        for housing in housings:
+        db.session.execute(text("""
+            INSERT INTO community_housing (community_id, housing_id)
+            SELECT c.id,
+                   (
+                       SELECT h.id
+                       FROM housing h
+                       WHERE h.latitude IS NOT NULL
+                       AND h.longitude IS NOT NULL
+                       ORDER BY
+                           (c.latitude - h.latitude)*(c.latitude - h.latitude) +
+                           (c.longitude - h.longitude)*(c.longitude - h.longitude)
+                       LIMIT 1
+                   )
+            FROM communities c
+            WHERE c.latitude IS NOT NULL
+            AND c.longitude IS NOT NULL
+            ON CONFLICT DO NOTHING
+        """))
 
-            if not housing.zip_code:
-                continue
+        # Community → nearest Transit
 
-            housing_zip = str(housing.zip_code).strip()
+        print("Community → nearest transit")
 
-            if housing_zip == community_zip:
+        db.session.execute(text("""
+            INSERT INTO community_transportation (community_id, transportation_id)
+            SELECT c.id,
+                   (
+                       SELECT t.id
+                       FROM transportation t
+                       WHERE t.latitude IS NOT NULL
+                       AND t.longitude IS NOT NULL
+                       ORDER BY
+                           (c.latitude - t.latitude)*(c.latitude - t.latitude) +
+                           (c.longitude - t.longitude)*(c.longitude - t.longitude)
+                       LIMIT 1
+                   )
+            FROM communities c
+            WHERE c.latitude IS NOT NULL
+            AND c.longitude IS NOT NULL
+            ON CONFLICT DO NOTHING
+        """))
 
-                # prevent duplicate insert
-                if housing not in community.housing:
-                    community.housing.append(housing)
-                    linked_ch += 1
+        # Housing → nearest Community
 
-    print(f"Linked {linked_ch} community <-> housing pairs")
+        print("Housing → nearest community")
 
-    # -------------------------
-    # HOUSING ↔ TRANSPORTATION
-    # -------------------------
+        db.session.execute(text("""
+            INSERT INTO community_housing (community_id, housing_id)
+            SELECT
+                (
+                    SELECT c.id
+                    FROM communities c
+                    WHERE c.latitude IS NOT NULL
+                    AND c.longitude IS NOT NULL
+                    ORDER BY
+                        (h.latitude - c.latitude)*(h.latitude - c.latitude) +
+                        (h.longitude - c.longitude)*(h.longitude - c.longitude)
+                    LIMIT 1
+                ),
+                h.id
+            FROM housing h
+            WHERE h.latitude IS NOT NULL
+            AND h.longitude IS NOT NULL
+            ON CONFLICT DO NOTHING
+        """))
 
-    DEGREE_THRESHOLD = 0.0072  # ~0.5 miles
+        
+        # Housing → nearest Transit
 
-    for housing in housings:
+        print("Housing → nearest transit")
 
-        if housing.latitude is None or housing.longitude is None:
-            continue
+        db.session.execute(text("""
+            INSERT INTO housing_transportation (housing_id, transportation_id)
+            SELECT h.id,
+                   (
+                       SELECT t.id
+                       FROM transportation t
+                       WHERE t.latitude IS NOT NULL
+                       AND t.longitude IS NOT NULL
+                       ORDER BY
+                           (h.latitude - t.latitude)*(h.latitude - t.latitude) +
+                           (h.longitude - t.longitude)*(h.longitude - t.longitude)
+                       LIMIT 1
+                   )
+            FROM housing h
+            WHERE h.latitude IS NOT NULL
+            AND h.longitude IS NOT NULL
+            ON CONFLICT DO NOTHING
+        """))
 
-        for stop in stops:
+        # Transit → nearest Housing
 
-            if stop.latitude is None or stop.longitude is None:
-                continue
+        print("Transit → nearest housing")
 
-            lat_diff = abs(housing.latitude - stop.latitude)
-            lon_diff = abs(housing.longitude - stop.longitude)
+        db.session.execute(text("""
+            INSERT INTO housing_transportation (housing_id, transportation_id)
+            SELECT
+                (
+                    SELECT h.id
+                    FROM housing h
+                    WHERE h.latitude IS NOT NULL
+                    AND h.longitude IS NOT NULL
+                    ORDER BY
+                        (t.latitude - h.latitude)*(t.latitude - h.latitude) +
+                        (t.longitude - h.longitude)*(t.longitude - h.longitude)
+                    LIMIT 1
+                ),
+                t.id
+            FROM transportation t
+            WHERE t.latitude IS NOT NULL
+            AND t.longitude IS NOT NULL
+            ON CONFLICT DO NOTHING
+        """))
 
-            if lat_diff <= DEGREE_THRESHOLD and lon_diff <= DEGREE_THRESHOLD:
+        # Transit → nearest Community
 
-                if stop not in housing.transportation:
-                    housing.transportation.append(stop)
-                    linked_ht += 1
+        print("Transit → nearest community")
 
-    print(f"Linked {linked_ht} housing <-> transportation pairs")
+        db.session.execute(text("""
+            INSERT INTO community_transportation (community_id, transportation_id)
+            SELECT
+                (
+                    SELECT c.id
+                    FROM communities c
+                    WHERE c.latitude IS NOT NULL
+                    AND c.longitude IS NOT NULL
+                    ORDER BY
+                        (t.latitude - c.latitude)*(t.latitude - c.latitude) +
+                        (t.longitude - c.longitude)*(t.longitude - c.longitude)
+                    LIMIT 1
+                ),
+                t.id
+            FROM transportation t
+            WHERE t.latitude IS NOT NULL
+            AND t.longitude IS NOT NULL
+            ON CONFLICT DO NOTHING
+        """))
 
-    # -------------------------
-    # COMMUNITY ↔ TRANSPORTATION
-    # -------------------------
+        db.session.commit()
 
-    for community in communities:
+        print("\nAssociations committed successfully.")
 
-        for housing in community.housing:
+    except Exception as e:
 
-            for stop in housing.transportation:
+        db.session.rollback()
 
-                if stop not in community.transportation:
-                    community.transportation.append(stop)
-                    linked_ct += 1
+        print("\nError occurred — transaction rolled back.")
+        print(e)
 
-    print(f"Linked {linked_ct} community <-> transportation pairs")
 
-    # commit everything once
-    db.session.commit()
+def show_counts():
 
-    print("Done!")
+    ch = db.session.execute(text("SELECT COUNT(*) FROM community_housing")).scalar()
+    ht = db.session.execute(text("SELECT COUNT(*) FROM housing_transportation")).scalar()
+    ct = db.session.execute(text("SELECT COUNT(*) FROM community_transportation")).scalar()
+
+    print("\nAssociation counts:")
+    print("community_housing:", ch)
+    print("housing_transportation:", ht)
+    print("community_transportation:", ct)
 
 
 if __name__ == "__main__":
 
+    confirm = input(
+        "\nThis will rebuild all association tables.\n"
+        "Core tables will NOT be modified.\n"
+        "Continue? (y/n): "
+    )
+
+    if confirm.lower() != "y":
+        print("Aborted.")
+        sys.exit()
+
     with app.app_context():
 
-        print("Community rows:", Community.query.count())
-        print("Housing rows:", Housing.query.count())
-        print("Transportation rows:", Transportation.query.count())
+        print("\nRow counts before:")
+        print("Community:", Community.query.count())
+        print("Housing:", Housing.query.count())
+        print("Transportation:", Transportation.query.count())
 
         seed_associations()
+
+        show_counts()
+
+        print("\nDone.")

@@ -93,7 +93,7 @@ export default function HousingInstance() {
           },
 
           {
-            key : "community",
+            key : "communities",
             title: "Community Information",
             modelName: "community",
             attributes: MODEL_ATTRIBUTES.community
