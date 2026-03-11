@@ -54,7 +54,7 @@ def fetch_walkability_score(address, lat, lon):
     return None, None, None
 
 
-def get_street_url(zip_code):
+def get_street_url(zip_code, lat, lon):
     base = "https://maps.googleapis.com/maps/api/streetview"
     metadata_url = "https://maps.googleapis.com/maps/api/streetview/metadata"
     
@@ -69,6 +69,7 @@ def get_street_url(zip_code):
             return f"{base}?size=400x300&location={location}&radius=5000&key={GOOGLE_MAPS_API_KEY}"
     
     return None
+
 
 austin_url = "https://data.austintexas.gov/resource/ifzc-3xz8.json"
 census_url = "https://api.census.gov/data/2024/acs/acs5"
@@ -223,7 +224,7 @@ for _, row in merged_df.iterrows():
 
     map_urls.append({
         "zip": zip_code,
-        "map_embed_url": f"https://www.google.com/maps/embed/v1/place?q={zip_code}+Austin+TX&key={GOOGLE_MAPS_API_KEY}",
+        "map_embed_url": f"https://www.google.com/maps/embed/v1/place?q={lat},{lon}&key={GOOGLE_MAPS_API_KEY}",
         "street_view_url": get_street_url(zip_code, lat, lon)
     })
 
