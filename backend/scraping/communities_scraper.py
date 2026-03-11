@@ -223,8 +223,6 @@ for _, row in merged_df.iterrows():
 
     map_urls.append({
         "zip": zip_code,
-        "latitude": lat, 
-        "longitude": lon,
         "map_embed_url": f"https://www.google.com/maps/embed/v1/place?q={lat},{lon}&key={GOOGLE_MAPS_API_KEY}",
         "street_view_url": get_street_url(zip_code, lat, lon)
     })
