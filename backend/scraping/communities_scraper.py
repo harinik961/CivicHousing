@@ -59,8 +59,8 @@ def get_street_url(zip_code, lat, lon):
     metadata_url = "https://maps.googleapis.com/maps/api/streetview/metadata"
     
     options = [
+        f"{float(lat):.6f},{float(lon):.6f}",
         f"{zip_code}+Austin+TX",
-        f"{lat},{lon}",
     ]
     
     for location in options:
@@ -69,7 +69,6 @@ def get_street_url(zip_code, lat, lon):
             return f"{base}?size=400x300&location={location}&radius=5000&key={GOOGLE_MAPS_API_KEY}"
     
     return None
-
 
 austin_url = "https://data.austintexas.gov/resource/ifzc-3xz8.json"
 census_url = "https://api.census.gov/data/2024/acs/acs5"
