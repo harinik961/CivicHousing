@@ -122,3 +122,38 @@ Model 3 - Transportation (bus stations, train stations, sidewalk/trails score)
     - Is the path between my 'affordable' apartment and the bus stop actually safe and accessible?"
     - What affordable housing options are available and closest to reliable transit options?
 
+## Phase 2
+
+Project Leader: 
+Name: Aarshi Khatiwada
+Responsibilities: 
+- Scheduled meetings/calls
+- Assigned tasks/issues
+- Ensured task completion
+
+GitLab Information: 
+- Git SHA: 8985a77680d97448a895879f09aa1d5a87459158
+- Git Pipeline Link: https://gitlab.com/matthewpham16/cs373-spring-2026-53380_06/-/pipelines/2379746475
+
+Website Link: 
+[civichousing.me](https://civichousing.me/)
+
+Estimated and Actual Hours: 
+| Name | Estimated Hours | Actual Hours |
+|------|-------------------|--------------|
+| Coco Zhou | 20 hrs | 23 hrs |
+| Matthew Pham | 18 hrs | 23 hrs |
+| Sri Harini Kolluru | 19 hrs | 23 hrs |
+| Alexander Nguyen | 21 hrs | 23 hr |
+| Aarshi Khatiwada | 20 hrs | 23 hrs |
+
+Customer Stories Estimated and Time Spent: 
+| Customer Story | Estimated Hours | Time Spent |
+|------|-------------------|--------------|
+| Customer Story #6 (Issue #78) | 2 hours | 3 hours |
+| Customer Story #7 (Issue #79) | 1 hour | 1 hour 30 mins |
+| Customer Story #8 (Issue #80) | 1 hour 30 mins | 2 hours |
+| Customer Story #9 (Issue #81) | 1 hour | 1 hour 30 mins |
+| Customer Story #10 (Issue #82) | 30 mins | 1 hour |
+
+Comments: N/A
