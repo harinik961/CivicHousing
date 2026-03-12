@@ -53,7 +53,9 @@ def nearest_transport_stop_for_housing(housing):
     )
 
 
-def get_google_walking_distance_miles(origin_lat, origin_lng, dest_lat, dest_lng, api_key):
+def get_google_walking_distance_miles(
+    origin_lat, origin_lng, dest_lat, dest_lng, api_key
+):
     if not api_key:
         return None
 
@@ -108,12 +110,14 @@ def create_app():
     # -----------------------------
     @app.route("/", methods=["GET"])
     def index():
-        return jsonify({
-            "message": "CivicHousing API is running.",
-            "api": "/api",
-            "docs": "/docs",
-            "health": "/health"
-        })
+        return jsonify(
+            {
+                "message": "CivicHousing API is running.",
+                "api": "/api",
+                "docs": "/docs",
+                "health": "/health",
+            }
+        )
 
     @app.route("/health", methods=["GET"])
     def health():
@@ -121,33 +125,32 @@ def create_app():
 
     @app.route("/api", methods=["GET"])
     def api_info():
-        return jsonify({
-            "name": "CivicHousing API",
-            "version": "1.0",
-            "description": "API for CivicHousing housing, community, and transportation data.",
-            "resources": {
-                "housing": {
-                    "list": "/api/housing",
-                    "detail": "/api/housing/<id>"
+        return jsonify(
+            {
+                "name": "CivicHousing API",
+                "version": "1.0",
+                "description": "API for CivicHousing housing, community, and transportation data.",
+                "resources": {
+                    "housing": {"list": "/api/housing", "detail": "/api/housing/<id>"},
+                    "community": {
+                        "list": "/api/community",
+                        "detail": "/api/community/<id>",
+                    },
+                    "transportation": {
+                        "list": "/api/transportation",
+                        "detail": "/api/transportation/<id>",
+                    },
                 },
-                "community": {
-                    "list": "/api/community",
-                    "detail": "/api/community/<id>"
-                },
-                "transportation": {
-                    "list": "/api/transportation",
-                    "detail": "/api/transportation/<id>"
-                }
-            },
-            "system": {
-                "health": "/health"
-            },
-            "documentation": "/docs"
-        })
-        
+                "system": {"health": "/health"},
+                "documentation": "/docs",
+            }
+        )
+
     @app.route("/docs", methods=["GET"])
     def docs():
-        return redirect("https://documenter.getpostman.com/view/52514232/2sBXcDHMyK", code=302)
+        return redirect(
+            "https://documenter.getpostman.com/view/52514232/2sBXcDHMyK", code=302
+        )
 
     # -----------------------------
     # HOUSING
@@ -171,12 +174,14 @@ def create_app():
 
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
-        return jsonify({
-            "data": [h.to_dict() for h in pagination.items],
-            "total": pagination.total,
-            "page": page,
-            "pages": pagination.pages
-        })
+        return jsonify(
+            {
+                "data": [h.to_dict() for h in pagination.items],
+                "total": pagination.total,
+                "page": page,
+                "pages": pagination.pages,
+            }
+        )
 
     @app.route("/api/housing/<int:id>", methods=["GET"], strict_slashes=False)
     def get_one_housing(id):
@@ -213,14 +218,20 @@ def create_app():
                     "&mode=walking"
                 )
 
-            distance_miles = walking_distance_miles if walking_distance_miles is not None else approx_miles
+            distance_miles = (
+                walking_distance_miles
+                if walking_distance_miles is not None
+                else approx_miles
+            )
 
-            payload.update({
-                "closest_stop_frequency": nearest_stop.frequency,
-                "walking_distance": f"~{round(distance_miles, 2)} miles (walking route)",
-                "walking_map_embed_url": walking_map_embed_url,
-                "transportation": [nearest_stop.to_dict()],
-            })
+            payload.update(
+                {
+                    "closest_stop_frequency": nearest_stop.frequency,
+                    "walking_distance": f"~{round(distance_miles, 2)} miles (walking route)",
+                    "walking_map_embed_url": walking_map_embed_url,
+                    "transportation": [nearest_stop.to_dict()],
+                }
+            )
 
         return jsonify(payload)
 
@@ -237,12 +248,14 @@ def create_app():
 
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
-        return jsonify({
-            "data": [c.to_dict(include_relations=True) for c in pagination.items],
-            "total": pagination.total,
-            "page": page,
-            "pages": pagination.pages
-        })
+        return jsonify(
+            {
+                "data": [c.to_dict(include_relations=True) for c in pagination.items],
+                "total": pagination.total,
+                "page": page,
+                "pages": pagination.pages,
+            }
+        )
 
     @app.route("/api/community/<int:id>", methods=["GET"], strict_slashes=False)
     def get_community(id):
@@ -264,12 +277,14 @@ def create_app():
 
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
-        return jsonify({
-            "data": [t.to_dict() for t in pagination.items],
-            "total": pagination.total,
-            "page": page,
-            "pages": pagination.pages
-        })
+        return jsonify(
+            {
+                "data": [t.to_dict() for t in pagination.items],
+                "total": pagination.total,
+                "page": page,
+                "pages": pagination.pages,
+            }
+        )
 
     @app.route("/api/transportation/<int:id>", methods=["GET"], strict_slashes=False)
     def get_one_transportation(id):
@@ -284,7 +299,7 @@ def create_app():
 app = create_app()
 application = app
 
-if __name__ == "__main__": # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     if os.getenv("FLASK_ENV") != "production":
         with app.app_context():
             db.create_all()

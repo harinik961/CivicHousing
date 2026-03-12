@@ -33,7 +33,9 @@ def seed_associations():
 
         print("Community → nearest housing")
 
-        db.session.execute(text("""
+        db.session.execute(
+            text(
+                """
             INSERT INTO community_housing (community_id, housing_id)
             SELECT c.id,
                    (
@@ -50,13 +52,17 @@ def seed_associations():
             WHERE c.latitude IS NOT NULL
             AND c.longitude IS NOT NULL
             ON CONFLICT DO NOTHING
-        """))
+        """
+            )
+        )
 
         # Community → nearest Transit
 
         print("Community → nearest transit")
 
-        db.session.execute(text("""
+        db.session.execute(
+            text(
+                """
             INSERT INTO community_transportation (community_id, transportation_id)
             SELECT c.id,
                    (
@@ -73,13 +79,17 @@ def seed_associations():
             WHERE c.latitude IS NOT NULL
             AND c.longitude IS NOT NULL
             ON CONFLICT DO NOTHING
-        """))
+        """
+            )
+        )
 
         # Housing → nearest Community
 
         print("Housing → nearest community")
 
-        db.session.execute(text("""
+        db.session.execute(
+            text(
+                """
             INSERT INTO community_housing (community_id, housing_id)
             SELECT
                 (
@@ -97,14 +107,17 @@ def seed_associations():
             WHERE h.latitude IS NOT NULL
             AND h.longitude IS NOT NULL
             ON CONFLICT DO NOTHING
-        """))
+        """
+            )
+        )
 
-        
         # Housing → nearest Transit
 
         print("Housing → nearest transit")
 
-        db.session.execute(text("""
+        db.session.execute(
+            text(
+                """
             INSERT INTO housing_transportation (housing_id, transportation_id)
             SELECT h.id,
                    (
@@ -121,13 +134,17 @@ def seed_associations():
             WHERE h.latitude IS NOT NULL
             AND h.longitude IS NOT NULL
             ON CONFLICT DO NOTHING
-        """))
+        """
+            )
+        )
 
         # Transit → nearest Housing
 
         print("Transit → nearest housing")
 
-        db.session.execute(text("""
+        db.session.execute(
+            text(
+                """
             INSERT INTO housing_transportation (housing_id, transportation_id)
             SELECT
                 (
@@ -145,13 +162,17 @@ def seed_associations():
             WHERE t.latitude IS NOT NULL
             AND t.longitude IS NOT NULL
             ON CONFLICT DO NOTHING
-        """))
+        """
+            )
+        )
 
         # Transit → nearest Community
 
         print("Transit → nearest community")
 
-        db.session.execute(text("""
+        db.session.execute(
+            text(
+                """
             INSERT INTO community_transportation (community_id, transportation_id)
             SELECT
                 (
@@ -169,7 +190,9 @@ def seed_associations():
             WHERE t.latitude IS NOT NULL
             AND t.longitude IS NOT NULL
             ON CONFLICT DO NOTHING
-        """))
+        """
+            )
+        )
 
         db.session.commit()
 
@@ -186,8 +209,12 @@ def seed_associations():
 def show_counts():
 
     ch = db.session.execute(text("SELECT COUNT(*) FROM community_housing")).scalar()
-    ht = db.session.execute(text("SELECT COUNT(*) FROM housing_transportation")).scalar()
-    ct = db.session.execute(text("SELECT COUNT(*) FROM community_transportation")).scalar()
+    ht = db.session.execute(
+        text("SELECT COUNT(*) FROM housing_transportation")
+    ).scalar()
+    ct = db.session.execute(
+        text("SELECT COUNT(*) FROM community_transportation")
+    ).scalar()
 
     print("\nAssociation counts:")
     print("community_housing:", ch)

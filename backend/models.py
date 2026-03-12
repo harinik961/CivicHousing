@@ -9,25 +9,40 @@ db = SQLAlchemy()
 
 community_housing = db.Table(
     "community_housing",
-    db.Column("community_id", db.Integer, db.ForeignKey("communities.id"), primary_key=True),
-    db.Column("housing_id", db.Integer, db.ForeignKey("housing.id"), primary_key=True)
+    db.Column(
+        "community_id", db.Integer, db.ForeignKey("communities.id"), primary_key=True
+    ),
+    db.Column("housing_id", db.Integer, db.ForeignKey("housing.id"), primary_key=True),
 )
 
 community_transportation = db.Table(
     "community_transportation",
-    db.Column("community_id", db.Integer, db.ForeignKey("communities.id"), primary_key=True),
-    db.Column("transportation_id", db.Integer, db.ForeignKey("transportation.id"), primary_key=True)
+    db.Column(
+        "community_id", db.Integer, db.ForeignKey("communities.id"), primary_key=True
+    ),
+    db.Column(
+        "transportation_id",
+        db.Integer,
+        db.ForeignKey("transportation.id"),
+        primary_key=True,
+    ),
 )
 
 housing_transportation = db.Table(
     "housing_transportation",
     db.Column("housing_id", db.Integer, db.ForeignKey("housing.id"), primary_key=True),
-    db.Column("transportation_id", db.Integer, db.ForeignKey("transportation.id"), primary_key=True)
+    db.Column(
+        "transportation_id",
+        db.Integer,
+        db.ForeignKey("transportation.id"),
+        primary_key=True,
+    ),
 )
 
 # ---------------------------------------------------------
 # Community Model
 # ---------------------------------------------------------
+
 
 class Community(db.Model):
     __tablename__ = "communities"
@@ -48,17 +63,14 @@ class Community(db.Model):
     longitude = db.Column(db.Float)
 
     housing = db.relationship(
-        "Housing",
-        secondary=community_housing,
-        backref="communities",
-        lazy="selectin"
+        "Housing", secondary=community_housing, backref="communities", lazy="selectin"
     )
 
     transportation = db.relationship(
         "Transportation",
         secondary=community_transportation,
         backref="communities",
-        lazy="selectin"
+        lazy="selectin",
     )
 
     def to_dict(self, include_relations=False):
@@ -74,7 +86,7 @@ class Community(db.Model):
             "health_count": self.health_count,
             "map_embed_url": self.map_embed_url,
             "street_view_url": self.street_view_url,
-            "transit_score": self.transit_score, 
+            "transit_score": self.transit_score,
             "latitude": self.latitude,
             "longitude": self.longitude,
         }
@@ -89,6 +101,7 @@ class Community(db.Model):
 # ---------------------------------------------------------
 # Housing Model
 # ---------------------------------------------------------
+
 
 class Housing(db.Model):
     __tablename__ = "housing"
@@ -120,7 +133,7 @@ class Housing(db.Model):
         "Transportation",
         secondary=housing_transportation,
         backref="housing",
-        lazy="selectin"
+        lazy="selectin",
     )
 
     def to_dict(self, include_relations=False):
@@ -140,7 +153,7 @@ class Housing(db.Model):
             "longitude": self.longitude,
             "street_view_image": self.street_view_image,
             "last_synced_at": self.last_synced_at,
-            "walk_score": self.walk_score
+            "walk_score": self.walk_score,
         }
 
         if include_relations:
@@ -153,6 +166,7 @@ class Housing(db.Model):
 # ---------------------------------------------------------
 # Transportation Model
 # ---------------------------------------------------------
+
 
 class Transportation(db.Model):
     __tablename__ = "transportation"
@@ -203,7 +217,7 @@ class Transportation(db.Model):
             "service_days": self.service_days,
             "travel_time_ut": self.travel_time_ut,
             "travel_time_downtown": self.travel_time_downtown,
-            "travel_time_domain": self.travel_time_domain
+            "travel_time_domain": self.travel_time_domain,
         }
 
         if include_relations:

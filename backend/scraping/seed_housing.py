@@ -20,34 +20,36 @@ BASE_URL = "https://data.austintexas.gov/resource/ifzc-3xz8.json"
 WALKABILITY_URL = "https://api.walkscore.com/score"
 WALK_SCORE_API_KEY = os.getenv("WALK_SCORE_API_KEY")
 
-def fetch_walkability_score(address, lat, lon): 
+
+def fetch_walkability_score(address, lat, lon):
     """
     Fetches walkability score, transit score, and bike score of a given
-    location using the Walk Score API. 
+    location using the Walk Score API.
     Returns None, None, None upon failure.
     """
-    try: 
+    try:
         url = WALKABILITY_URL
         params = {
-            "format": "json", 
-            "address": address, 
-            "lat": lat, 
-            "lon": lon, 
-            "transit": 1, 
-            "bike": 1, 
-            "wsapikey": WALK_SCORE_API_KEY
+            "format": "json",
+            "address": address,
+            "lat": lat,
+            "lon": lon,
+            "transit": 1,
+            "bike": 1,
+            "wsapikey": WALK_SCORE_API_KEY,
         }
         response = requests.get(url, params=params, timeout=10)
-        if response.status_code == 200: 
+        if response.status_code == 200:
             data = response.json()
-            if data.get("status") == 1: 
+            if data.get("status") == 1:
                 walk_score = data.get("walkscore")
                 transit_score = data.get("transit", {}).get("score")
                 bike_score = data.get("bike", {}).get("score")
                 return walk_score, transit_score, bike_score
-    except Exception as e: 
+    except Exception as e:
         print(f"Walk Score fetch failed for {address}: {e}")
     return None, None, None
+
 
 # ----------------------------------------
 # SETUP FLASK APP AND DB CONNECTION
@@ -59,6 +61,7 @@ db.init_app(app)
 
 GOOGLE_MAPS_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 APP_TOKEN = os.getenv("APP_TOKEN_HOUSING")
+
 
 def fetch_street_view(address=None, latitude=None, longitude=None):
     """
@@ -82,6 +85,7 @@ def fetch_street_view(address=None, latitude=None, longitude=None):
         print(f"Street view URL failed: {e}")
     return None
 
+
 # ----------------------------------------
 # STEP 1: Fetch all data from SODA 2 API
 # ----------------------------------------
@@ -90,9 +94,7 @@ def fetch_housing_data():
     limit = 1000
     offset = 0
 
-    headers = {
-        "X-App-Token": APP_TOKEN
-    }
+    headers = {"X-App-Token": APP_TOKEN}
 
     params = {
         "$limit": limit,
@@ -121,6 +123,7 @@ def fetch_housing_data():
     print(f"Total records fetched: {len(all_records)}")
     return all_records
 
+
 # ----------------------------------------
 # STEP 2: Merge records by project_name before sending to DB
 # ----------------------------------------
@@ -132,6 +135,7 @@ def merge_records_by_project_name(records):
     - address (and zip, etc.) = from first record in group that has address+zip, else first record
     """
     from collections import defaultdict
+
     groups = defaultdict(list)
     for r in records:
         key = (r.get("project_name") or "").strip() or "Unknown"
@@ -140,11 +144,15 @@ def merge_records_by_project_name(records):
     merged = []
     for project_name, group in groups.items():
         # Prefer first record that has both address and zip for address/zip
-        first_with_address = next((r for r in group if r.get("address") and r.get("zip")), group[0])
+        first_with_address = next(
+            (r for r in group if r.get("address") and r.get("zip")), group[0]
+        )
         first = first_with_address
 
         try:
-            total_affordable = sum(int(r.get("affordable_units", 0) or 0) for r in group)
+            total_affordable = sum(
+                int(r.get("affordable_units", 0) or 0) for r in group
+            )
         except (TypeError, ValueError):
             total_affordable = 0
         try:
@@ -188,6 +196,7 @@ def get_income_restriction(record):
             pass
     return ", ".join(levels) if levels else "Not Specified"
 
+
 # ----------------------------------------
 # STEP 4: Load data into database (Upsert)
 # ----------------------------------------
@@ -199,7 +208,7 @@ def seed_housing(records):
     Removes stale records that no longer exist in the API.
     """
     print("Syncing housing data with database (upsert)...")
-    
+
     inserted = 0
     updated = 0
     skipped = 0
@@ -222,7 +231,9 @@ def seed_housing(records):
 
         try:
             latitude = float(record.get("latitude")) if record.get("latitude") else None
-            longitude = float(record.get("longitude")) if record.get("longitude") else None
+            longitude = (
+                float(record.get("longitude")) if record.get("longitude") else None
+            )
         except:
             latitude = None
             longitude = None
@@ -236,11 +247,12 @@ def seed_housing(records):
             longitude=longitude,
         )
         walk_score, transit_score, bike_score = fetch_walkability_score(
-            f"{address}, Austin, TX", latitude, longitude)
+            f"{address}, Austin, TX", latitude, longitude
+        )
 
         # Check if housing with this address already exists
         existing = Housing.query.filter_by(address=address).first()
-        
+
         if existing:
             # Update existing record
             existing.project_name = record.get("project_name", "Unknown")
@@ -281,10 +293,14 @@ def seed_housing(records):
             inserted += 1
 
     # Remove stale records that no longer exist in the API
-    deleted = Housing.query.filter(Housing.address.notin_(seen_addresses)).delete(synchronize_session=False)
-    
+    deleted = Housing.query.filter(Housing.address.notin_(seen_addresses)).delete(
+        synchronize_session=False
+    )
+
     db.session.commit()
-    print(f"Inserted {inserted} new records, updated {updated}, deleted {deleted} stale records, skipped {skipped}")
+    print(
+        f"Inserted {inserted} new records, updated {updated}, deleted {deleted} stale records, skipped {skipped}"
+    )
 
 
 # ----------------------------------------
@@ -297,7 +313,9 @@ def refresh_street_views():
     updated = 0
     failed = 0
     for i, housing in enumerate(rows):
-        if not housing.address and (housing.latitude is None or housing.longitude is None):
+        if not housing.address and (
+            housing.latitude is None or housing.longitude is None
+        ):
             failed += 1
             continue
         full_address = f"{housing.address}, Austin, TX" if housing.address else None
@@ -333,4 +351,3 @@ if __name__ == "__main__":
             print(f"Merged to {len(records)} records by project_name")
             seed_housing(records)
         print("Done!")
-        
