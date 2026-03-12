@@ -126,7 +126,7 @@ Model 3 - Transportation (bus stations, train stations, sidewalk/trails score)
 
 Project Leader: 
 Name: Aarshi Khatiwada
-Responsibilities: 
+Responsibilities:  
 - Scheduled meetings/calls
 - Assigned tasks/issues
 - Ensured task completion
@@ -144,7 +144,7 @@ Estimated and Actual Hours:
 | Coco Zhou | 20 hrs | 23 hrs |
 | Matthew Pham | 18 hrs | 23 hrs |
 | Sri Harini Kolluru | 19 hrs | 23 hrs |
-| Alexander Nguyen | 21 hrs | 23 hr |
+| Alexander Nguyen | 21 hrs | 23 hrs |
 | Aarshi Khatiwada | 20 hrs | 23 hrs |
 
 Customer Stories Estimated and Time Spent: 
