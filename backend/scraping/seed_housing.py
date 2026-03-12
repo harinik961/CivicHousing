@@ -13,9 +13,8 @@ from models import db, Housing
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "../.env"))
 
-# ----------------------------------------
 # CONFIGURATION
-# ----------------------------------------
+
 BASE_URL = "https://data.austintexas.gov/resource/ifzc-3xz8.json"
 WALKABILITY_URL = "https://api.walkscore.com/score"
 WALK_SCORE_API_KEY = os.getenv("WALK_SCORE_API_KEY")
@@ -51,9 +50,8 @@ def fetch_walkability_score(address, lat, lon):
     return None, None, None
 
 
-# ----------------------------------------
 # SETUP FLASK APP AND DB CONNECTION
-# ----------------------------------------
+
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -86,9 +84,9 @@ def fetch_street_view(address=None, latitude=None, longitude=None):
     return None
 
 
-# ----------------------------------------
+
 # STEP 1: Fetch all data from SODA 2 API
-# ----------------------------------------
+
 def fetch_housing_data():
     all_records = []
     limit = 1000
@@ -124,9 +122,8 @@ def fetch_housing_data():
     return all_records
 
 
-# ----------------------------------------
 # STEP 2: Merge records by project_name before sending to DB
-# ----------------------------------------
+
 def merge_records_by_project_name(records):
     """
     Combine all records with the same project_name into one record.
@@ -170,9 +167,9 @@ def merge_records_by_project_name(records):
     return merged
 
 
-# ----------------------------------------
+
 # STEP 3: Helper for income restriction
-# ----------------------------------------
+
 def get_income_restriction(record):
     mfi_fields = {
         "mfi_20": "20% AMI",
@@ -197,9 +194,9 @@ def get_income_restriction(record):
     return ", ".join(levels) if levels else "Not Specified"
 
 
-# ----------------------------------------
+
 # STEP 4: Load data into database (Upsert)
-# ----------------------------------------
+
 def seed_housing(records):
     """
     Upsert housing data: update existing records, insert new ones.
@@ -303,9 +300,8 @@ def seed_housing(records):
     )
 
 
-# ----------------------------------------
 # Refresh street view images only (no API pull, no merge)
-# ----------------------------------------
+
 def refresh_street_views():
     """Re-fetch street view images for all existing Housing rows. Does not touch other data."""
     print("Refreshing street view images for all housing records...")
@@ -336,9 +332,9 @@ def refresh_street_views():
     print(f"Done. Updated {updated} images, {failed} skipped or failed.")
 
 
-# ----------------------------------------
+
 # MAIN
-# ----------------------------------------
+
 # pragma: no cover
 if __name__ == "__main__":
     with app.app_context():

@@ -163,9 +163,7 @@ class Housing(db.Model):
         return data
 
 
-# ---------------------------------------------------------
 # Transportation Model
-# ---------------------------------------------------------
 
 
 class Transportation(db.Model):
