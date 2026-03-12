@@ -132,11 +132,17 @@ Responsibilities:
 - Ensured task completion
 
 GitLab Information: 
-- Git SHA: 8985a77680d97448a895879f09aa1d5a87459158
-- Git Pipeline Link: https://gitlab.com/matthewpham16/cs373-spring-2026-53380_06/-/pipelines/2379746475
+- Git SHA: 64535ed2c060bb7d06ec12e414972528f82fec03
+- Git Pipeline Link: https://gitlab.com/matthewpham16/cs373-spring-2026-53380_06/-/pipelines/2379856027
+
+Backend API Link: 
+[api.civichousing.me/api](https://api.civichousing.me/api)
 
 Website Link: 
 [civichousing.me](https://civichousing.me/)
+
+Postman Documentation: 
+[Postman API Documentation](https://documenter.getpostman.com/view/52514232/2sBXcDHMyK)
 
 Estimated and Actual Hours: 
 | Name | Estimated Hours | Actual Hours |
@@ -156,4 +162,8 @@ Customer Stories Estimated and Time Spent:
 | Customer Story #9 (Issue #81) | 1 hour | 1 hour 30 mins |
 | Customer Story #10 (Issue #82) | 30 mins | 1 hour |
 
-Comments: N/A
+Comments: 
+We used AccessATX's group's selenium test for reference and as a boilerplate 
+template for our Selenium Tests. 
+https://gitlab.com/anjalikaimal/cs373-fall-2025-55090_11. 
+Attriubtion also included in the test file itself.
