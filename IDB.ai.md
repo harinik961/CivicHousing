@@ -15,7 +15,8 @@ Debugging Help
 - When working on yml file to automatically build and push, we were having errors when running the pipeline, and I used chatgpt to help debug what the issue could be. 
 - Helped debug and fix  routing between model and instance pages by identifying a missing `modelName` prop, which resolved the `/undefined/1` navigation issue and enabled proper linking across all models
 - Assisted in fixing page linking issues for the Navbar
-- Helped debug GitLab API retrievals and link warnings on the About Page 
+- Helped debug GitLab API retrievals and link warnings on the About Page
+
 
 Conceptual Clarification
 - Understood why GET requests should not have a body in REST API design
@@ -28,6 +29,9 @@ Code Improvement
 - Restructured model data files from a flat attributes string array to a proper
   key-value object format for better scalability
 - Updated ModelCard.js to use a per-model attribute map instead of relying on string splitting
+- seed_housing.py scraper — AI helped with the housing seed/scraper script (structure, data flow, or debugging as used in the project)
+- Setting up docker-compose.yml — AI assisted with configuring docker-compose (services, environment, or build steps) for local development
+
 
 UI Layout and Masonry Implementation
 - Helped implement a masonry style layout for the instance   pages so cards would flow naturally instead of stacking in rigid rows
@@ -76,8 +80,9 @@ It took the AI some time to figure out what may be the issue with npm install, b
 .slide-3 { background-image: url("https://..."); }
 ```
 
-
-
+This change taught me that CSS background images require `background-size: cover` 
+and `background-position: center` to display properly, and that swapping colors 
+for real images makes a significant visual difference on a landing page.
 
 **Before:**
 
@@ -108,6 +113,7 @@ It took the AI some time to figure out what may be the issue with npm install, b
 This change taught me that CSS background images require `background-size: cover` 
 and `background-position: center` to display properly, and that swapping colors 
 for real images makes a significant visual difference on a landing page.
+
 **Before:**
   script:
     - cd frontend

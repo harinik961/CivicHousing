@@ -41,7 +41,7 @@ As a single parent searching for affordable housing, I want each housing instanc
 
 The CivicHousing API was designed using Postman and provides access to all three models. The API follows REST conventions and returns JSON for all endpoints.
 
-**Base URL:** `https://civichousing.me/api`
+**Base URL:** `https://api.civichousing.me/api`
 
 No authentication is required. All endpoints are publicly accessible.
 
