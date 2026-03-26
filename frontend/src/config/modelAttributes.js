@@ -19,8 +19,8 @@ export const MODEL_ATTRIBUTES = {
     { title: "Affordable Units", key: "total_affordable_units" },
     { title: "Unit Type", key: "unit_type" },
     { title: "Housing Tenure", key: "housing_tenure" },
-    { title: "Walkability Score", key: "walk_score" }
-
+    { title: "Walkability Score", key: "walk_score" },
+    { title: "Income Restriction Level", key: "income_restriction_level" }
   ],
 
   transportation: [

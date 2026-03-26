@@ -4,7 +4,8 @@ from dotenv import load_dotenv
 import os
 import math
 import requests
-
+from sqlalchemy import cast, Integer
+from sqlalchemy.sql import func
 from models import db, Housing, Community, Transportation
 from flask_migrate import Migrate
 
@@ -161,17 +162,46 @@ def create_app():
         page = request.args.get("page", 1, type=int)
         per_page = 50
 
-        zip_code = request.args.get("zip")
-        district = request.args.get("district")
+        # --- FILTER PARAMS (MATCH FRONTEND EXACTLY) ---
+        unit_type = request.args.get("unit_type")
+        housing_tenure = request.args.get("housing_tenure")
+        zip_code = request.args.get("zip_code")
 
         query = Housing.query
+
+        # --- FILTERS ---
+        if unit_type:
+            query = query.filter(Housing.unit_type == unit_type)
+
+        if housing_tenure:
+            query = query.filter(Housing.housing_tenure == housing_tenure)
 
         if zip_code:
             query = query.filter(Housing.zip_code == zip_code)
 
-        if district:
-            query = query.filter(Housing.council_district == district)
+        # --- SORTING ---
+        sort = request.args.get("sort")
+        order = request.args.get("order", "asc")
 
+        SORT_MAP = {
+            "walk_score": Housing.walk_score,
+            "total_ada_units": Housing.total_ada_units,
+
+            "income_restriction_level": cast(
+                func.split_part(
+                    func.replace(Housing.income_restriction_level, "% AMI", ""),
+                    ",",
+                    1
+                ),
+                Integer
+            )
+        }
+
+        if sort in SORT_MAP:
+            column = SORT_MAP[sort]
+            query = query.order_by(column.desc() if order == "desc" else column.asc())
+
+        # --- PAGINATION (ALWAYS LAST) ---
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
         return jsonify(

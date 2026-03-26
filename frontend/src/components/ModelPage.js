@@ -84,7 +84,7 @@ function buildHousingStatsByZip(housingList) {
   return byZip;
 }
 
-export default function ModelPage({ title, apiEndpoint, modelName, attributes, query}) {
+export default function ModelPage({ title, apiEndpoint, modelName, attributes, query, sortOptions = [] }) {
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -94,19 +94,32 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
   const [pages, setPages] = useState(1);
   const [housingStatsByZip, setHousingStatsByZip] = useState(null);
 
+  const [sort, setSort] = useState("");
+  const [order, setOrder] = useState("asc");
+  const [sortValue, setSortValue] = useState("");
+
   const PER_PAGE = 50;
   const isCommunity = apiEndpoint === "/api/community";
 
-  // Fetch data only when apiEndpoint or attributes change
+    // Fetch data only when apiEndpoint or attributes change
+
   useEffect(() => {
 
     setLoading(true);
     setPage(1);
     setHousingStatsByZip(null);
 
+    const params = new URLSearchParams({
+      page: 1,
+      per_page: PER_PAGE
+    });
+
+    if (sort) params.append("sort", sort);
+    if (order) params.append("order", order);
+
     if (isCommunity) {
       Promise.all([
-        fetch(`${API_BASE}${apiEndpoint}?page=1&per_page=${PER_PAGE}`).then(r => r.json()),
+        fetch(`${API_BASE}${apiEndpoint}?${params}`).then(r => r.json()),
         fetchAllHousingPages()
       ])
         .then(([data, housingList]) => {
@@ -126,7 +139,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
           setLoading(false);
         });
     } else {
-      fetch(`${API_BASE}${apiEndpoint}?page=1&per_page=${PER_PAGE}`)
+      fetch(`${API_BASE}${apiEndpoint}?${params}`)
         .then(res => res.json())
         .then(data => {
           const raw = data.data || [];
@@ -142,7 +155,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
         });
     }
 
-  }, [apiEndpoint, attributes, isCommunity]);
+  }, [apiEndpoint, attributes, isCommunity, sort, order]);
 
   // Handle page changes - fetch new page from server
   useEffect(() => {
@@ -151,6 +164,14 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
 
     window.scrollTo(0, 0);
     setLoading(true);
+
+    const params = new URLSearchParams({
+      page: page,
+      per_page: PER_PAGE
+    });
+
+    if (sort) params.append("sort", sort);
+    if (order) params.append("order", order);
 
     const mergeAndFormat = (raw) => {
       if (isCommunity && housingStatsByZip) {
@@ -161,7 +182,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
       return raw.map(item => formatItem(item, attributes));
     };
 
-    fetch(`${API_BASE}${apiEndpoint}?page=${page}&per_page=${PER_PAGE}`)
+    fetch(`${API_BASE}${apiEndpoint}?${params}`)
       .then(res => res.json())
       .then(data => {
         const raw = data.data || [];
@@ -175,7 +196,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
       });
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, sort, order]);
 
   const cards = items.map(item => (
     <div className="col-lg-4 col-md-6 col-sm-12 mb-4" key={item.id}>
@@ -187,8 +208,6 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
     </div>
   ));
 
-
-
   if (loading) {
     return (
       <div className="container mt-4 text-center">
@@ -198,24 +217,47 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
     );
   }
 
-
-
   const start = (page - 1) * PER_PAGE + 1;
   const end = Math.min(page * PER_PAGE, total);
-
-
 
   return (
     <div className="container mt-4">
 
-      {/* SHOWING COUNT */}
       <p className="text-muted small text-center mb-1">
         Showing {start}-{end} of {total}
       </p>
 
       <h2 className="text-center mb-4">{title}</h2>
 
+      <div className="d-flex justify-content-end mb-3">
+        <select
+          className="form-select"
+          style={{ width: "260px" }}
+          value={sortValue}
+          onChange={(e) => {
+            const value = e.target.value;
+            setSortValue(value);
 
+            if (!value) {
+              setSort("");
+              setOrder("asc");
+              setPage(1);
+              return;
+            }
+
+            const [newSort, newOrder] = value.split("|");
+            setSort(newSort);
+            setOrder(newOrder);
+            setPage(1);
+          }}
+        >
+          {sortOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div className="row">
         {cards}
@@ -223,7 +265,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
 
 
 
-      {/* PAGINATION */}
+       {/* PAGINATION */}
       <div className="d-flex justify-content-center mt-4 gap-3">
 
         <button
