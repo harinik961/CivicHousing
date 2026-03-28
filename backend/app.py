@@ -280,11 +280,7 @@ def create_app():
         crime_index = request.args.get("crime_index", type=int)
         transit_score = request.args.get("transit_score", type = int)
         population = request.args.get("population", type = int)
-        population_min = request.args.get("population_min", type=int)
-        population_max = request.args.get("population_max", type=int)
-
         health_count = request.args.get("health_count", type = int)
-        zipcode = request.args.get("zipcode")
 
 
 
@@ -300,10 +296,6 @@ def create_app():
             query = query.filter(Community.transit_score == transit_score)
         if health_count:
             query = query.filter(Community.health_count == health_count)
-        if population_min: 
-            query = query.filter(Community.population >= population_min)
-        if population_max:
-            query = query.filter(Community.population <= population_max)
 
 
         sort = request.args.get("sort")
