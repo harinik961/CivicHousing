@@ -182,6 +182,9 @@ def create_app():
         # --- SORTING ---
         sort = request.args.get("sort")
         order = request.args.get("order", "asc")
+        if not sort:
+            sort = "median_housing_price"
+            order = "asc"
 
         SORT_MAP = {
             "walk_score": Housing.walk_score,
@@ -273,9 +276,43 @@ def create_app():
 
         page = request.args.get("page", 1, type=int)
         per_page = 50
+        median_housing_price = request.args.get("median_housing_price", type = int)
+        crime_index = request.args.get("crime_index", type=int)
+        transit_score = request.args.get("transit_score", type = int)
+        population = request.args.get("population", type = int)
+        health_count = request.args.get("health_count", type = int)
+
+
+
 
         query = Community.query
 
+        #filtering 
+        if median_housing_price:
+            query = query.filter(Community.median_housing_price == median_housing_price)
+        if crime_index:
+            query = query.filter(Community.crime_index == crime_index)
+        if transit_score:
+            query = query.filter(Community.transit_score == transit_score)
+        if health_count:
+            query = query.filter(Community.health_count == health_count)
+
+
+        sort = request.args.get("sort")
+        order = request.args.get("order", "asc")
+        print(f"DEBUG sort={sort} order={order}")
+
+        SORT_MAP = {
+           "median_housing_price": Community.median_housing_price,
+           "health_count": Community.health_count,
+           "crime_index": Community.crime_index,
+           "park_count": Community.park_count,
+
+        }
+
+        if sort in SORT_MAP:
+            column = SORT_MAP[sort]
+            query = query.order_by(column.desc() if order == "desc" else column.asc())
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
         return jsonify(
@@ -334,4 +371,4 @@ if __name__ == "__main__":  # pragma: no cover
         with app.app_context():
             db.create_all()
 
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=0, debug=True)
