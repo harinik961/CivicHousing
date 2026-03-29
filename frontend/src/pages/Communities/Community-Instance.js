@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import InstancePage from "../../components/InstancePage";
 
-const API_BASE = "https://civichousing.me";
+const API_BASE = "https://api.civichousing.me";
 
 const getImage = (item) => item.street_view_url;
 
@@ -160,3 +160,4 @@ export default function CommunityInstance() {
       />
   );
 }
+

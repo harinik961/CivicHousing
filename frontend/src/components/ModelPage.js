@@ -129,7 +129,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
       if (bucket.min !== null)
         params.append(f.min_parameter, bucket.min);
       if (bucket.max !== null)
-        params.append(f.param_max, bucket.max);
+        params.append(f.max_parameter, bucket.max);
     }
 
     if (isCommunity) {
@@ -193,7 +193,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
       if (bucket.min !== null)
         params.append(f.min_parameter, bucket.min);
       if (bucket.max !== null)
-        params.append(f.param_max, bucket.max);
+        params.append(f.max_parameter, bucket.max);
     }
 
     const mergeAndFormat = (raw) => {

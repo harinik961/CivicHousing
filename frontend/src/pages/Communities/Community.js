@@ -21,9 +21,9 @@ const sortOptions = [
       label: "Population",
       buckets: [
         { label: "All", min: null, max: null },
-        { label: "Under 5k", min: null, max: 5000 },
-        { label: "5k-10k", min: 5000, max: 10000 },
-        { label: "10k+", min: 10000, max: null },
+        { label: "Under 15k pop. ", min: null, max: 15000 },
+        { label: "15-25k pop. ", min: 15000, max: 25000 },
+        { label: "25k+ pop. ", min: 25000, max: null },
       ],
     },
   ];
@@ -41,3 +41,4 @@ const sortOptions = [
   );
 
 }
+
