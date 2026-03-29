@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import ModelCard from "./ModelCard";
 
 // Inject radius=500 into Google Static Street View URLs that are missing a radius,
@@ -54,7 +54,7 @@ function formatItem(item, attributes) {
   };
 }
 
-const API_BASE = "https://civichousing.me";
+const API_BASE = "https://api.civichousing.me";
 
 async function fetchAllHousingPages() {
   const all = [];
@@ -89,10 +89,8 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
-
-
   const initialFilterValues = {};
-  for (const f of filterOptions){
+  for (const f of filterOptions) {
     initialFilterValues[f.min_parameter] = f.buckets[0];
   }
   const [filterValues, setFilterValues] = useState(initialFilterValues);
@@ -106,10 +104,11 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
   const [order, setOrder] = useState("asc");
   const [sortValue, setSortValue] = useState("");
 
+  const attributesRef = useRef(attributes);
+  const filterOptionsRef = useRef(filterOptions);
+
   const PER_PAGE = 50;
   const isCommunity = apiEndpoint === "/api/community";
-
-    // Fetch data only when apiEndpoint or attributes change
 
   useEffect(() => {
 
@@ -125,14 +124,14 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
     if (sort) params.append("sort", sort);
     if (order) params.append("order", order);
 
+    for (const f of filterOptionsRef.current) {
+      const bucket = filterValues[f.min_parameter];
+      if (bucket.min !== null)
+        params.append(f.min_parameter, bucket.min);
+      if (bucket.max !== null)
+        params.append(f.param_max, bucket.max);
+    }
 
-    for (const f of filterOptions) {
-    const bucket = filterValues[f.min_parameter];
-    if (bucket.min !== null) 
-      params.append(f.min_parameter, bucket.min);
-    if (bucket.max !== null) 
-      params.append(f.param_max, bucket.max);
-}
     if (isCommunity) {
       Promise.all([
         fetch(`${API_BASE}${apiEndpoint}?${params}`).then(r => r.json()),
@@ -144,7 +143,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
           const raw = data.data || [];
           const defaults = { community_total_affordable_units: 0, community_housing_count: 0 };
           const merged = raw.map(c => ({ ...c, ...defaults, ...(zipMap[c.zip_code] || {}) }));
-          const formatted = merged.map(item => formatItem(item, attributes));
+          const formatted = merged.map(item => formatItem(item, attributesRef.current));
           setTotal(data.total ?? 0);
           setPages(data.pages ?? 1);
           setItems(formatted);
@@ -159,7 +158,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
         .then(res => res.json())
         .then(data => {
           const raw = data.data || [];
-          const formatted = raw.map(item => formatItem(item, attributes));
+          const formatted = raw.map(item => formatItem(item, attributesRef.current));
           setTotal(data.total ?? 0);
           setPages(data.pages ?? 1);
           setItems(formatted);
@@ -171,7 +170,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
         });
     }
 
-  }, [apiEndpoint, attributes, isCommunity, sort, order, filterValues, filterOptions]);
+  }, [apiEndpoint, isCommunity, sort, order, filterValues]);
 
   // Handle page changes - fetch new page from server
   useEffect(() => {
@@ -188,22 +187,22 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
 
     if (sort) params.append("sort", sort);
     if (order) params.append("order", order);
-    
-    for (const f of filterOptions) {
+
+    for (const f of filterOptionsRef.current) {
       const bucket = filterValues[f.min_parameter];
-      if (bucket.min !== null) 
+      if (bucket.min !== null)
         params.append(f.min_parameter, bucket.min);
-      if (bucket.max !== null) 
+      if (bucket.max !== null)
         params.append(f.param_max, bucket.max);
-}
+    }
 
     const mergeAndFormat = (raw) => {
       if (isCommunity && housingStatsByZip) {
         const defaults = { community_total_affordable_units: 0, community_housing_count: 0 };
         const merged = raw.map(c => ({ ...c, ...defaults, ...(housingStatsByZip[c.zip_code] || {}) }));
-        return merged.map(item => formatItem(item, attributes));
+        return merged.map(item => formatItem(item, attributesRef.current));
       }
-      return raw.map(item => formatItem(item, attributes));
+      return raw.map(item => formatItem(item, attributesRef.current));
     };
 
     fetch(`${API_BASE}${apiEndpoint}?${params}`)
@@ -220,7 +219,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
       });
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, sort, order, filterValues, filterOptions]);
+  }, [page, sort, order, filterValues]);
 
   const cards = items.map(item => (
     <div className="col-lg-4 col-md-6 col-sm-12 mb-4" key={item.id}>
@@ -253,11 +252,10 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
 
       <h2 className="text-center mb-4">{title}</h2>
 
-
-
       {filterOptions.map((f) => (
         <select
           key={f.min_parameter}
+          id={`filter-${f.min_parameter}`}
           className="form-select mb-2"
           style={{ width: "200px" }}
           onChange={(e) => {
@@ -274,9 +272,10 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
         </select>
       ))}
 
-
       <div className="d-flex justify-content-end mb-3">
         <select
+          id="select"
+          name="select"
           className="form-select"
           style={{ width: "260px" }}
           value={sortValue}
@@ -308,8 +307,6 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
       <div className="row">
         {cards}
       </div>
-
-
 
        {/* PAGINATION */}
       <div className="d-flex justify-content-center mt-4 gap-3">
@@ -355,4 +352,3 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
     </div>
   );
 }
-
