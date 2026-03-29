@@ -1,4 +1,3 @@
-
 import ModelPage from "../../components/ModelPage";
 import { MODEL_ATTRIBUTES } from "../../config/modelAttributes";
 export default function Community() {
@@ -15,6 +14,20 @@ const sortOptions = [
     { value: "park_count|desc", label: "Park Count: High to Low" },
 
   ];
+  const filterOptions = [
+    {
+      min_parameter: "population_min",
+      max_parameter: "population_max",
+      label: "Population",
+      buckets: [
+        { label: "All", min: null, max: null },
+        { label: "Under 5k", min: null, max: 5000 },
+        { label: "5k-10k", min: 5000, max: 10000 },
+        { label: "10k+", min: 10000, max: null },
+      ],
+    },
+  ];
+
   return (
       <ModelPage
       title="Communities"
@@ -22,6 +35,7 @@ const sortOptions = [
       modelName="community"
       attributes={MODEL_ATTRIBUTES.community}
       sortOptions={sortOptions}
+      filterOptions={filterOptions}
 
     />
   );

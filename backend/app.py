@@ -98,7 +98,7 @@ def get_google_walking_distance_miles(
 def create_app():
 
     app = Flask(__name__)
-    CORS(app, origins=["https://civichousing.me", "http://localhost:3000"])
+    CORS(app)
 
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -280,7 +280,11 @@ def create_app():
         crime_index = request.args.get("crime_index", type=int)
         transit_score = request.args.get("transit_score", type = int)
         population = request.args.get("population", type = int)
+        population_min = request.args.get("population_min", type=int)
+        population_max = request.args.get("population_max", type=int)
+
         health_count = request.args.get("health_count", type = int)
+        zipcode = request.args.get("zipcode")
 
 
 
@@ -296,6 +300,10 @@ def create_app():
             query = query.filter(Community.transit_score == transit_score)
         if health_count:
             query = query.filter(Community.health_count == health_count)
+        if population_min: 
+            query = query.filter(Community.population >= population_min)
+        if population_max:
+            query = query.filter(Community.population <= population_max)
 
 
         sort = request.args.get("sort")
@@ -372,3 +380,4 @@ if __name__ == "__main__":  # pragma: no cover
             db.create_all()
 
     app.run(host="0.0.0.0", port=0, debug=True)
+
