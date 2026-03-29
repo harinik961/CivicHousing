@@ -171,7 +171,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
         });
     }
 
-  }, [apiEndpoint, attributes, isCommunity, sort, order, filterValues]);
+  }, [apiEndpoint, attributes, isCommunity, sort, order, filterValues, filterOptions]);
 
   // Handle page changes - fetch new page from server
   useEffect(() => {
@@ -220,7 +220,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
       });
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, sort, order, filterValues]);
+  }, [page, sort, order, filterValues, filterOptions]);
 
   const cards = items.map(item => (
     <div className="col-lg-4 col-md-6 col-sm-12 mb-4" key={item.id}>
