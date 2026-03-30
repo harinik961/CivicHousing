@@ -409,38 +409,50 @@ def create_app():
 
         SORT_MAP = {
             "num_routes": Transportation.num_routes,
+
             "frequency": cast(
-                func.nullif(
-                    func.regexp_replace(Transportation.frequency, r'\D', '', 'g'),
-                    ''
+                func.coalesce(
+                    func.replace(
+                        func.replace(
+                            func.replace(Transportation.frequency, "Every ", ""),
+                            " Minutes", ""
+                        ),
+                        " Minute", ""
+                    ),
+                    "0"
                 ),
                 Integer
             ),
 
             "travel_time_ut": cast(
-                func.nullif(
-                    func.regexp_replace(Transportation.travel_time_ut, r'\D', '', 'g'),
-                    ''
+                func.coalesce(
+                    func.replace(
+                        func.replace(Transportation.travel_time_ut, " mins", ""),
+                        " min", ""
+                    ),
+                    "0"
                 ),
                 Integer
             ),
 
             "travel_time_downtown": cast(
-                func.nullif(
-                    func.regexp_replace(Transportation.travel_time_downtown, r'\D', '', 'g'),
-                    ''
+                func.coalesce(
+                    func.replace(
+                        func.replace(Transportation.travel_time_downtown, " mins", ""),
+                        " min", ""
+                    ),
+                    "0"
                 ),
                 Integer
             ),
         }
+        # --- PAGINATION ---
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
         if sort in SORT_MAP:
             column = SORT_MAP[sort]
-            query = query.order_by(None).order_by(
-                column.desc() if order == "desc" else column.asc()
-            )
+            query = query.order_by(column.desc() if order == "desc" else column.asc())
 
-        # --- PAGINATION ---
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
         return jsonify({
