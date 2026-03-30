@@ -12,6 +12,26 @@ export default function Housing() {
     { value: "total_ada_units|asc", label: "ADA Units: Low to High" },
     { value: "total_ada_units|desc", label: "ADA Units: High to Low" }
   ];
+  const filterOptions = [
+    {
+      parameter: "unit_type",
+      label: "Unit Type",
+      buckets: [
+        { label: "All", value: null },
+        { label: "Single Family", value: "Single Family" },
+        { label: "Multifamily", value: "Multifamily" }
+      ]
+    },
+    {
+      parameter: "housing_tenure",
+      label: "Housing Tenure",
+      buckets: [
+        { label: "All", value: null },
+        { label: "Ownership", value: "Ownership" },
+        { label: "Rental", value: "Rental" }
+      ]
+    }
+  ];
   return (
     <ModelPage
   title="Housing"
@@ -19,6 +39,7 @@ export default function Housing() {
   modelName="housing"
   attributes={MODEL_ATTRIBUTES.housing}
   sortOptions={sortOptions}
+  filterOptions={filterOptions}
 
 />
   );
