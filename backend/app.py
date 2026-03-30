@@ -419,42 +419,6 @@ def create_app():
 
         SORT_MAP = {
             "num_routes": Transportation.num_routes,
-
-            "frequency": cast(
-                func.coalesce(
-                    func.replace(
-                        func.replace(
-                            func.replace(Transportation.frequency, "Every ", ""),
-                            " Minutes", ""
-                        ),
-                        " Minute", ""
-                    ),
-                    "0"
-                ),
-                Integer
-            ),
-
-            "travel_time_ut": cast(
-                func.coalesce(
-                    func.replace(
-                        func.replace(Transportation.travel_time_ut, " mins", ""),
-                        " min", ""
-                    ),
-                    "0"
-                ),
-                Integer
-            ),
-
-            "travel_time_downtown": cast(
-                func.coalesce(
-                    func.replace(
-                        func.replace(Transportation.travel_time_downtown, " mins", ""),
-                        " min", ""
-                    ),
-                    "0"
-                ),
-                Integer
-            ),
         }
         # --- PAGINATION ---
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
@@ -462,15 +426,17 @@ def create_app():
         if sort in SORT_MAP:
             column = SORT_MAP[sort]
             query = query.order_by(column.desc() if order == "desc" else column.asc())
-
+            
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
-        return jsonify({
-            "data": [t.to_dict() for t in pagination.items],
-            "total": pagination.total,
-            "page": page,
-            "pages": pagination.pages,
-        })
+        return jsonify(
+            {
+                "data": [c.to_dict(include_relations=True) for c in pagination.items],
+                "total": pagination.total,
+                "page": page,
+                "pages": pagination.pages,
+            }
+        )
 
     @app.route("/api/transportation/<int:id>", methods=["GET"], strict_slashes=False)
     def get_one_transportation(id):
