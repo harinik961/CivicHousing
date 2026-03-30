@@ -84,7 +84,7 @@ function buildHousingStatsByZip(housingList) {
   return byZip;
 }
 
-export default function ModelPage({ title, apiEndpoint, modelName, attributes, query, sortOptions = [], filterOptions = [] }) {
+export default function ModelPage({ title, apiEndpoint, modelName, attributes, query, sortOptions = [], filterOptions=[]}) {
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -108,33 +108,26 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
   const attributesRef = useRef(attributes);
   const filterOptionsRef = useRef(filterOptions);
 
-  // Keep refs in sync so the page-change effect always has latest values
-  const sortRef = useRef(sort);
-  const orderRef = useRef(order);
-  const filterValuesRef = useRef(filterValues);
-  const housingStatsByZipRef = useRef(housingStatsByZip);
-  const isCommunityRef = useRef(apiEndpoint === "/api/community");
-
-  useEffect(() => { sortRef.current = sort; }, [sort]);
-  useEffect(() => { orderRef.current = order; }, [order]);
-  useEffect(() => { filterValuesRef.current = filterValues; }, [filterValues]);
-  useEffect(() => { housingStatsByZipRef.current = housingStatsByZip; }, [housingStatsByZip]);
-
   const PER_PAGE = 50;
   const isCommunity = apiEndpoint === "/api/community";
 
-  function buildParams(pageNum) {
+  useEffect(() => {
+
+    setLoading(true);
+    setPage(1);
+    setHousingStatsByZip(null);
+
     const params = new URLSearchParams({
-      page: pageNum,
+      page: 1,
       per_page: PER_PAGE
     });
 
-    if (sortRef.current) params.append("sort", sortRef.current);
-    if (orderRef.current) params.append("order", orderRef.current);
+    if (sort) params.append("sort", sort);
+    if (order) params.append("order", order);
 
     for (const f of filterOptionsRef.current) {
       const filterKey = f.parameter || f.min_parameter;
-      const bucket = filterValuesRef.current[filterKey];
+      const bucket = filterValues[filterKey];
       if (!bucket) continue;
 
       if (f.parameter) {
@@ -148,27 +141,6 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
       }
     }
 
-    return params;
-  }
-
-  function mergeAndFormat(raw, zipMap) {
-    if (isCommunityRef.current && zipMap) {
-      const defaults = { community_total_affordable_units: 0, community_housing_count: 0 };
-      const merged = raw.map(c => ({ ...c, ...defaults, ...(zipMap[c.zip_code] || {}) }));
-      return merged.map(item => formatItem(item, attributesRef.current));
-    }
-    return raw.map(item => formatItem(item, attributesRef.current));
-  }
-
-  // Fires on sort, filter, or apiEndpoint changes — always resets to page 1
-  useEffect(() => {
-
-    setLoading(true);
-    setPage(1);
-    setHousingStatsByZip(null);
-
-    const params = buildParams(1);
-
     if (isCommunity) {
       Promise.all([
         fetch(`${API_BASE}${apiEndpoint}?${params}`).then(r => r.json()),
@@ -177,9 +149,10 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
         .then(([data, housingList]) => {
           const zipMap = buildHousingStatsByZip(housingList);
           setHousingStatsByZip(zipMap);
-          housingStatsByZipRef.current = zipMap;
           const raw = data.data || [];
-          const formatted = mergeAndFormat(raw, zipMap);
+          const defaults = { community_total_affordable_units: 0, community_housing_count: 0 };
+          const merged = raw.map(c => ({ ...c, ...defaults, ...(zipMap[c.zip_code] || {}) }));
+          const formatted = merged.map(item => formatItem(item, attributesRef.current));
           setTotal(data.total ?? 0);
           setPages(data.pages ?? 1);
           setItems(formatted);
@@ -194,7 +167,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
         .then(res => res.json())
         .then(data => {
           const raw = data.data || [];
-          const formatted = mergeAndFormat(raw, null);
+          const formatted = raw.map(item => formatItem(item, attributesRef.current));
           setTotal(data.total ?? 0);
           setPages(data.pages ?? 1);
           setItems(formatted);
@@ -206,10 +179,9 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
         });
     }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiEndpoint, isCommunity, sort, order, filterValues]);
 
-  // Fires ONLY on page changes — reads sort/filter from refs so it's always current
+  // Handle page changes - fetch new page from server
   useEffect(() => {
 
     if (page === 1) return;
@@ -217,13 +189,44 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
     window.scrollTo(0, 0);
     setLoading(true);
 
-    const params = buildParams(page);
+    const params = new URLSearchParams({
+      page: page,
+      per_page: PER_PAGE
+    });
+
+    if (sort) params.append("sort", sort);
+    if (order) params.append("order", order);
+
+    for (const f of filterOptionsRef.current) {
+      const filterKey = f.parameter || f.min_parameter;
+      const bucket = filterValues[filterKey];
+      if (!bucket) continue;
+
+      if (f.parameter) {
+        if (bucket.value !== null)
+          params.append(f.parameter, bucket.value);
+      } else {
+        if (bucket.min !== null)
+          params.append(f.min_parameter, bucket.min);
+        if (bucket.max !== null)
+          params.append(f.max_parameter, bucket.max);
+      }
+    }
+
+    const mergeAndFormat = (raw) => {
+      if (isCommunity && housingStatsByZip) {
+        const defaults = { community_total_affordable_units: 0, community_housing_count: 0 };
+        const merged = raw.map(c => ({ ...c, ...defaults, ...(housingStatsByZip[c.zip_code] || {}) }));
+        return merged.map(item => formatItem(item, attributesRef.current));
+      }
+      return raw.map(item => formatItem(item, attributesRef.current));
+    };
 
     fetch(`${API_BASE}${apiEndpoint}?${params}`)
       .then(res => res.json())
       .then(data => {
         const raw = data.data || [];
-        const formatted = mergeAndFormat(raw, housingStatsByZipRef.current);
+        const formatted = mergeAndFormat(raw);
         setItems(formatted);
         setLoading(false);
       })
@@ -233,7 +236,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
       });
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, sort, order, filterValues]);
 
   const cards = items.map(item => (
     <div className="col-lg-4 col-md-6 col-sm-12 mb-4" key={item.id}>
@@ -270,23 +273,23 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
         (() => {
           const filterKey = f.parameter || f.min_parameter;
           return (
-            <select
-              key={filterKey}
-              id={`filter-${filterKey}`}
-              className="form-select mb-2"
-              style={{ width: "200px" }}
-              onChange={(e) => {
-                setFilterValues(prev => ({
-                  ...prev,
-                  [filterKey]: f.buckets[Number(e.target.value)]
-                }));
-                setPage(1);
-              }}
-            >
-              {f.buckets.map((b, i) => (
-                <option key={i} value={i}>{b.label}</option>
-              ))}
-            </select>
+        <select
+          key={filterKey}
+          id={`filter-${filterKey}`}
+          className="form-select mb-2"
+          style={{ width: "200px" }}
+          onChange={(e) => {
+            setFilterValues(prev => ({
+              ...prev,
+              [filterKey]: f.buckets[Number(e.target.value)]
+            }));
+            setPage(1);
+          }}
+        >
+          {f.buckets.map((b, i) => (
+            <option key={i} value={i}>{b.label}</option>
+          ))}
+        </select>
           );
         })()
       ))}
@@ -327,7 +330,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
         {cards}
       </div>
 
-      {/* PAGINATION */}
+       {/* PAGINATION */}
       <div className="d-flex justify-content-center mt-4 gap-3">
 
         <button
