@@ -91,7 +91,8 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
 
   const initialFilterValues = {};
   for (const f of filterOptions) {
-    initialFilterValues[f.min_parameter] = f.buckets[0];
+    const filterKey = f.parameter || f.min_parameter;
+    initialFilterValues[filterKey] = f.buckets[0];
   }
   const [filterValues, setFilterValues] = useState(initialFilterValues);
 
@@ -125,11 +126,19 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
     if (order) params.append("order", order);
 
     for (const f of filterOptionsRef.current) {
-      const bucket = filterValues[f.min_parameter];
-      if (bucket.min !== null)
-        params.append(f.min_parameter, bucket.min);
-      if (bucket.max !== null)
-        params.append(f.max_parameter, bucket.max);
+      const filterKey = f.parameter || f.min_parameter;
+      const bucket = filterValues[filterKey];
+      if (!bucket) continue;
+
+      if (f.parameter) {
+        if (bucket.value !== null)
+          params.append(f.parameter, bucket.value);
+      } else {
+        if (bucket.min !== null)
+          params.append(f.min_parameter, bucket.min);
+        if (bucket.max !== null)
+          params.append(f.max_parameter, bucket.max);
+      }
     }
 
     if (isCommunity) {
@@ -189,11 +198,19 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
     if (order) params.append("order", order);
 
     for (const f of filterOptionsRef.current) {
-      const bucket = filterValues[f.min_parameter];
-      if (bucket.min !== null)
-        params.append(f.min_parameter, bucket.min);
-      if (bucket.max !== null)
-        params.append(f.max_parameter, bucket.max);
+      const filterKey = f.parameter || f.min_parameter;
+      const bucket = filterValues[filterKey];
+      if (!bucket) continue;
+
+      if (f.parameter) {
+        if (bucket.value !== null)
+          params.append(f.parameter, bucket.value);
+      } else {
+        if (bucket.min !== null)
+          params.append(f.min_parameter, bucket.min);
+        if (bucket.max !== null)
+          params.append(f.max_parameter, bucket.max);
+      }
     }
 
     const mergeAndFormat = (raw) => {
@@ -253,15 +270,18 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
       <h2 className="text-center mb-4">{title}</h2>
 
       {filterOptions.map((f) => (
+        (() => {
+          const filterKey = f.parameter || f.min_parameter;
+          return (
         <select
-          key={f.min_parameter}
-          id={`filter-${f.min_parameter}`}
+          key={filterKey}
+          id={`filter-${filterKey}`}
           className="form-select mb-2"
           style={{ width: "200px" }}
           onChange={(e) => {
             setFilterValues(prev => ({
               ...prev,
-              [f.min_parameter]: f.buckets[Number(e.target.value)]
+              [filterKey]: f.buckets[Number(e.target.value)]
             }));
             setPage(1);
           }}
@@ -270,6 +290,8 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
             <option key={i} value={i}>{b.label}</option>
           ))}
         </select>
+          );
+        })()
       ))}
 
       <div className="d-flex justify-content-end mb-3">

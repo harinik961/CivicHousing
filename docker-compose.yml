@@ -1,9 +1,9 @@
-version: "3.9"
-
 services:
   backend:
     build: ./backend
     container_name: backend
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////app/local-dev.db}
     ports:
       - "5000:5000"
     volumes:
