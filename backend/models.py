@@ -1,7 +1,8 @@
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Index
-from ts_vector import TSVector
+from sqlalchemy import Index, event, DDL
+from sqlalchemy_utils import TSVectorType
+
 db = SQLAlchemy()
 
 # ---------------------------------------------------------
@@ -74,37 +75,13 @@ class Community(db.Model):
         lazy="selectin",
     )
 
-    ts_vector = db.Column(
-        TSVector(),
-        db.Computed(
-            "to_tsvector('english', "
-            "coalesce(county, '') || ' ' || "
-            "coalesce(zip_code, '') || ' ' || "
-            "coalesce(median_housing_price::text, '') || ' ' || "
-            "coalesce(population::text, '') || ' ' || "
-            "coalesce(crime_index::text, '') || ' ' || "
-            "coalesce(park_count::text, '') || ' ' || "
-            "coalesce(health_count::text, '') || ' ' || "
-            "coalesce(map_embed_url, '') || ' ' || "
-            "coalesce(street_view_url, '') || ' ' || "
-            "coalesce(transit_score::text, '')"
-            ")",
-            persisted=True
-        ), 
-        nullable=False, 
-        name="ts_vector"
-    )
+    ts_vector = db.Column(TSVectorType(), nullable=True)
 
     __table_args__ = (
-        Index(
-            "ix_community_ts_vector",
-            "ts_vector",
-            postgresql_using="gin"
-        ),
+        Index("ix_community_ts_vector", "ts_vector", postgresql_using="gin"),
     )
 
     def to_dict(self, include_relations=False):
-
         data = {
             "id": self.id,
             "county": self.county,
@@ -127,11 +104,6 @@ class Community(db.Model):
 
         return data
 
-community_index = Index(
-    "ix_community_ts_vector",
-    Community.__table__.c.ts_vector,
-    postgresql_using="gin"
-)
 
 # ---------------------------------------------------------
 # Housing Model
@@ -171,39 +143,13 @@ class Housing(db.Model):
         lazy="selectin",
     )
 
-    ts_vector = db.Column(
-        TSVector(),
-        db.Computed(
-            "to_tsvector('english', "
-            "coalesce(project_name, '') || ' ' || "
-            "coalesce(address, '') || ' ' || "
-            "coalesce(zip_code, '') || ' ' || "
-            "coalesce(unit_type, '') || ' ' || "
-            "coalesce(housing_tenure, '') || ' ' || "
-            "coalesce(income_restriction_level, '') || ' ' || "
-            "coalesce(council_district, '') || ' ' || "
-            "coalesce(total_ada_units::text, '') || ' ' || "
-            "coalesce(total_affordable_units::text, '') || ' ' || "
-            "coalesce(street_view_image, '') || ' ' || "
-            "coalesce(last_synced_at::text, '') || ' ' || "
-            "coalesce(walk_score::text, '')"
-            ")",
-            persisted=True
-        ), 
-        nullable=False, 
-        name="ts_vector"
-    )
+    ts_vector = db.Column(TSVectorType(), nullable=True)
 
     __table_args__ = (
-        Index(
-            "ix_housing_ts_vector",
-            "ts_vector",
-            postgresql_using="gin"
-        ),
+        Index("ix_housing_ts_vector", "ts_vector", postgresql_using="gin"),
     )
 
     def to_dict(self, include_relations=False):
-
         data = {
             "id": self.id,
             "project_name": self.project_name,
@@ -228,13 +174,10 @@ class Housing(db.Model):
 
         return data
 
-housing_index = Index(
-    "ix_housing_ts_vector",
-    Housing.__table__.c.ts_vector,
-    postgresql_using="gin"
-)
 
+# ---------------------------------------------------------
 # Transportation Model
+# ---------------------------------------------------------
 
 
 class Transportation(db.Model):
@@ -267,41 +210,13 @@ class Transportation(db.Model):
     travel_time_downtown = db.Column(db.String(1000))
     travel_time_domain = db.Column(db.String(1000))
 
-    ts_vector = db.Column(
-        TSVector(),
-        db.Computed(
-            "to_tsvector('english', "
-            "coalesce(stop_id, '') || ' ' || "
-            "coalesce(stop_name, '') || ' ' || "
-            "coalesce(stop_url, '') || ' ' || "
-            "coalesce(map_embed_url, '') || ' ' || "
-            "coalesce(street_view_url, '') || ' ' || "
-            "coalesce(transport_type, '') || ' ' || "
-            "coalesce(routes, '') || ' ' || "
-            "coalesce(frequency, '') || ' ' || "
-            "coalesce(num_routes::text, '') || ' ' || "
-            "coalesce(wheelchair_accessible, '') || ' ' || "
-            "coalesce(service_days, '') || ' ' || "
-            "coalesce(travel_time_ut, '') || ' ' || "
-            "coalesce(travel_time_downtown, '') || ' ' || "
-            "coalesce(travel_time_domain, '')"
-            ")",
-            persisted=True
-        ), 
-        nullable=False, 
-        name="ts_vector"
-    )
+    ts_vector = db.Column(TSVectorType(), nullable=True)
 
     __table_args__ = (
-        Index(
-            "ix_transportation_ts_vector",
-            "ts_vector",
-            postgresql_using="gin"
-        ),
+        Index("ix_transportation_ts_vector", "ts_vector", postgresql_using="gin"),
     )
 
     def to_dict(self, include_relations=False):
-
         data = {
             "id": self.id,
             "stop_id": self.stop_id,
@@ -328,8 +243,100 @@ class Transportation(db.Model):
 
         return data
 
-transportation_index = Index(
-    "ix_transportation_ts_vector",
-    Transportation.__table__.c.ts_vector,
-    postgresql_using="gin"
+
+# ---------------------------------------------------------
+# Trigger DDL — fires after table creation via db.create_all()
+# ---------------------------------------------------------
+
+event.listen(
+    Community.__table__,
+    "after_create",
+    DDL("""
+        CREATE OR REPLACE FUNCTION community_ts_vector_update() RETURNS trigger AS $$
+        BEGIN
+            NEW.ts_vector :=
+                to_tsvector('english',
+                    coalesce(NEW.county, '') || ' ' ||
+                    coalesce(NEW.zip_code, '') || ' ' ||
+                    coalesce(NEW.median_housing_price::text, '') || ' ' ||
+                    coalesce(NEW.population::text, '') || ' ' ||
+                    coalesce(NEW.crime_index::text, '') || ' ' ||
+                    coalesce(NEW.park_count::text, '') || ' ' ||
+                    coalesce(NEW.health_count::text, '') || ' ' ||
+                    coalesce(NEW.map_embed_url, '') || ' ' ||
+                    coalesce(NEW.street_view_url, '') || ' ' ||
+                    coalesce(NEW.transit_score::text, '')
+                );
+            RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql;
+
+        CREATE TRIGGER community_ts_vector_trigger
+        BEFORE INSERT OR UPDATE ON communities
+        FOR EACH ROW EXECUTE FUNCTION community_ts_vector_update();
+    """)
+)
+
+event.listen(
+    Housing.__table__,
+    "after_create",
+    DDL("""
+        CREATE OR REPLACE FUNCTION housing_ts_vector_update() RETURNS trigger AS $$
+        BEGIN
+            NEW.ts_vector :=
+                to_tsvector('english',
+                    coalesce(NEW.project_name, '') || ' ' ||
+                    coalesce(NEW.address, '') || ' ' ||
+                    coalesce(NEW.zip_code, '') || ' ' ||
+                    coalesce(NEW.unit_type, '') || ' ' ||
+                    coalesce(NEW.housing_tenure, '') || ' ' ||
+                    coalesce(NEW.income_restriction_level, '') || ' ' ||
+                    coalesce(NEW.council_district, '') || ' ' ||
+                    coalesce(NEW.total_ada_units::text, '') || ' ' ||
+                    coalesce(NEW.total_affordable_units::text, '') || ' ' ||
+                    coalesce(NEW.street_view_image, '') || ' ' ||
+                    coalesce(NEW.last_synced_at::text, '') || ' ' ||
+                    coalesce(NEW.walk_score::text, '')
+                );
+            RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql;
+
+        CREATE TRIGGER housing_ts_vector_trigger
+        BEFORE INSERT OR UPDATE ON housing
+        FOR EACH ROW EXECUTE FUNCTION housing_ts_vector_update();
+    """)
+)
+
+event.listen(
+    Transportation.__table__,
+    "after_create",
+    DDL("""
+        CREATE OR REPLACE FUNCTION transportation_ts_vector_update() RETURNS trigger AS $$
+        BEGIN
+            NEW.ts_vector :=
+                to_tsvector('english',
+                    coalesce(NEW.stop_id, '') || ' ' ||
+                    coalesce(NEW.stop_name, '') || ' ' ||
+                    coalesce(NEW.stop_url, '') || ' ' ||
+                    coalesce(NEW.map_embed_url, '') || ' ' ||
+                    coalesce(NEW.street_view_url, '') || ' ' ||
+                    coalesce(NEW.transport_type, '') || ' ' ||
+                    coalesce(NEW.routes, '') || ' ' ||
+                    coalesce(NEW.frequency, '') || ' ' ||
+                    coalesce(NEW.num_routes::text, '') || ' ' ||
+                    coalesce(NEW.wheelchair_accessible, '') || ' ' ||
+                    coalesce(NEW.service_days, '') || ' ' ||
+                    coalesce(NEW.travel_time_ut, '') || ' ' ||
+                    coalesce(NEW.travel_time_downtown, '') || ' ' ||
+                    coalesce(NEW.travel_time_domain, '')
+                );
+            RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql;
+
+        CREATE TRIGGER transportation_ts_vector_trigger
+        BEFORE INSERT OR UPDATE ON transportation
+        FOR EACH ROW EXECUTE FUNCTION transportation_ts_vector_update();
+    """)
 )
