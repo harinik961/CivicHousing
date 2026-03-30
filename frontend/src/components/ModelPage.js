@@ -84,7 +84,38 @@ function buildHousingStatsByZip(housingList) {
   return byZip;
 }
 
-export default function ModelPage({ title, apiEndpoint, modelName, attributes, query, sortOptions = [], filterOptions=[]}) {
+function bucketsEqual(a, b, f) {
+  if (!a || !b) return false;
+  if (f.parameter) return a.value === b.value;
+  return a.min === b.min && a.max === b.max;
+}
+
+function isAllBucket(bucket, f) {
+  if (!bucket) return true;
+  if (f.parameter) return bucket.value === null;
+  return bucket.min === null && bucket.max === null;
+}
+
+function filterSelectionsEqual(draft, applied, filterOptions) {
+  for (const opt of filterOptions) {
+    const key = opt.parameter || opt.min_parameter;
+    if (!bucketsEqual(draft[key], applied[key], opt)) return false;
+  }
+  return true;
+}
+
+function buildActiveFilterLines(applied, filterOptions) {
+  const lines = [];
+  for (const f of filterOptions) {
+    const key = f.parameter || f.min_parameter;
+    const bucket = applied[key];
+    if (!bucket || isAllBucket(bucket, f)) continue;
+    lines.push(`${f.label}: ${bucket.label}`);
+  }
+  return lines;
+}
+
+export default function ModelPage({ title, apiEndpoint, modelName, attributes, query, sortOptions = [], filterOptions = [] }) {
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -95,6 +126,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
     initialFilterValues[filterKey] = f.buckets[0];
   }
   const [filterValues, setFilterValues] = useState(initialFilterValues);
+  const [draftFilterValues, setDraftFilterValues] = useState(initialFilterValues);
 
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -260,6 +292,11 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
   const start = (page - 1) * PER_PAGE + 1;
   const end = Math.min(page * PER_PAGE, total);
 
+  const activeFilterLines = buildActiveFilterLines(filterValues, filterOptions);
+  const applyDisabled =
+    filterOptions.length === 0 ||
+    filterSelectionsEqual(draftFilterValues, filterValues, filterOptions);
+
   return (
     <div className="container mt-4">
 
@@ -269,30 +306,64 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
 
       <h2 className="text-center mb-4">{title}</h2>
 
-      {filterOptions.map((f) => (
-        (() => {
-          const filterKey = f.parameter || f.min_parameter;
-          return (
-        <select
-          key={filterKey}
-          id={`filter-${filterKey}`}
-          className="form-select mb-2"
-          style={{ width: "200px" }}
-          onChange={(e) => {
-            setFilterValues(prev => ({
-              ...prev,
-              [filterKey]: f.buckets[Number(e.target.value)]
-            }));
-            setPage(1);
-          }}
-        >
-          {f.buckets.map((b, i) => (
-            <option key={i} value={i}>{b.label}</option>
-          ))}
-        </select>
-          );
-        })()
-      ))}
+      {filterOptions.length > 0 && (
+        <>
+          {activeFilterLines.length > 0 && (
+            <p className="text-center small mb-2">
+              <span className="text-muted">Active filters: </span>
+              {activeFilterLines.join("; ")}
+            </p>
+          )}
+
+          <div className="card mb-3 mx-auto" style={{ maxWidth: "420px" }}>
+            <div className="card-body py-3">
+              {filterOptions.map((f) => {
+                const filterKey = f.parameter || f.min_parameter;
+                return (
+                  <div key={filterKey} className="mb-3">
+                    <div className="fw-semibold small mb-2">{f.label}</div>
+                    {f.buckets.map((b, i) => {
+                      const selected = draftFilterValues[filterKey];
+                      const checked = bucketsEqual(selected, b, f);
+                      const inputId = `filter-${filterKey}-${i}`;
+                      return (
+                        <div key={inputId} className="form-check">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            id={inputId}
+                            checked={checked}
+                            onChange={() => {
+                              setDraftFilterValues((prev) => ({
+                                ...prev,
+                                [filterKey]: b
+                              }));
+                            }}
+                          />
+                          <label className="form-check-label" htmlFor={inputId}>
+                            {b.label}
+                          </label>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+              <button
+                type="button"
+                className="btn btn-primary w-100"
+                disabled={applyDisabled}
+                onClick={() => {
+                  setFilterValues({ ...draftFilterValues });
+                  setPage(1);
+                }}
+              >
+                Apply filters
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="d-flex justify-content-end mb-3">
         <select

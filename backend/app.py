@@ -112,6 +112,16 @@ def create_app():
     db.init_app(app)
     migrate = Migrate(app, db)
 
+    auto_create_tables = os.getenv("AUTO_CREATE_TABLES")
+    should_auto_create = (
+        auto_create_tables.lower() == "true"
+        if auto_create_tables is not None
+        else database_uri.startswith("sqlite")
+    )
+    if should_auto_create:
+        with app.app_context():
+            db.create_all()
+
     # -----------------------------
     # Root Routes
     # -----------------------------
@@ -489,9 +499,5 @@ app = create_app()
 application = app
 
 if __name__ == "__main__":  # pragma: no cover
-    if os.getenv("FLASK_ENV") != "production":
-        with app.app_context():
-            db.create_all()
-
     app.run(host="0.0.0.0", port=0, debug=True)
 
