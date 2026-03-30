@@ -9,8 +9,8 @@ export default function Housing() {
     { value: "walk_score|desc", label: "Walkability: High to Low" },
     { value: "income_restriction_level|asc", label: "Income: Low to High" },
     { value: "income_restriction_level|desc", label: "Income: High to Low" },
-    { value: "total_ada_units|asc", label: "ADA Units: Low to High" },
-    { value: "total_ada_units|desc", label: "ADA Units: High to Low" }
+    { value: "total_affordable_units|asc", label: "Affordable Units: Low to High" },
+    { value: "total_affordable_units|desc", label: "Affordable Units: High to Low" }
   ];
   const filterOptions = [
     {

@@ -202,13 +202,16 @@ def create_app():
         sort = request.args.get("sort")
         order = request.args.get("order", "asc")
         if not sort:
-            sort = "median_housing_price"
+            sort = "id"
             order = "asc"
 
         SORT_MAP = {
             "walk_score": Housing.walk_score,
-            "total_ada_units": Housing.total_ada_units,
-
+            "total_affordable_units": cast(
+                func.coalesce(Housing.total_affordable_units, 0),
+                Integer
+            ),           
+            "id": Housing.id,
             "income_restriction_level": cast(
                 func.split_part(
                     func.replace(Housing.income_restriction_level, "% AMI", ""),
@@ -387,6 +390,7 @@ def create_app():
     # -----------------------------
     # TRANSPORTATION
     # -----------------------------
+
     @app.route("/api/transportation", methods=["GET"], strict_slashes=False)
     def get_transportation():
 
@@ -395,16 +399,56 @@ def create_app():
 
         query = Transportation.query
 
+        # --- SORTING ---
+        sort = request.args.get("sort")
+        order = request.args.get("order", "asc")
+
+        if not sort:
+            sort = "num_routes"
+            order = "desc"
+
+        SORT_MAP = {
+            "num_routes": Transportation.num_routes,
+            "frequency": cast(
+                func.nullif(
+                    func.regexp_replace(Transportation.frequency, r'\D', '', 'g'),
+                    ''
+                ),
+                Integer
+            ),
+
+            "travel_time_ut": cast(
+                func.nullif(
+                    func.regexp_replace(Transportation.travel_time_ut, r'\D', '', 'g'),
+                    ''
+                ),
+                Integer
+            ),
+
+            "travel_time_downtown": cast(
+                func.nullif(
+                    func.regexp_replace(Transportation.travel_time_downtown, r'\D', '', 'g'),
+                    ''
+                ),
+                Integer
+            ),
+        }
+
+        if sort in SORT_MAP:
+            column = SORT_MAP[sort]
+            query = query.order_by(None).order_by(
+                column.desc() if order == "desc" else column.asc()
+            )
+
+        # --- PAGINATION ---
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
-        return jsonify(
-            {
-                "data": [t.to_dict() for t in pagination.items],
-                "total": pagination.total,
-                "page": page,
-                "pages": pagination.pages,
-            }
-        )
+        return jsonify({
+            "data": [t.to_dict() for t in pagination.items],
+            "total": pagination.total,
+            "page": page,
+            "pages": pagination.pages,
+        })
 
     @app.route("/api/transportation/<int:id>", methods=["GET"], strict_slashes=False)
     def get_one_transportation(id):
