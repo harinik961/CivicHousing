@@ -98,7 +98,7 @@ def get_google_walking_distance_miles(
 def create_app():
 
     app = Flask(__name__)
-    CORS(app, origins=["https://civichousing.me", "http://localhost:3000"])
+    CORS(app)
 
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
