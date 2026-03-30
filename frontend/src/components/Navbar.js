@@ -18,6 +18,7 @@ export default function NavBar() {
               <Nav.Link as={Link} to="/community">Communities</Nav.Link>
               <Nav.Link as={Link} to="/housing">Housing</Nav.Link>
               <Nav.Link as={Link} to="/transportation">Transportation</Nav.Link>
+              <Nav.Link as={Link} to="/globalsearch">Search</Nav.Link>
               <Nav.Link as={Link} to="/about">About</Nav.Link>
             </Nav>
           </BSNavbar.Collapse>

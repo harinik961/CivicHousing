@@ -8,6 +8,7 @@ from sqlalchemy import cast, Integer
 from sqlalchemy.sql import func
 from models import db, Housing, Community, Transportation
 from flask_migrate import Migrate
+from search import search_housing, search_communities, search_transportation, global_search
 
 load_dotenv()
 
@@ -152,6 +153,19 @@ def create_app():
         return redirect(
             "https://documenter.getpostman.com/view/52514232/2sBXcDHMyK", code=302
         )
+    
+    @app.route("/search")
+    def global_search_route():
+        query = request.args.get("q", "")
+        page = int(request.args.get("page", 1))
+
+        results, total = global_search(query, page)
+
+        return jsonify({
+            "results": results,
+            "total": total,
+            "page": page
+        })
 
     # -----------------------------
     # HOUSING
@@ -267,6 +281,19 @@ def create_app():
             )
 
         return jsonify(payload)
+    
+    @app.route("/search/housing")
+    def housing_search_route():
+        query = request.args.get("q", "")
+        page = int(request.args.get("page", 1))
+
+        results, total = search_housing(query, page)
+
+        return jsonify({
+            "results": results,
+            "total": total,
+            "page": page
+        })
 
     # -----------------------------
     # COMMUNITY
@@ -338,6 +365,19 @@ def create_app():
         community = Community.query.get_or_404(id)
 
         return jsonify(community.to_dict(include_relations=True))
+    
+    @app.route("/search/community")
+    def community_search_route():
+        query = request.args.get("q", "")
+        page = int(request.args.get("page", 1))
+
+        results, total = search_communities(query, page)
+
+        return jsonify({
+            "results": results,
+            "total": total,
+            "page": page
+        })
 
     # -----------------------------
     # TRANSPORTATION
@@ -367,6 +407,19 @@ def create_app():
         transportation = Transportation.query.get_or_404(id)
 
         return jsonify(transportation.to_dict(include_relations=True))
+    
+    @app.route("/search/transportation")
+    def transportation_serach_route():
+        query = request.args.get("q", "")
+        page = int(request.args.get("page", 1))
+
+        results, total = search_transportation(query, page)
+
+        return jsonify({
+            "results": results,
+            "total": total,
+            "page": page
+        })
 
     return app
 

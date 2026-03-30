@@ -1,6 +1,7 @@
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
-
+from sqlalchemy import Index
+from ts_vector import TSVector
 db = SQLAlchemy()
 
 # ---------------------------------------------------------
@@ -73,6 +74,35 @@ class Community(db.Model):
         lazy="selectin",
     )
 
+    ts_vector = db.Column(
+        TSVector(),
+        db.Computed(
+            "to_tsvector('english', "
+            "coalesce(county, '') || ' ' || "
+            "coalesce(zip_code, '') || ' ' || "
+            "coalesce(median_housing_price::text, '') || ' ' || "
+            "coalesce(population::text, '') || ' ' || "
+            "coalesce(crime_index::text, '') || ' ' || "
+            "coalesce(park_count::text, '') || ' ' || "
+            "coalesce(health_count::text, '') || ' ' || "
+            "coalesce(map_embed_url, '') || ' ' || "
+            "coalesce(street_view_url, '') || ' ' || "
+            "coalesce(transit_score::text, '')"
+            ")",
+            persisted=True
+        ), 
+        nullable=False, 
+        name="ts_vector"
+    )
+
+    __table_args__ = (
+        Index(
+            "ix_community_ts_vector",
+            "ts_vector",
+            postgresql_using="gin"
+        ),
+    )
+
     def to_dict(self, include_relations=False):
 
         data = {
@@ -97,6 +127,11 @@ class Community(db.Model):
 
         return data
 
+community_index = Index(
+    "ix_community_ts_vector",
+    Community.__table__.c.ts_vector,
+    postgresql_using="gin"
+)
 
 # ---------------------------------------------------------
 # Housing Model
@@ -136,6 +171,37 @@ class Housing(db.Model):
         lazy="selectin",
     )
 
+    ts_vector = db.Column(
+        TSVector(),
+        db.Computed(
+            "to_tsvector('english', "
+            "coalesce(project_name, '') || ' ' || "
+            "coalesce(address, '') || ' ' || "
+            "coalesce(zip_code, '') || ' ' || "
+            "coalesce(unit_type, '') || ' ' || "
+            "coalesce(housing_tenure, '') || ' ' || "
+            "coalesce(income_restriction_level, '') || ' ' || "
+            "coalesce(council_district, '') || ' ' || "
+            "coalesce(total_ada_units::text, '') || ' ' || "
+            "coalesce(total_affordable_units::text, '') || ' ' || "
+            "coalesce(street_view_image, '') || ' ' || "
+            "coalesce(last_synced_at::text, '') || ' ' || "
+            "coalesce(walk_score::text, '')"
+            ")",
+            persisted=True
+        ), 
+        nullable=False, 
+        name="ts_vector"
+    )
+
+    __table_args__ = (
+        Index(
+            "ix_housing_ts_vector",
+            "ts_vector",
+            postgresql_using="gin"
+        ),
+    )
+
     def to_dict(self, include_relations=False):
 
         data = {
@@ -162,6 +228,11 @@ class Housing(db.Model):
 
         return data
 
+housing_index = Index(
+    "ix_housing_ts_vector",
+    Housing.__table__.c.ts_vector,
+    postgresql_using="gin"
+)
 
 # Transportation Model
 
@@ -196,6 +267,39 @@ class Transportation(db.Model):
     travel_time_downtown = db.Column(db.String(1000))
     travel_time_domain = db.Column(db.String(1000))
 
+    ts_vector = db.Column(
+        TSVector(),
+        db.Computed(
+            "to_tsvector('english', "
+            "coalesce(stop_id, '') || ' ' || "
+            "coalesce(stop_name, '') || ' ' || "
+            "coalesce(stop_url, '') || ' ' || "
+            "coalesce(map_embed_url, '') || ' ' || "
+            "coalesce(street_view_url, '') || ' ' || "
+            "coalesce(transport_type, '') || ' ' || "
+            "coalesce(routes, '') || ' ' || "
+            "coalesce(frequency, '') || ' ' || "
+            "coalesce(num_routes::text, '') || ' ' || "
+            "coalesce(wheelchair_accessible, '') || ' ' || "
+            "coalesce(service_days, '') || ' ' || "
+            "coalesce(travel_time_ut, '') || ' ' || "
+            "coalesce(travel_time_downtown, '') || ' ' || "
+            "coalesce(travel_time_domain, '')"
+            ")",
+            persisted=True
+        ), 
+        nullable=False, 
+        name="ts_vector"
+    )
+
+    __table_args__ = (
+        Index(
+            "ix_transportation_ts_vector",
+            "ts_vector",
+            postgresql_using="gin"
+        ),
+    )
+
     def to_dict(self, include_relations=False):
 
         data = {
@@ -223,3 +327,9 @@ class Transportation(db.Model):
             data["housing"] = [h.to_dict() for h in self.housing[:1]]
 
         return data
+
+transportation_index = Index(
+    "ix_transportation_ts_vector",
+    Transportation.__table__.c.ts_vector,
+    postgresql_using="gin"
+)
