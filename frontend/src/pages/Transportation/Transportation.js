@@ -19,8 +19,7 @@ export default function Transportation() {
       buckets: [
         { label: "All", value: null },
         { label: "Bus", value: "Bus" },
-        { label: "Rail", value: "Rail" },
-        { label: "Rail and Bus", value: "Rail and Bus" }
+        { label: "Rail", value: "Rail" }
       ]
     },
     {
@@ -29,8 +28,7 @@ export default function Transportation() {
       buckets: [
         { label: "All", value: null },
         { label: "Wheelchair Accessible", value: "Wheelchair Accessible" },
-        { label: "Not Wheelchair Accessible", value: "Not Wheelchair Accessible" },
-        { label: "No Information Available", value: "No Information Available" }
+        { label: "Not Wheelchair Accessible", value: "Not Wheelchair Accessible" }
       ]
     }
   ];
