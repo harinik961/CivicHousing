@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import ModelCard from "../components/ModelCard";
 import { MODEL_ATTRIBUTES } from "../config/modelAttributes";
 
 const API_BASE = "https://api.civichousing.me";
 const PER_PAGE = 12;
 
-// Normalize image URLs / base64
 function normalizeImage(item) {
   const candidate = item.street_view_url || item.street_view_image || item.image || null;
   if (!candidate) return null;
@@ -20,7 +19,6 @@ function normalizeImage(item) {
   return `data:image/jpeg;base64,${candidate}`;
 }
 
-// Format item to match ModelCard expected props
 function formatItem(item) {
   const attrs = (MODEL_ATTRIBUTES[item.type] || []).map((attr) => ({
     title: attr.title,
@@ -45,7 +43,7 @@ export default function GlobalSearch() {
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
 
-  const fetchResults = async () => {
+  const fetchResults = useCallback(async () => {
     if (!searchTerm) return;
 
     setLoading(true);
@@ -67,17 +65,15 @@ export default function GlobalSearch() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm, page]);
 
-  // Reset page when search term changes
   useEffect(() => {
     setPage(1);
   }, [searchTerm]);
 
-  // Fetch results when search term or page changes
   useEffect(() => {
     fetchResults();
-  }, [searchTerm, page]);
+  }, [fetchResults]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
