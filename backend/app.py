@@ -169,17 +169,19 @@ def create_app():
             "https://documenter.getpostman.com/view/52514232/2sBXcDHMyK", code=302
         )
     
-    @app.route("/search")
+    @app.route("/api/search", methods=["GET"])
     def global_search_route():
         query = request.args.get("q", "")
         page = int(request.args.get("page", 1))
+        per_page = int(request.args.get("per_page", 50))
 
-        results, total = global_search(query, page)
+        results, total, pages = global_search(query, page=page, per_page=per_page)
 
         return jsonify({
             "results": results,
             "total": total,
-            "page": page
+            "page": page,
+            "pages": pages
         })
 
     # -----------------------------
@@ -300,17 +302,19 @@ def create_app():
 
         return jsonify(payload)
     
-    @app.route("/search/housing")
+    @app.route("/api/search/housing", methods=["GET"])
     def housing_search_route():
         query = request.args.get("q", "")
         page = int(request.args.get("page", 1))
+        per_page = int(request.args.get("per_page", 50))
 
-        results, total = search_housing(query, page)
+        results, total, pages = search_housing(query, page=page, per_page=per_page)
 
         return jsonify({
             "results": results,
             "total": total,
-            "page": page
+            "page": page,
+            "pages": pages
         })
 
     # -----------------------------
@@ -384,17 +388,19 @@ def create_app():
 
         return jsonify(community.to_dict(include_relations=True))
     
-    @app.route("/search/community")
+    @app.route("/api/search/community", methods=["GET"])
     def community_search_route():
         query = request.args.get("q", "")
         page = int(request.args.get("page", 1))
+        per_page = int(request.args.get("per_page", 50))
 
-        results, total = search_communities(query, page)
+        results, total, pages = search_communities(query, page=page, per_page=per_page)
 
         return jsonify({
             "results": results,
             "total": total,
-            "page": page
+            "page": page,
+            "pages": pages
         })
 
     # -----------------------------
@@ -445,17 +451,19 @@ def create_app():
 
         return jsonify(transportation.to_dict(include_relations=True))
     
-    @app.route("/search/transportation")
-    def transportation_serach_route():
+    @app.route("/api/search/transportation", methods=["GET"])
+    def transportation_search_route():
         query = request.args.get("q", "")
         page = int(request.args.get("page", 1))
+        per_page = int(request.args.get("per_page", 50))
 
-        results, total = search_transportation(query, page)
+        results, total, pages = search_transportation(query, page=page, per_page=per_page)
 
         return jsonify({
             "results": results,
             "total": total,
-            "page": page
+            "page": page,
+            "pages": pages
         })
 
     return app

@@ -3,19 +3,15 @@ from models import db, Housing, Community, Transportation
 
 def search_model(model, query, highlight_field, page=1, per_page=12):
   if not query or query.strip() == "":
-    return [], 0
+    return [], 0, 0
 
   plain_query = func.plainto_tsquery('english', query)
   phrase_query = func.phraseto_tsquery('english', query)
 
-  # Ranking
-  rank_plain = func.ts_rank(model.__ts_vector__, plain_query)
-  rank_phrase = func.ts_rank(model.__ts_vector__, phrase_query)
-
-  # Multi-word matches hold more relevance
+  rank_plain = func.ts_rank(model.ts_vector, plain_query)
+  rank_phrase = func.ts_rank(model.ts_vector, phrase_query)
   total_rank = (rank_phrase * 2.0 + rank_plain).label("rank")
 
-  # Highlighting
   headline = func.ts_headline(
     'english',
     getattr(model, highlight_field),
@@ -25,11 +21,12 @@ def search_model(model, query, highlight_field, page=1, per_page=12):
 
   base_query = (
     db.session.query(model, total_rank, headline)
-    .filter(model.__ts_vector__.op('@@')(plain_query))
+    .filter(model.ts_vector.op('@@')(plain_query))
     .order_by(desc("rank"))
   )
 
   total = base_query.count()
+  total_pages = (total + per_page - 1) // per_page
 
   results = (
     base_query
@@ -38,15 +35,11 @@ def search_model(model, query, highlight_field, page=1, per_page=12):
     .all()
   )
 
-  return results, total
+  return results, total, total_pages
 
 def search_housing(query, page=1, per_page=12):
-  results, total = search_model(
-    Housing,
-    query,
-    highlight_field="project_name",
-    page=page,
-    per_page=per_page
+  results, total, total_pages = search_model(
+    Housing, query, highlight_field="project_name", page=page, per_page=per_page
   )
 
   return [
@@ -56,15 +49,12 @@ def search_housing(query, page=1, per_page=12):
       "rank": rank
     }
     for housing, rank, highlight in results
-  ], total
+  ], total, total_pages
+
 
 def search_communities(query, page=1, per_page=12):
-  results, total = search_model(
-    Community,
-    query,
-    highlight_field="county",
-    page=page,
-    per_page=per_page
+  results, total, total_pages = search_model(
+    Community, query, highlight_field="county", page=page, per_page=per_page
   )
 
   return [
@@ -74,47 +64,46 @@ def search_communities(query, page=1, per_page=12):
       "rank": rank
     }
     for community, rank, highlight in results
-  ], total
+  ], total, total_pages
+
 
 def search_transportation(query, page=1, per_page=12):
-  results, total = search_model(
-    Transportation,
-    query,
-    highlight_field="stop_name",
-    page=page,
-    per_page=per_page
+  results, total, total_pages = search_model(
+    Transportation, query, highlight_field="stop_name", page=page, per_page=per_page
   )
 
   return [
     {
-      "data": t.to_dict(),
+      "data": transportation.to_dict(),
       "highlight": highlight,
       "rank": rank
     }
-    for t, rank, highlight in results
-  ], total
+    for transportation, rank, highlight in results
+  ], total, total_pages
 
 def global_search(query, page=1, per_page=20):
-  results = []
+  # fetch all matches per model
+  max_fetch = 1000  # arbitrary large number
+  housing_results, _, _ = search_model(Housing, query, "project_name", page=1, per_page=max_fetch)
+  community_results, _, _ = search_model(Community, query, "county", page=1, per_page=max_fetch)
+  transport_results, _, _ = search_model(Transportation, query, "stop_name", page=1, per_page=max_fetch)
 
-  for item, rank, highlight in search_model(Housing, query, "project_name")[0]:
-    results.append(("housing", item, rank, highlight))
+  combined = []
+  for item, rank, highlight in housing_results:
+    combined.append(("housing", item, rank, highlight))
+  for item, rank, highlight in community_results:
+    combined.append(("community", item, rank, highlight))
+  for item, rank, highlight in transport_results:
+    combined.append(("transportation", item, rank, highlight))
 
-  for item, rank, highlight in search_model(Community, query, "county")[0]:
-    results.append(("community", item, rank, highlight))
+  combined.sort(key=lambda x: x[2], reverse=True)
 
-  for item, rank, highlight in search_model(Transportation, query, "stop_name")[0]:
-    results.append(("transportation", item, rank, highlight))
+  total = len(combined)
+  total_pages = (total + per_page - 1) // per_page
 
-  # Sort globally
-  results.sort(key=lambda x: x[2], reverse=True)
-
-  # Pagination
-  total = len(results)
   start = (page - 1) * per_page
   end = start + per_page
-
-  paginated = results[start:end]
+  paginated = combined[start:end]
 
   return [
     {
@@ -124,4 +113,4 @@ def global_search(query, page=1, per_page=20):
       "rank": rank
     }
     for t, obj, rank, highlight in paginated
-  ], total
+  ], total, total_pages
