@@ -12,7 +12,7 @@ const sortOptions = [
     { value: "crime_index|desc", label: "Crime Index: High to Low" },
     { value: "park_count|asc", label: "Park Count: Low to High" },
     { value: "park_count|desc", label: "Park Count: High to Low" },
-
+    
   ];
   const filterOptions = [
     {
