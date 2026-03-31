@@ -209,6 +209,9 @@ class Transportation(db.Model):
     travel_time_ut = db.Column(db.String(1000))
     travel_time_downtown = db.Column(db.String(1000))
     travel_time_domain = db.Column(db.String(1000))
+    travel_time_ut_minutes = db.Column(db.Integer)
+    travel_time_downtown_minutes = db.Column(db.Integer)
+    travel_time_domain_minutes = db.Column(db.Integer)
 
     ts_vector = db.Column(TSVectorType(), nullable=True)
 
@@ -235,6 +238,9 @@ class Transportation(db.Model):
             "travel_time_ut": self.travel_time_ut,
             "travel_time_downtown": self.travel_time_downtown,
             "travel_time_domain": self.travel_time_domain,
+            "travel_time_ut_minutes": self.travel_time_ut_minutes,
+            "travel_time_downtown_minutes": self.travel_time_downtown_minutes,
+            "travel_time_domain_minutes": self.travel_time_domain_minutes,
         }
 
         if include_relations:

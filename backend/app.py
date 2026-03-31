@@ -419,15 +419,12 @@ def create_app():
         sort = request.args.get("sort")
         order = request.args.get("order", "asc")
 
-        if not sort:
-            sort = "num_routes"
-            order = "desc"
-
         SORT_MAP = {
             "num_routes": Transportation.num_routes,
+            "travel_time_ut_minutes": Transportation.travel_time_ut_minutes,
+            "travel_time_downtown_minutes": Transportation.travel_time_downtown_minutes,
+            "travel_time_domain_minutes": Transportation.travel_time_domain_minutes,
         }
-        # --- PAGINATION ---
-        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
         if sort in SORT_MAP:
             column = SORT_MAP[sort]

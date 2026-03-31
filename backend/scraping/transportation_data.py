@@ -2,6 +2,7 @@ import os
 import sys
 import requests
 import io
+import math
 from dotenv import load_dotenv
 import zipfile
 import pandas as pd
@@ -60,12 +61,22 @@ def get_transit_time(origin_lat, origin_lon, dest_lat, dest_lon):
         if response.status_code == 200:
             data = response.json()
             if data["routes"]:
-                duration = data["routes"][0]["legs"][0]["duration"]["text"]
-                return duration
+                duration_info = data["routes"][0]["legs"][0]["duration"]
+                duration_text = duration_info.get("text")
+                duration_seconds = duration_info.get("value")
+                duration_minutes = (
+                    int(math.ceil(duration_seconds / 60))
+                    if isinstance(duration_seconds, (int, float))
+                    else None
+                )
+                return {
+                    "display": duration_text,
+                    "minutes": duration_minutes,
+                }
 
     except Exception as e:
         print("Transit lookup failed:", e)
-    return None
+    return {"display": None, "minutes": None}
 
 
 # ----------------------------------------
@@ -114,6 +125,11 @@ def seed_transportation(transportation_data):
             existing.travel_time_ut = record.get("travel_time_ut", "")
             existing.travel_time_downtown = record.get("travel_time_downtown", "")
             existing.travel_time_domain = record.get("travel_time_domain", "")
+            existing.travel_time_ut_minutes = record.get("travel_time_ut_minutes")
+            existing.travel_time_downtown_minutes = record.get(
+                "travel_time_downtown_minutes"
+            )
+            existing.travel_time_domain_minutes = record.get("travel_time_domain_minutes")
             updated += 1
         else:
             # Insert new record
@@ -134,6 +150,9 @@ def seed_transportation(transportation_data):
                 travel_time_ut=record.get("travel_time_ut", ""),
                 travel_time_downtown=record.get("travel_time_downtown", ""),
                 travel_time_domain=record.get("travel_time_domain", ""),
+                travel_time_ut_minutes=record.get("travel_time_ut_minutes"),
+                travel_time_downtown_minutes=record.get("travel_time_downtown_minutes"),
+                travel_time_domain_minutes=record.get("travel_time_domain_minutes"),
             )
             db.session.add(transportation)
             inserted += 1
@@ -348,9 +367,12 @@ def extract_data():
                     "num_routes": num_routes,  # Data Point 4
                     "wheelchair_accessible": disability_services,  # Data Point 5
                     "service_days": days_served_str,  # Daya Point 6
-                    "travel_time_ut": travel_time_ut,
-                    "travel_time_downtown": travel_time_downtown,
-                    "travel_time_domain": travel_time_domain,
+                    "travel_time_ut": travel_time_ut["display"],
+                    "travel_time_downtown": travel_time_downtown["display"],
+                    "travel_time_domain": travel_time_domain["display"],
+                    "travel_time_ut_minutes": travel_time_ut["minutes"],
+                    "travel_time_downtown_minutes": travel_time_downtown["minutes"],
+                    "travel_time_domain_minutes": travel_time_domain["minutes"],
                 }
             )
 
@@ -391,6 +413,21 @@ if __name__ == "__main__":
             conn.execute(
                 text(
                     "ALTER TABLE transportation ALTER COLUMN service_days TYPE varchar(200)"
+                )
+            )
+            conn.execute(
+                text(
+                    "ALTER TABLE transportation ADD COLUMN IF NOT EXISTS travel_time_ut_minutes INTEGER"
+                )
+            )
+            conn.execute(
+                text(
+                    "ALTER TABLE transportation ADD COLUMN IF NOT EXISTS travel_time_downtown_minutes INTEGER"
+                )
+            )
+            conn.execute(
+                text(
+                    "ALTER TABLE transportation ADD COLUMN IF NOT EXISTS travel_time_domain_minutes INTEGER"
                 )
             )
             conn.commit()

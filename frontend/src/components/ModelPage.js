@@ -136,6 +136,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
   const [sort, setSort] = useState("");
   const [order, setOrder] = useState("asc");
   const [sortValue, setSortValue] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
 
   const attributesRef = useRef(attributes);
   const filterOptionsRef = useRef(filterOptions);
@@ -315,51 +316,69 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
             </p>
           )}
 
-          <div className="card mb-3 mx-auto" style={{ maxWidth: "420px" }}>
-            <div className="card-body py-3">
-              {filterOptions.map((f) => {
-                const filterKey = f.parameter || f.min_parameter;
-                return (
-                  <div key={filterKey} className="mb-3">
-                    <div className="fw-semibold small mb-2">{f.label}</div>
-                    {f.buckets.map((b, i) => {
-                      const selected = draftFilterValues[filterKey];
-                      const checked = bucketsEqual(selected, b, f);
-                      const inputId = `filter-${filterKey}-${i}`;
-                      return (
-                        <div key={inputId} className="form-check">
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            id={inputId}
-                            checked={checked}
-                            onChange={() => {
-                              setDraftFilterValues((prev) => ({
-                                ...prev,
-                                [filterKey]: b
-                              }));
-                            }}
-                          />
-                          <label className="form-check-label" htmlFor={inputId}>
-                            {b.label}
-                          </label>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
+          <div className="card mb-3 mx-auto" style={{ maxWidth: "760px" }}>
+            <div className="card-body py-2">
               <button
                 type="button"
-                className="btn btn-primary w-100"
-                disabled={applyDisabled}
-                onClick={() => {
-                  setFilterValues({ ...draftFilterValues });
-                  setPage(1);
-                }}
+                className="btn btn-outline-secondary w-100 d-flex justify-content-between align-items-center"
+                onClick={() => setShowFilters((prev) => !prev)}
+                aria-expanded={showFilters}
               >
-                Apply filters
+                <span>Filters</span>
+                <span className="small">{showFilters ? "Hide" : "Show"}</span>
               </button>
+
+              {showFilters && (
+                <div className="pt-3">
+                  {filterOptions.map((f) => {
+                    const filterKey = f.parameter || f.min_parameter;
+                    return (
+                      <div key={filterKey} className="mb-3">
+                        <div className="fw-semibold small mb-2">{f.label}</div>
+                        <div className="row row-cols-1 row-cols-md-2 g-1">
+                          {f.buckets.map((b, i) => {
+                            const selected = draftFilterValues[filterKey];
+                            const checked = bucketsEqual(selected, b, f);
+                            const inputId = `filter-${filterKey}-${i}`;
+                            return (
+                              <div key={inputId} className="col">
+                                <div className="form-check">
+                                  <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    id={inputId}
+                                    checked={checked}
+                                    onChange={() => {
+                                      setDraftFilterValues((prev) => ({
+                                        ...prev,
+                                        [filterKey]: b
+                                      }));
+                                    }}
+                                  />
+                                  <label className="form-check-label" htmlFor={inputId}>
+                                    {b.label}
+                                  </label>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    className="btn btn-primary w-100"
+                    disabled={applyDisabled}
+                    onClick={() => {
+                      setFilterValues({ ...draftFilterValues });
+                      setPage(1);
+                    }}
+                  >
+                    Apply filters
+                  </button>
+                  </div>
+              )}
             </div>
           </div>
         </>
