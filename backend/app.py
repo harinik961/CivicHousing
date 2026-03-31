@@ -465,6 +465,9 @@ def create_app():
         sort = request.args.get("sort")
         order = request.args.get("order", "asc")
 
+        if sort not in SORT_MAP:
+            sort = "num_routes"
+
         frequency_value = cast(
             func.coalesce(
                 func.nullif(
@@ -475,11 +478,11 @@ def create_app():
                     ),
                     'Unknown'
                 ),
-                '0'
+                '999999'
             ),
             Integer
-        )
-
+        )        
+        
         SORT_MAP = {
             "num_routes": Transportation.num_routes,
             "travel_time_ut_minutes": Transportation.travel_time_ut_minutes,
