@@ -56,7 +56,7 @@ function formatItem(item, attributes) {
   };
 }
 
-const LOCAL_API_BASE = "http://localhost:5000";
+const LOCAL_API_BASE = "http://127.0.0.1:56448";
 const PROD_API_BASE = "https://api.civichousing.me";
 const isLocalFrontend =
   typeof window !== "undefined" &&
@@ -116,6 +116,8 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
   const [order, setOrder] = useState("asc");
   const [sortValue, setSortValue] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const[searchQuery, setSearchQuery] = useState("");
+  const[activeSearch, setActiveSearch] = useState("");  
 
   const attributesRef = useRef(attributes);
   const filterOptionsRef = useRef(filterOptions);
@@ -163,11 +165,26 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
       }
     }
 
-    fetch(`${API_BASE}${apiEndpoint}?${params}`)
+      const isSearching = activeSearch.trim();
+
+      const url = isSearching
+        ? `${API_BASE}/api/search/${modelName}?q=${encodeURIComponent(activeSearch)}&page=${page}&per_page=${PER_PAGE}`
+        : `${API_BASE}${apiEndpoint}?${params}`;
+
+      fetch(url)
       .then(res => res.json())
       .then(data => {
-        const raw = data.data || [];
-        const formatted = raw.map(item => formatItem(item, attributesRef.current));
+        const raw = data.results || data.data || [];
+        const formatted = raw.map(item => {
+          const actual = item.data ? item.data : item;
+
+          if (!actual) return null; // safety
+
+          return {
+            ...formatItem(actual, attributesRef.current),
+            highlight: item.highlight || null
+          };
+        }).filter(Boolean);       
         setTotal(data.total ?? 0);
         setPages(data.pages ?? 1);
         setItems(formatted);
@@ -178,7 +195,9 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
         setLoading(false);
       });
 
-  }, [apiEndpoint, isCommunity, sort, order, filterValues]);
+    console.log("ACTIVE SEARCH:", activeSearch);
+
+  }, [apiEndpoint, isCommunity, sort, order, filterValues, activeSearch]);
 
   // Handle page changes - fetch new page from server
   useEffect(() => {
@@ -212,11 +231,28 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
       }
     }
 
-    fetch(`${API_BASE}${apiEndpoint}?${params}`)
+    const isSearching = activeSearch.trim();
+    const url = isSearching
+        ? `${API_BASE}/api/search/${modelName}?q=${encodeURIComponent(activeSearch)}&page=${page}&per_page=${PER_PAGE}`
+        : `${API_BASE}${apiEndpoint}?${params}`;
+
+      fetch(url)
+
       .then(res => res.json())
       .then(data => {
-        const raw = data.data || [];
-        const formatted = raw.map(item => formatItem(item, attributesRef.current));
+        const raw = data.results || data.data || [];
+        const formatted = raw.map(item => {
+          const actual = item.data ? item.data : item;
+
+          if (!actual) return null; // safety
+
+          return {
+            ...formatItem(actual, attributesRef.current),
+            highlight: item.highlight || null
+          };
+        }).filter(Boolean);  
+        
+        
         setItems(formatted);
         setLoading(false);
       })
@@ -226,7 +262,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
       });
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, sort, order, filterValues]);
+  }, [page, sort, order, filterValues, activeSearch]);
 
   const cards = items.map(item => (
     <div className="col-lg-4 col-md-6 col-sm-12 mb-4" key={item.id}>
@@ -263,6 +299,46 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
       </p>
 
       <h2 className="text-center mb-4">{title}</h2>
+
+      <div className="d-flex justify-content-center mb-3 gap-2">
+          <input
+            type="text"
+            className="form-control"
+            style={{ maxWidth: "400px" }}
+            placeholder={`Search ${modelName}`}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              setActiveSearch(searchQuery);
+              setPage(1);
+            }}
+          >
+            Search
+          </button>
+
+          {searchQuery && (
+            <button
+              className="btn btn-secondary"
+              onClick={() => {
+                setSearchQuery("");
+                setActiveSearch("");
+                setPage(1);
+              }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        {activeSearch && (
+        <p className="text-center mb-2">
+          Showing results for "<strong>{activeSearch}</strong>"
+        </p>
+      )}
 
       {filterOptions.length > 0 && (
         <>
