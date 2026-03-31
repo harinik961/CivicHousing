@@ -116,15 +116,15 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
   const [order, setOrder] = useState("asc");
   const [sortValue, setSortValue] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeSearch, setActiveSearch] = useState("");
+  const[searchQuery, setSearchQuery] = useState("");
+  const[activeSearch, setActiveSearch] = useState("");  
 
   const attributesRef = useRef(attributes);
   const filterOptionsRef = useRef(filterOptions);
 
   const PER_PAGE = 50;
+  const isCommunity = apiEndpoint === "/api/community";
 
-  // Load last synced timestamp
   useEffect(() => {
     fetch(`${API_BASE}/api/data-as-of`)
       .then(res => res.json())
@@ -136,8 +136,75 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
       });
   }, [apiEndpoint]);
 
-  // MAIN DATA FETCH (handles search, pagination, filters, sorting)
   useEffect(() => {
+
+    setLoading(true);
+    setPage(1);
+
+    const params = new URLSearchParams({
+      page: 1,
+      per_page: PER_PAGE
+    });
+
+    if (sort) params.append("sort", sort);
+    if (order) params.append("order", order);
+
+    for (const f of filterOptionsRef.current) {
+      const filterKey = f.parameter || f.min_parameter;
+      const bucket = filterValues[filterKey];
+      if (!bucket) continue;
+
+      if (f.parameter) {
+        if (bucket.value !== null)
+          params.append(f.parameter, bucket.value);
+      } else {
+        if (bucket.min !== null)
+          params.append(f.min_parameter, bucket.min);
+        if (bucket.max !== null)
+          params.append(f.max_parameter, bucket.max);
+      }
+    }
+
+      const isSearching = activeSearch.trim();
+
+      const url = isSearching
+        ? `${API_BASE}/api/search/${modelName}?q=${encodeURIComponent(activeSearch)}&page=${page}&per_page=${PER_PAGE}`
+        : `${API_BASE}${apiEndpoint}?${params}`;
+
+      fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        const raw = data.results || data.data || [];
+        const formatted = raw.map(item => {
+          const actual = item.data ? item.data : item;
+
+          if (!actual) return null; // safety
+
+          return {
+            ...formatItem(actual, attributesRef.current),
+            highlight: item.highlight || null
+          };
+        }).filter(Boolean);       
+        setTotal(data.total ?? 0);
+        setPages(data.pages ?? 1);
+        setItems(formatted);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Error loading model data:", err);
+        setLoading(false);
+      });
+
+    console.log("ACTIVE SEARCH:", activeSearch);
+
+  }, [apiEndpoint, modelName, page, isCommunity, sort, order, filterValues, activeSearch]);
+
+  // Handle page changes - fetch new page from server
+  useEffect(() => {
+
+    if (page === 1) return;
+
+    window.scrollTo(0, 0);
     setLoading(true);
 
     const params = new URLSearchParams({
@@ -165,37 +232,37 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
     }
 
     const isSearching = activeSearch.trim();
-
     const url = isSearching
-      ? `${API_BASE}/api/search/${modelName}?q=${encodeURIComponent(activeSearch)}&page=${page}&per_page=${PER_PAGE}`
-      : `${API_BASE}${apiEndpoint}?${params}`;
+        ? `${API_BASE}/api/search/${modelName}?q=${encodeURIComponent(activeSearch)}&page=${page}&per_page=${PER_PAGE}`
+        : `${API_BASE}${apiEndpoint}?${params}`;
 
-    fetch(url)
+      fetch(url)
+
       .then(res => res.json())
       .then(data => {
         const raw = data.results || data.data || [];
-
         const formatted = raw.map(item => {
           const actual = item.data ? item.data : item;
-          if (!actual) return null;
+
+          if (!actual) return null; // safety
 
           return {
             ...formatItem(actual, attributesRef.current),
             highlight: item.highlight || null
           };
-        }).filter(Boolean);
-
+        }).filter(Boolean);  
+        
+        
         setItems(formatted);
-        setTotal(data.total ?? 0);
-        setPages(data.total_pages ?? data.pages ?? 1);
         setLoading(false);
       })
       .catch(err => {
-        console.error("Error loading model data:", err);
+        console.error("Error loading page:", err);
         setLoading(false);
       });
 
-  }, [apiEndpoint, modelName, page, sort, order, filterValues, activeSearch]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, sort, order, filterValues, activeSearch]);
 
   const cards = items.map(item => (
     <div className="col-lg-4 col-md-6 col-sm-12 mb-4" key={item.id}>
@@ -216,8 +283,8 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
     );
   }
 
-  const start = total === 0 ? 0 : (page - 1) * PER_PAGE + 1;
-  const end = total === 0 ? 0 : Math.min(page * PER_PAGE, total);
+  const start = (page - 1) * PER_PAGE + 1;
+  const end = Math.min(page * PER_PAGE, total);
 
   const activeFilterLines = buildActiveFilterLines(filterValues, filterOptions);
   const applyDisabled =
@@ -233,60 +300,178 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
 
       <h2 className="text-center mb-4">{title}</h2>
 
-      {/* SEARCH */}
       <div className="d-flex justify-content-center mb-3 gap-2">
-        <input
-          type="text"
-          className="form-control"
-          style={{ maxWidth: "400px" }}
-          placeholder={`Search ${modelName}`}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+          <input
+            type="text"
+            className="form-control"
+            style={{ maxWidth: "400px" }}
+            placeholder={`Search ${modelName}`}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
 
-        <button
-          className="btn btn-primary"
-          onClick={() => {
-            setActiveSearch(searchQuery);
-            setPage(1);
-          }}
-        >
-          Search
-        </button>
-
-        {searchQuery && (
           <button
-            className="btn btn-secondary"
+            className="btn btn-primary"
             onClick={() => {
-              setSearchQuery("");
-              setActiveSearch("");
+              setActiveSearch(searchQuery);
               setPage(1);
             }}
           >
-            Clear
+            Search
           </button>
-        )}
-      </div>
 
-      {activeSearch && (
+          {searchQuery && (
+            <button
+              className="btn btn-secondary"
+              onClick={() => {
+                setSearchQuery("");
+                setActiveSearch("");
+                setPage(1);
+              }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        {activeSearch && (
         <p className="text-center mb-2">
           Showing results for "<strong>{activeSearch}</strong>"
         </p>
       )}
 
-      {/* CARDS */}
+      {filterOptions.length > 0 && (
+        <>
+          {activeFilterLines.length > 0 && (
+            <p className="text-center small mb-2">
+              <span className="text-muted">Active filters: </span>
+              {activeFilterLines.join("; ")}
+            </p>
+          )}
+
+          <div className="card mb-3 mx-auto" style={{ maxWidth: "760px" }}>
+            <div className="card-body py-2">
+              <button
+                type="button"
+                className="btn btn-outline-secondary w-100 d-flex justify-content-between align-items-center"
+                onClick={() => setShowFilters((prev) => !prev)}
+                aria-expanded={showFilters}
+              >
+                <span>Filters</span>
+                <span className="small">{showFilters ? "Hide" : "Show"}</span>
+              </button>
+
+              {showFilters && (
+                <div className="pt-3">
+                  {filterOptions.map((f) => {
+                    const filterKey = f.parameter || f.min_parameter;
+                    return (
+                      <div key={filterKey} className="mb-3">
+                        <div className="fw-semibold small mb-2">{f.label}</div>
+                        <div className="row row-cols-1 row-cols-md-2 g-1">
+                          {f.buckets.map((b, i) => {
+                            const selected = draftFilterValues[filterKey];
+                            const checked = bucketsEqual(selected, b, f);
+                            const inputId = `filter-${filterKey}-${i}`;
+                            return (
+                              <div key={inputId} className="col">
+                                <div className="form-check">
+                                  <input
+                                    className="form-check-input"
+                                    type="checkbox"
+                                    id={inputId}
+                                    checked={checked}
+                                    onChange={() => {
+                                      setDraftFilterValues((prev) => ({
+                                        ...prev,
+                                        [filterKey]: b
+                                      }));
+                                    }}
+                                  />
+                                  <label className="form-check-label" htmlFor={inputId}>
+                                    {b.label}
+                                  </label>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    className="btn btn-primary w-100"
+                    disabled={applyDisabled}
+                    onClick={() => {
+                      setFilterValues({ ...draftFilterValues });
+                      setPage(1);
+                    }}
+                  >
+                    Apply filters
+                  </button>
+                  </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <DataBadge lastSyncedAt={lastSyncedAt} />
+        </div>
+        <select
+          id="select"
+          name="select"
+          className="form-select"
+          style={{ width: "260px" }}
+          value={sortValue}
+          onChange={(e) => {
+            const value = e.target.value;
+            setSortValue(value);
+
+            if (!value) {
+              setSort("");
+              setOrder("asc");
+              setPage(1);
+              return;
+            }
+
+            const [newSort, newOrder] = value.split("|");
+            setSort(newSort);
+            setOrder(newOrder);
+            setPage(1);
+          }}
+        >
+          {sortOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="row">
         {cards}
       </div>
 
-      {/* PAGINATION */}
+       {/* PAGINATION */}
       <div className="d-flex justify-content-center mt-4 gap-3">
 
-        <button className="btn btn-primary" disabled={page === 1} onClick={() => setPage(1)}>
+        <button
+          className="btn btn-primary"
+          disabled={page === 1}
+          onClick={() => setPage(1)}
+        >
           First
         </button>
 
-        <button className="btn btn-primary" disabled={page === 1} onClick={() => setPage(page - 1)}>
+        <button
+          className="btn btn-primary"
+          disabled={page === 1}
+          onClick={() => setPage(page - 1)}
+        >
           Previous
         </button>
 
@@ -294,11 +479,19 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
           Page {page} of {pages}
         </span>
 
-        <button className="btn btn-primary" disabled={page === pages} onClick={() => setPage(page + 1)}>
+        <button
+          className="btn btn-primary"
+          disabled={page === pages}
+          onClick={() => setPage(page + 1)}
+        >
           Next
         </button>
 
-        <button className="btn btn-primary" disabled={page === pages} onClick={() => setPage(pages)}>
+        <button
+          className="btn btn-primary"
+          disabled={page === pages}
+          onClick={() => setPage(pages)}
+        >
           Last
         </button>
 
