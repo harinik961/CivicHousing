@@ -154,6 +154,18 @@ export default function InstancePage({
     }
   }
 
+  function getGoogleMapsLocationUrl() {
+    if (item?.latitude != null && item?.longitude != null) {
+      return `https://www.google.com/maps/search/?api=1&query=${item.latitude},${item.longitude}`;
+    }
+
+    if (item?.address) {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address)}`;
+    }
+
+    return null;
+  }
+
   function renderAttributeValue(key, value) {
 
     if (key === "last_synced_at" && typeof value === "string") {
@@ -200,6 +212,7 @@ export default function InstancePage({
       const imageSrc = streetReadyValue.includes("/maps/api/streetview")
         ? getStaticStreetViewImageUrl(streetReadyValue)
         : normalizeImage(streetReadyValue);
+      const mapsLocationUrl = apiEndpoint === "/api/housing" ? getGoogleMapsLocationUrl() : null;
 
       return (
         <>
@@ -225,6 +238,17 @@ export default function InstancePage({
                 marginBottom: "10px"
               }}
             />
+          ) : null}
+
+          {mapsLocationUrl ? (
+            <a
+              href={mapsLocationUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="maps-link"
+            >
+              Get Directions
+            </a>
           ) : null}
         </>
       );
