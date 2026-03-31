@@ -465,30 +465,11 @@ def create_app():
         sort = request.args.get("sort")
         order = request.args.get("order", "asc")
 
-        if sort not in SORT_MAP:
-            sort = "num_routes"
-
-        frequency_value = cast(
-            func.coalesce(
-                func.nullif(
-                    func.split_part(
-                        func.replace(Transportation.frequency, 'Every ', ''),
-                        ' ',
-                        1
-                    ),
-                    'Unknown'
-                ),
-                '999999'
-            ),
-            Integer
-        )        
-        
         SORT_MAP = {
             "num_routes": Transportation.num_routes,
             "travel_time_ut_minutes": Transportation.travel_time_ut_minutes,
             "travel_time_downtown_minutes": Transportation.travel_time_downtown_minutes,
             "travel_time_domain_minutes": Transportation.travel_time_domain_minutes,
-            "frequency": frequency_value
         }
 
         if sort in SORT_MAP:

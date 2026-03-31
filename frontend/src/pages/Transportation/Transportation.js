@@ -10,8 +10,6 @@ export default function Transportation() {
   { value: "travel_time_ut_minutes|asc", label: "Closest to UT (Travel Time)" },
   { value: "travel_time_downtown_minutes|asc", label: "Closest to Downtown (Travel Time)" },
   { value: "travel_time_domain_minutes|asc", label: "Closest to The Domain (Travel Time)" },
-  {value: "frequency|desc", label: "Frequency: High to Low"},
-  {value: "frequency|asc", label: "Frequency: Low to High"}
 ];
 
   return (
