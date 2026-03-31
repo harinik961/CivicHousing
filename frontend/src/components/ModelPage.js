@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import ModelCard from "./ModelCard";
+import DataBadge from "./DataBadge";
 
 // Inject radius=500 into Google Static Street View URLs that are missing a radius,
 // so images resolve for locations where an exact-point panorama doesn't exist.
@@ -50,39 +51,12 @@ function formatItem(item, attributes) {
     attributes: attributes.map(attr => ({
       title: attr.title,
       value: item[attr.key]
-    }))
+    })),
+    last_synced_at: item.last_synced_at
   };
 }
 
 const API_BASE = "https://api.civichousing.me";
-
-async function fetchAllHousingPages() {
-  const all = [];
-  let page = 1;
-  let pages = 1;
-  do {
-    const res = await fetch(`${API_BASE}/api/housing?page=${page}&per_page=50`);
-    const data = await res.json();
-    const list = data.data || [];
-    all.push(...list);
-    pages = data.pages ?? 1;
-    page += 1;
-  } while (page <= pages);
-  return all;
-}
-
-function buildHousingStatsByZip(housingList) {
-  const byZip = {};
-  for (const h of housingList || []) {
-    const zip = h.zip_code ?? "";
-    if (!byZip[zip]) {
-      byZip[zip] = { community_total_affordable_units: 0, community_housing_count: 0 };
-    }
-    byZip[zip].community_total_affordable_units += Number(h.total_affordable_units) || 0;
-    byZip[zip].community_housing_count += 1;
-  }
-  return byZip;
-}
 
 function bucketsEqual(a, b, f) {
   if (!a || !b) return false;
@@ -119,6 +93,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lastSyncedAt, setLastSyncedAt] = useState(null);
 
   const initialFilterValues = {};
   for (const f of filterOptions) {
@@ -131,7 +106,6 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
-  const [housingStatsByZip, setHousingStatsByZip] = useState(null);
 
   const [sort, setSort] = useState("");
   const [order, setOrder] = useState("asc");
@@ -145,10 +119,20 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
   const isCommunity = apiEndpoint === "/api/community";
 
   useEffect(() => {
+    fetch(`${API_BASE}/api/data-as-of`)
+      .then(res => res.json())
+      .then(data => {
+        setLastSyncedAt(data?.last_synced_at || null);
+      })
+      .catch(() => {
+        setLastSyncedAt(null);
+      });
+  }, [apiEndpoint]);
+
+  useEffect(() => {
 
     setLoading(true);
     setPage(1);
-    setHousingStatsByZip(null);
 
     const params = new URLSearchParams({
       page: 1,
@@ -174,43 +158,20 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
       }
     }
 
-    if (isCommunity) {
-      Promise.all([
-        fetch(`${API_BASE}${apiEndpoint}?${params}`).then(r => r.json()),
-        fetchAllHousingPages()
-      ])
-        .then(([data, housingList]) => {
-          const zipMap = buildHousingStatsByZip(housingList);
-          setHousingStatsByZip(zipMap);
-          const raw = data.data || [];
-          const defaults = { community_total_affordable_units: 0, community_housing_count: 0 };
-          const merged = raw.map(c => ({ ...c, ...defaults, ...(zipMap[c.zip_code] || {}) }));
-          const formatted = merged.map(item => formatItem(item, attributesRef.current));
-          setTotal(data.total ?? 0);
-          setPages(data.pages ?? 1);
-          setItems(formatted);
-          setLoading(false);
-        })
-        .catch(err => {
-          console.error("Error loading community/housing data:", err);
-          setLoading(false);
-        });
-    } else {
-      fetch(`${API_BASE}${apiEndpoint}?${params}`)
-        .then(res => res.json())
-        .then(data => {
-          const raw = data.data || [];
-          const formatted = raw.map(item => formatItem(item, attributesRef.current));
-          setTotal(data.total ?? 0);
-          setPages(data.pages ?? 1);
-          setItems(formatted);
-          setLoading(false);
-        })
-        .catch(err => {
-          console.error("Error loading model data:", err);
-          setLoading(false);
-        });
-    }
+    fetch(`${API_BASE}${apiEndpoint}?${params}`)
+      .then(res => res.json())
+      .then(data => {
+        const raw = data.data || [];
+        const formatted = raw.map(item => formatItem(item, attributesRef.current));
+        setTotal(data.total ?? 0);
+        setPages(data.pages ?? 1);
+        setItems(formatted);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Error loading model data:", err);
+        setLoading(false);
+      });
 
   }, [apiEndpoint, isCommunity, sort, order, filterValues]);
 
@@ -246,20 +207,11 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
       }
     }
 
-    const mergeAndFormat = (raw) => {
-      if (isCommunity && housingStatsByZip) {
-        const defaults = { community_total_affordable_units: 0, community_housing_count: 0 };
-        const merged = raw.map(c => ({ ...c, ...defaults, ...(housingStatsByZip[c.zip_code] || {}) }));
-        return merged.map(item => formatItem(item, attributesRef.current));
-      }
-      return raw.map(item => formatItem(item, attributesRef.current));
-    };
-
     fetch(`${API_BASE}${apiEndpoint}?${params}`)
       .then(res => res.json())
       .then(data => {
         const raw = data.data || [];
-        const formatted = mergeAndFormat(raw);
+        const formatted = raw.map(item => formatItem(item, attributesRef.current));
         setItems(formatted);
         setLoading(false);
       })
@@ -384,7 +336,10 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
         </>
       )}
 
-      <div className="d-flex justify-content-end mb-3">
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <DataBadge lastSyncedAt={lastSyncedAt} />
+        </div>
         <select
           id="select"
           name="select"

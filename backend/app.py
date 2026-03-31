@@ -163,6 +163,15 @@ def create_app():
             }
         )
 
+    @app.route("/api/data-as-of", methods=["GET"])
+    def data_as_of():
+        latest_sync = db.session.query(func.max(Housing.last_synced_at)).scalar()
+        return jsonify(
+            {
+                "last_synced_at": latest_sync.isoformat() if latest_sync else None,
+            }
+        )
+
     @app.route("/docs", methods=["GET"])
     def docs():
         return redirect(
@@ -372,9 +381,46 @@ def create_app():
             query = query.order_by(column.desc() if order == "desc" else column.asc())
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
+        page_items = pagination.items
+        page_zips = [c.zip_code for c in page_items if c.zip_code]
+
+        zip_stats = {}
+        if page_zips:
+            zip_rows = (
+                db.session.query(
+                    Housing.zip_code,
+                    func.coalesce(func.sum(Housing.total_affordable_units), 0),
+                    func.count(Housing.id),
+                )
+                .filter(Housing.zip_code.in_(page_zips))
+                .group_by(Housing.zip_code)
+                .all()
+            )
+            zip_stats = {
+                zip_code: {
+                    "community_total_affordable_units": int(total_units or 0),
+                    "community_housing_count": int(housing_count or 0),
+                }
+                for zip_code, total_units, housing_count in zip_rows
+            }
+
+        data = []
+        for community in page_items:
+            payload = community.to_dict(include_relations=False)
+            payload.update(
+                zip_stats.get(
+                    community.zip_code,
+                    {
+                        "community_total_affordable_units": 0,
+                        "community_housing_count": 0,
+                    },
+                )
+            )
+            data.append(payload)
+
         return jsonify(
             {
-                "data": [c.to_dict(include_relations=True) for c in pagination.items],
+                "data": data,
                 "total": pagination.total,
                 "page": page,
                 "pages": pagination.pages,
@@ -434,7 +480,7 @@ def create_app():
 
         return jsonify(
             {
-                "data": [c.to_dict(include_relations=True) for c in pagination.items],
+                "data": [c.to_dict(include_relations=False) for c in pagination.items],
                 "total": pagination.total,
                 "page": page,
                 "pages": pagination.pages,
