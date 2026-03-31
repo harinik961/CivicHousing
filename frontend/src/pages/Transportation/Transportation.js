@@ -12,12 +12,36 @@ export default function Transportation() {
   { value: "travel_time_domain_minutes|asc", label: "Closest to The Domain (Travel Time)" },
 ];
 
+  const filterOptions = [
+    {
+      parameter: "transport_type",
+      label: "Transport Type",
+      buckets: [
+        { label: "All", value: null },
+        { label: "Bus", value: "Bus" },
+        { label: "Rail", value: "Rail" },
+        { label: "Rail and Bus", value: "Rail and Bus" }
+      ]
+    },
+    {
+      parameter: "wheelchair_accessible",
+      label: "Wheelchair Accessibility",
+      buckets: [
+        { label: "All", value: null },
+        { label: "Wheelchair Accessible", value: "Wheelchair Accessible" },
+        { label: "Not Wheelchair Accessible", value: "Not Wheelchair Accessible" },
+        { label: "No Information Available", value: "No Information Available" }
+      ]
+    }
+  ];
+
   return (
     <ModelPage
   title="Transportation"
   apiEndpoint="/api/transportation"
   modelName="transportation"
   sortOptions={sortOptions}
+  filterOptions={filterOptions}
   attributes={MODEL_ATTRIBUTES.transportation}
 />
   );

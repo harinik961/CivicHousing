@@ -459,7 +459,38 @@ def create_app():
         page = request.args.get("page", 1, type=int)
         per_page = 50
 
+        transport_type = request.args.get("transport_type")
+        wheelchair_accessible = request.args.get("wheelchair_accessible")
+        num_routes_min = request.args.get("num_routes_min", type=int)
+        num_routes_max = request.args.get("num_routes_max", type=int)
+        travel_time_ut_minutes_min = request.args.get("travel_time_ut_minutes_min", type=int)
+        travel_time_ut_minutes_max = request.args.get("travel_time_ut_minutes_max", type=int)
+        travel_time_downtown_minutes_min = request.args.get("travel_time_downtown_minutes_min", type=int)
+        travel_time_downtown_minutes_max = request.args.get("travel_time_downtown_minutes_max", type=int)
+
         query = Transportation.query
+
+        # --- FILTERS ---
+        if transport_type:
+            query = query.filter(Transportation.transport_type == transport_type)
+        if wheelchair_accessible:
+            query = query.filter(Transportation.wheelchair_accessible == wheelchair_accessible)
+        if num_routes_min is not None:
+            query = query.filter(Transportation.num_routes >= num_routes_min)
+        if num_routes_max is not None:
+            query = query.filter(Transportation.num_routes <= num_routes_max)
+        if travel_time_ut_minutes_min is not None:
+            query = query.filter(Transportation.travel_time_ut_minutes >= travel_time_ut_minutes_min)
+        if travel_time_ut_minutes_max is not None:
+            query = query.filter(Transportation.travel_time_ut_minutes <= travel_time_ut_minutes_max)
+        if travel_time_downtown_minutes_min is not None:
+            query = query.filter(
+                Transportation.travel_time_downtown_minutes >= travel_time_downtown_minutes_min
+            )
+        if travel_time_downtown_minutes_max is not None:
+            query = query.filter(
+                Transportation.travel_time_downtown_minutes <= travel_time_downtown_minutes_max
+            )
 
         # --- SORTING ---
         sort = request.args.get("sort")
