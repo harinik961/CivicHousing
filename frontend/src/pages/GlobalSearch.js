@@ -19,18 +19,22 @@ function normalizeImage(item) {
   return `data:image/jpeg;base64,${candidate}`;
 }
 
-function formatItem(item) {
-  const attrs = (MODEL_ATTRIBUTES[item.type] || []).map((attr) => ({
-    title: attr.title,
-    value: item[attr.key] ?? "",
-  }));
+function formatItem(result) {
+
+  const type = result.type;
+  const item = result.data;
+  const attrs = MODEL_ATTRIBUTES[type] || [];
 
   return {
-    id: item.id,
-    name: item.name || item.project_name || item.stop_name || `Item ${item.id}`,
+    id: item.id, 
+    type, 
+    name: item.project_name || item.project_name || item.stop_name || item.zip_code || `Item ${item.id}`,
     image: normalizeImage(item),
-    attributes: attrs,
-    type: item.type,
+    attributes: attrs.map((attr)=> ({
+      title: attr.title, 
+      value: item[attr.key] ?? "",
+    })),
+
   };
 }
 
@@ -53,7 +57,7 @@ export default function GlobalSearch() {
       );
       const data = await res.json();
 
-      const formatted = (data.data || []).map(formatItem);
+      const formatted = (data.results || []).map(formatItem); //harini changed data.data to data.results
       setItems(formatted);
       setTotal(data.total || 0);
       setPages(data.pages || 1);
