@@ -75,7 +75,7 @@ function TeamMemberCard({name, image, bio, responsibilities, commits, issues, te
     image: alexImage, 
     bio: "I'm a Junior studying computer science at UT Austin. I enjoy sports, hanging out with friends, and trying new food spots in my free time.", 
     responsibilities: "Fullstack: Data Scrape, Models and Instances",
-    tests: 0
+    tests: 15
   }
 ];
 export default function About() {

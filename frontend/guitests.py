@@ -4,6 +4,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
+import time
 
 '''
 Attribution: Ed Post #267 states we can reuse boilerplate code from previous year's
@@ -35,6 +36,15 @@ class CivicHousingUnitTests(unittest.TestCase):
 
   def setUp(self):
     self.driver.get(base_url)
+
+  def wait_for_element(self, by, value, timeout=20):
+    end_time = time.time() + timeout
+    while time.time() < end_time:
+      elements = self.driver.find_elements(by, value)
+      if elements:
+        return elements[0]
+      time.sleep(0.5)
+    self.fail(f"Timed out waiting for element: {by}={value}")
 
   def test_home_page(self):
     self.assertIn("Welcome to Civic Housing", self.driver.find_element(By.TAG_NAME, "h1").text)
@@ -83,6 +93,51 @@ class CivicHousingUnitTests(unittest.TestCase):
   def test_about_url(self):
     self.driver.get(base_url + "/about")
     self.assertEqual(self.driver.current_url.rstrip("/"), (base_url + "/about").rstrip("/"))
+
+  # Test 11
+  def test_data_badge_visible_on_housing_page(self):
+    self.driver.get(base_url + "/housing")
+    badge = self.wait_for_element(By.XPATH, "//*[contains(text(), 'Data as of')]")
+    self.assertIn("Data as of", badge.text)
+
+  # Test 12
+  def test_data_badge_visible_on_community_page(self):
+    self.driver.get(base_url + "/community")
+    badge = self.wait_for_element(By.XPATH, "//*[contains(text(), 'Data as of')]")
+    self.assertIn("Data as of", badge.text)
+
+  # Test 13
+  def test_data_badge_visible_on_transportation_page(self):
+    self.driver.get(base_url + "/transportation")
+    badge = self.wait_for_element(By.XPATH, "//*[contains(text(), 'Data as of')]")
+    self.assertIn("Data as of", badge.text)
+
+  # Test 14
+  def test_housing_instance_has_get_directions_link(self):
+    self.driver.get(base_url + "/housing")
+
+    housing_link = self.wait_for_element(By.CSS_SELECTOR, "a[href*='/housing/']")
+    housing_href = housing_link.get_attribute("href")
+    self.assertIsNotNone(housing_href)
+    self.driver.get(housing_href)
+
+    directions_link = self.wait_for_element(By.LINK_TEXT, "Get Directions")
+
+    href = directions_link.get_attribute("href")
+    self.assertIn("google.com/maps/search/?api=1&query=", href)
+
+  # Test 15
+  def test_community_badge_persists_after_sort_change(self):
+    self.driver.get(base_url + "/community")
+
+    select_el = self.wait_for_element(By.ID, "select")
+
+    options = select_el.find_elements(By.TAG_NAME, "option")
+    if len(options) > 1:
+      options[1].click()
+
+    badge = self.wait_for_element(By.XPATH, "//*[contains(text(), 'Data as of')]")
+    self.assertIn("Data as of", badge.text)
 
 if __name__ == "__main__":
   unittest.main()

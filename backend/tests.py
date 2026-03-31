@@ -7,6 +7,7 @@ from app import (
 )
 from models import Housing
 from unittest.mock import patch
+from datetime import datetime
 
 
 class TestRoutes(unittest.TestCase):
@@ -160,6 +161,117 @@ class TestRoutes(unittest.TestCase):
     def test_api(self):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
+
+    def test_data_as_of_endpoint_shape(self):
+        response = self.client.get("/api/data-as-of")
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertIn("last_synced_at", data)
+
+        if data["last_synced_at"] is not None:
+            parsed = datetime.fromisoformat(data["last_synced_at"])
+            self.assertIsInstance(parsed, datetime)
+
+    def test_data_as_of_endpoint_empty_housing_table(self):
+        class DummyQuery:
+            def scalar(self):
+                return None
+
+        with patch("app.db.session.query", return_value=DummyQuery()):
+            response = self.client.get("/api/data-as-of")
+
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertEqual(data["last_synced_at"], None)
+
+    def test_community_list_contains_aggregate_fields(self):
+        response = self.client.get("/api/community")
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        data = payload.get("data", [])
+        self.assertIsInstance(data, list)
+
+        if data:
+            first = data[0]
+            self.assertIn("community_total_affordable_units", first)
+            self.assertIn("community_housing_count", first)
+
+    def test_community_aggregate_fields_are_numeric(self):
+        response = self.client.get("/api/community")
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        data = payload.get("data", [])
+
+        if data:
+            first = data[0]
+            self.assertIsInstance(first["community_total_affordable_units"], int)
+            self.assertIsInstance(first["community_housing_count"], int)
+            self.assertGreaterEqual(first["community_total_affordable_units"], 0)
+            self.assertGreaterEqual(first["community_housing_count"], 0)
+
+    def test_community_list_is_relation_lightweight(self):
+        response = self.client.get("/api/community")
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        data = payload.get("data", [])
+
+        if data:
+            first = data[0]
+            self.assertNotIn("housing", first)
+            self.assertNotIn("transportation", first)
+
+    def test_transportation_list_is_relation_lightweight(self):
+        response = self.client.get("/api/transportation")
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        data = payload.get("data", [])
+
+        if data:
+            first = data[0]
+            self.assertNotIn("communities", first)
+            self.assertNotIn("housing", first)
+
+    def test_community_detail_includes_relations(self):
+        response = self.client.get("/api/community/18")
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertIn("housing", data)
+        self.assertIn("transportation", data)
+
+    def test_transportation_detail_includes_relations(self):
+        response = self.client.get("/api/transportation/1")
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertIn("communities", data)
+        self.assertIn("housing", data)
+
+    def test_community_pagination_consistency(self):
+        page1 = self.client.get("/api/community?page=1&per_page=5")
+        page2 = self.client.get("/api/community?page=2&per_page=5")
+
+        self.assertEqual(page1.status_code, 200)
+        self.assertEqual(page2.status_code, 200)
+
+        data1 = page1.get_json()
+        data2 = page2.get_json()
+
+        self.assertEqual(data1["page"], 1)
+        self.assertEqual(data2["page"], 2)
+        self.assertIn("data", data1)
+        self.assertIn("data", data2)
+
+    def test_community_sort_descending(self):
+        response = self.client.get("/api/community?sort=crime_index&order=desc")
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        values = [
+            item.get("crime_index")
+            for item in payload.get("data", [])
+            if item.get("crime_index") is not None
+        ]
+
+        if len(values) > 1:
+            self.assertEqual(values, sorted(values, reverse=True))
 
 
 if __name__ == "__main__":
