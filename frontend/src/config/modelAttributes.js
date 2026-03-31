@@ -29,6 +29,7 @@ export const MODEL_ATTRIBUTES = {
     { title: "Frequency", key: "frequency" },
     { title: "Travel time to UT", key: "travel_time_ut" },
     { title: "Travel time to Downtown", key: "travel_time_downtown" },
+    { title: "Travel time to The Domain", key: "travel_time_domain" },
     { title: "Service", key: "service_days" },
     { title: "Num of Routes", key: "num_routes" },    
     { title : "Accessible?", key: "wheelchair_accessible" }

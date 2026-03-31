@@ -151,6 +151,7 @@ export default function CommunityInstance() {
               { title: "Frequency", key: "frequency" },
               { title: "Travel Time to UT", key: "travel_time_ut" },
               { title: "Travel Time to Downtown", key: "travel_time_downtown" },
+              { title: "Travel Time to The Domain", key: "travel_time_domain" },
               { title: "Service Days", key: "service_days" },
               { title: "Number of Routes", key: "num_routes" },
               { title: "Wheelchair Accessible?", key: "wheelchair_accessible" }
