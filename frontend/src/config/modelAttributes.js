@@ -10,7 +10,8 @@ export const MODEL_ATTRIBUTES = {
     { title: "Num Healthcare Facilities", key: "health_count" },
     { title: "Transit Score", key: "transit_score" },
     { title: "Total Affordable Units", key: "community_total_affordable_units" },
-    { title: "Housing Projects", key: "community_housing_count" }
+    { title: "Housing Projects", key: "community_housing_count" }, 
+    { title: "Transportation Count", key: "transportation_count"},
   ],
 
   housing: [

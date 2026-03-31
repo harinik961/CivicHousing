@@ -18,7 +18,8 @@ const communityFields = [
   "health_count",
   "transit_score",
   "community_total_affordable_units",
-  "community_housing_count"
+  "community_housing_count", 
+  "transportation_count",
 ];
 
 async function fetchAllHousingByZip(zipCode) {
@@ -91,7 +92,11 @@ const communityDescriptions = {
 
   community_housing_count: (value) =>
     `There are ${value} housing projects in this community that are tracked in the dataset. 
-    Together with affordable unit counts, this indicates the scale of affordable housing supply in the neighborhood.`
+    Together with affordable unit counts, this indicates the scale of affordable housing supply in the neighborhood.`,
+
+  transportation_count: (value) =>
+    `There are ${value} transit stops that serve this community. 
+    Higher numbers of available transportation stops indicate a greater availability of buses, rail, and other transit options.`,
 };
 
 export default function CommunityInstance() {
@@ -138,7 +143,8 @@ export default function CommunityInstance() {
               { title: "Affordable Units", key: "total_affordable_units" },
               { title: "Unit Type", key: "unit_type" },
               { title: "Housing Tenure", key: "housing_tenure" },
-              { title: "Walkability Score", key: "walk_score" }
+              { title: "Walkability Score", key: "walk_score" }, 
+              { title: "Income Restriction Level", key: "income_restriction_level"}
             ]
           },
           {
