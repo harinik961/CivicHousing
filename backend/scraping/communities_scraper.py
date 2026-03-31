@@ -8,7 +8,7 @@ from flask import Flask
 # Add backend folder to path so we can import models
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from models import db, Community
+from models import db, Community, Housing, Transportation
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "../../.env"))
 load_dotenv()
@@ -24,6 +24,58 @@ GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 WALK_SCORE_API_KEY = os.getenv("WALK_SCORE_API_KEY")
 WALKABILITY_URL = "https://api.walkscore.com/score"
 
+def compute_housing_stats():
+    """
+    Aggregates housing stats per zip code from the Housing table.
+    Returns a DataFrame with: zip, community_total_affordable_units, 
+    community_housing_count
+    """
+    results = (
+        db.session.query(
+            Housing.zip_code,
+            db.func.coalesce(db.func.sum(Housing.total_affordable_units), 0),
+            db.func.count(Housing.id),
+        )
+        .group_by(Housing.zip_code)
+        .all()
+    )
+
+    df = pd.DataFrame(
+        results,
+        columns=[
+            "zip",
+            "community_total_affordable_units",
+            "community_housing_count",
+        ],
+    )
+
+    df["zip"] = df["zip"].astype(str)
+    return df
+
+def compute_transportation_stats():
+    """
+    Aggregates transportation stop counts per zip code.
+    Returns a DataFrame with: zip, transportation_count
+    """
+    results = (
+        db.session.query(
+            Transportation.zip_code,
+            db.func.count(Transportation.id),
+        )
+        .group_by(Transportation.zip_code)
+        .all()
+    )
+
+    df = pd.DataFrame(
+        results,
+        columns=[
+            "zip",
+            "transportation_count",
+        ],
+    )
+
+    df["zip"] = df["zip"].astype(str)
+    return df
 
 def fetch_walkability_score(address, lat, lon):
     """
@@ -252,6 +304,30 @@ for _, row in merged_df.iterrows():
 map_urls_df = pd.DataFrame(map_urls)
 merged_df = merged_df.merge(map_urls_df, on="zip", how="left")
 
+# aggregate housing stats
+with app.app_context():
+    housing_stats_df = compute_housing_stats()
+
+merged_df["zip"] = merged_df["zip"].astype(str)
+merged_df = merged_df.merge(housing_stats_df, on="zip", how="left")
+
+merged_df["community_total_affordable_units"] = (
+    merged_df["community_total_affordable_units"].fillna(0).astype(int)
+)
+merged_df["community_housing_count"] = (
+    merged_df["community_housing_count"].fillna(0).astype(int)
+)
+
+# aggregate transportation stats
+with app.app_context():
+    transportation_stats_df = compute_transportation_stats()
+
+merged_df = merged_df.merge(transportation_stats_df, on="zip", how="left")
+
+merged_df["transportation_count"] = (
+    merged_df["transportation_count"].fillna(0).astype(int)
+)
+
 print(merged_df.columns.tolist())
 print(merged_df.head())
 
@@ -279,6 +355,9 @@ def seed_communities(df):
             existing.transit_score = row["transit_score"]
             existing.latitude = row["latitude"]
             existing.longitude = row["longitude"]
+            existing.community_total_affordable_units = row["community_total_affordable_units"]
+            existing.community_housing_count = row["community_housing_count"]
+            existing.transportation_count = row["transportation_count"]
             updated += 1
         else:
             community = Community(
@@ -294,6 +373,9 @@ def seed_communities(df):
                 transit_score=row["transit_score"],
                 latitude=row["latitude"],
                 longitude=row["longitude"],
+                community_total_affordable_units=row["community_total_affordable_units"], 
+                community_housing_count=row["community_housing_count"], 
+                transportation_count=row["transportation_count"]
             )
             db.session.add(community)
             inserted += 1

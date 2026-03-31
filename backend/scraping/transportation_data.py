@@ -47,6 +47,28 @@ DESTINATIONS = {
 # HELPER FUNCTIONS
 # ----------------------------------------
 
+def get_zip_code(lat, lon):
+    try:
+        url = "https://maps.googleapis.com/maps/api/geocode/json"
+        params = {
+            "latlng": f"{lat},{lon}",
+            "key": GOOGLE_MAPS_API_KEY,
+        }
+        response = requests.get(url, params=params, timeout=6)
+
+        if response.status_code == 200:
+            data = response.json()
+            results = data.get("results", [])
+
+            if results:
+                for component in results[0]["address_components"]:
+                    if "postal_code" in component["types"]:
+                        return component["long_name"]
+
+    except Exception as e:
+        print(f"Zip lookup failed for {lat},{lon}: {e}")
+
+    return None
 
 def get_transit_time(origin_lat, origin_lon, dest_lat, dest_lon):
     try:
@@ -130,6 +152,7 @@ def seed_transportation(transportation_data):
                 "travel_time_downtown_minutes"
             )
             existing.travel_time_domain_minutes = record.get("travel_time_domain_minutes")
+            existing.zip_code = record.get("zip_code")
             updated += 1
         else:
             # Insert new record
@@ -153,6 +176,7 @@ def seed_transportation(transportation_data):
                 travel_time_ut_minutes=record.get("travel_time_ut_minutes"),
                 travel_time_downtown_minutes=record.get("travel_time_downtown_minutes"),
                 travel_time_domain_minutes=record.get("travel_time_domain_minutes"),
+                zip_code=record.get("zip_code"),
             )
             db.session.add(transportation)
             inserted += 1
@@ -347,6 +371,8 @@ def extract_data():
             lat = stop["stop_lat"]
             lon = stop["stop_lon"]
 
+            zip_code = get_zip_code(lat, lon)
+
             travel_time_ut = get_transit_time(lat, lon, *DESTINATIONS["ut"])
             travel_time_downtown = get_transit_time(lat, lon, *DESTINATIONS["downtown"])
             travel_time_domain = get_transit_time(lat, lon, *DESTINATIONS["domain"])
@@ -373,6 +399,7 @@ def extract_data():
                     "travel_time_ut_minutes": travel_time_ut["minutes"],
                     "travel_time_downtown_minutes": travel_time_downtown["minutes"],
                     "travel_time_domain_minutes": travel_time_domain["minutes"],
+                    "zip_code": zip_code,
                 }
             )
 

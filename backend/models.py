@@ -63,6 +63,9 @@ class Community(db.Model):
     transit_score = db.Column(db.Integer)
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
+    community_total_affordable_units = db.Column(db.Integer)
+    community_housing_count = db.Column(db.Integer)
+    transportation_count = db.Column(db.Integer)
 
     housing = db.relationship(
         "Housing", secondary=community_housing, backref="communities", lazy="selectin"
@@ -96,6 +99,9 @@ class Community(db.Model):
             "transit_score": self.transit_score,
             "latitude": self.latitude,
             "longitude": self.longitude,
+            "community_total_affordable_units": self.community_total_affordable_units,
+            "community_housing_count": self.community_housing_count,
+            "transportation_count": self.transportation_count,
         }
 
         if include_relations:
@@ -212,6 +218,7 @@ class Transportation(db.Model):
     travel_time_ut_minutes = db.Column(db.Integer)
     travel_time_downtown_minutes = db.Column(db.Integer)
     travel_time_domain_minutes = db.Column(db.Integer)
+    zip_code = db.Column(db.String(1000))
 
     ts_vector = db.Column(TSVectorType(), nullable=True)
 
@@ -241,6 +248,7 @@ class Transportation(db.Model):
             "travel_time_ut_minutes": self.travel_time_ut_minutes,
             "travel_time_downtown_minutes": self.travel_time_downtown_minutes,
             "travel_time_domain_minutes": self.travel_time_domain_minutes,
+            "zip_code": self.zip_code,
         }
 
         if include_relations:
@@ -271,7 +279,10 @@ event.listen(
                     coalesce(NEW.health_count::text, '') || ' ' ||
                     coalesce(NEW.map_embed_url, '') || ' ' ||
                     coalesce(NEW.street_view_url, '') || ' ' ||
-                    coalesce(NEW.transit_score::text, '')
+                    coalesce(NEW.transit_score::text, '') || ' ' || 
+                    coalesce(NEW.community_total_affordable_units::text, '') || ' ' ||
+                    coalesce(NEW.community_housing_count::text, '') || ' ' ||
+                    coalesce(NEW.transportation_count::text, '')
                 );
             RETURN NEW;
         END;
@@ -335,7 +346,8 @@ event.listen(
                     coalesce(NEW.service_days, '') || ' ' ||
                     coalesce(NEW.travel_time_ut, '') || ' ' ||
                     coalesce(NEW.travel_time_downtown, '') || ' ' ||
-                    coalesce(NEW.travel_time_domain, '')
+                    coalesce(NEW.travel_time_domain, '') || ' ' ||
+                    coalesce(NEW.zip_code, '')
                 );
             RETURN NEW;
         END;
