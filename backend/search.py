@@ -1,31 +1,46 @@
-from sqlalchemy import func, desc
 from models import db, Housing, Community, Transportation
+from sqlalchemy import cast, String, func, or_
+
+
+def build_ts_query(query):
+    # supports partial matching: bloom -> bloom:*
+    terms = query.strip().split()
+    ts_query = " & ".join([f"{term}:*" for term in terms])
+    return func.to_tsquery('english', ts_query)
+
 
 def search_model(model, query, highlight_field, page=1, per_page=12):
   if not query or query.strip() == "":
     return [], 0, 0
 
-  plain_query = func.plainto_tsquery('english', query)
-  phrase_query = func.phraseto_tsquery('english', query)
+  ts_query = build_ts_query(query)
 
-  rank_plain = func.ts_rank(model.ts_vector, plain_query)
-  rank_phrase = func.ts_rank(model.ts_vector, phrase_query)
-  total_rank = (rank_phrase * 2.0 + rank_plain).label("rank")
+    # Ranking
+  rank = func.ts_rank(model.ts_vector, ts_query).label("rank")
+
+    # Highlight ONLY a clean field (no giant concatenation)
+  highlight_column = getattr(model, highlight_field)
 
   headline = func.ts_headline(
     'english',
-    getattr(model, highlight_field),
-    plain_query,
+     cast(highlight_column, String),
+     ts_query,
     'StartSel=<mark>, StopSel=</mark>'
-  ).label("highlight")
+    ).label("highlight")
 
+    # Base query
   base_query = (
-    db.session.query(model, total_rank, headline)
-    .filter(model.ts_vector.op('@@')(plain_query))
-    .order_by(desc("rank"))
-  )
+    db.session.query(model, rank, headline)
+    .filter(model.ts_vector.op('@@')(ts_query))
+    .order_by(rank.desc())
+    )
 
-  total = base_query.count()
+    # Efficient count
+  count_query = db.session.query(func.count()).filter(
+      model.ts_vector.op('@@')(ts_query)
+    )
+
+  total = count_query.scalar()
   total_pages = (total + per_page - 1) // per_page
 
   results = (
@@ -36,6 +51,11 @@ def search_model(model, query, highlight_field, page=1, per_page=12):
   )
 
   return results, total, total_pages
+
+
+# -------------------------------
+# Model-specific search functions
+# -------------------------------
 
 def search_housing(query, page=1, per_page=12):
   results, total, total_pages = search_model(
@@ -81,6 +101,9 @@ def search_transportation(query, page=1, per_page=12):
     for transportation, rank, highlight in results
   ], total, total_pages
 
+# -------------------------------
+# Global search
+# -------------------------------
 def global_search(query, page=1, per_page=20):
   # fetch all matches per model
   max_fetch = 1000  # arbitrary large number

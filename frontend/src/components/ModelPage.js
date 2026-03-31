@@ -116,14 +116,13 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
   const [order, setOrder] = useState("asc");
   const [sortValue, setSortValue] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  const[searchQuery, setSearchQuery] = useState("");
-  const[activeSearch, setActiveSearch] = useState("");  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeSearch, setActiveSearch] = useState("");
 
   const attributesRef = useRef(attributes);
   const filterOptionsRef = useRef(filterOptions);
 
   const PER_PAGE = 50;
-  const isCommunity = apiEndpoint === "/api/community";
 
   useEffect(() => {
     fetch(`${API_BASE}/api/data-as-of`)
@@ -138,75 +137,9 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
 
   useEffect(() => {
 
-    setLoading(true);
-    setPage(1);
+  if (activeSearch && page !== 1) return;
 
-    const params = new URLSearchParams({
-      page: 1,
-      per_page: PER_PAGE
-    });
-
-    if (sort) params.append("sort", sort);
-    if (order) params.append("order", order);
-
-    for (const f of filterOptionsRef.current) {
-      const filterKey = f.parameter || f.min_parameter;
-      const bucket = filterValues[filterKey];
-      if (!bucket) continue;
-
-      if (f.parameter) {
-        if (bucket.value !== null)
-          params.append(f.parameter, bucket.value);
-      } else {
-        if (bucket.min !== null)
-          params.append(f.min_parameter, bucket.min);
-        if (bucket.max !== null)
-          params.append(f.max_parameter, bucket.max);
-      }
-    }
-
-      const isSearching = activeSearch.trim();
-
-      const url = isSearching
-        ? `${API_BASE}/api/search/${modelName}?q=${encodeURIComponent(activeSearch)}&page=${page}&per_page=${PER_PAGE}`
-        : `${API_BASE}${apiEndpoint}?${params}`;
-
-      fetch(url)
-      .then(res => res.json())
-      .then(data => {
-        const raw = data.results || data.data || [];
-        const formatted = raw.map(item => {
-          const actual = item.data ? item.data : item;
-
-          if (!actual) return null; // safety
-
-          return {
-            ...formatItem(actual, attributesRef.current),
-            highlight: item.highlight || null
-          };
-        }).filter(Boolean);       
-        setTotal(data.total ?? 0);
-        setPages(data.pages ?? 1);
-        setItems(formatted);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Error loading model data:", err);
-        setLoading(false);
-      });
-
-    console.log("ACTIVE SEARCH:", activeSearch);
-
-  }, [apiEndpoint, modelName, page, isCommunity, sort, order, filterValues, activeSearch]);
-
-  // Handle page changes - fetch new page from server
-  useEffect(() => {
-
-    if (page === 1) return;
-
-    window.scrollTo(0, 0);
-    setLoading(true);
-
+  setLoading(true);
     const params = new URLSearchParams({
       page: page,
       per_page: PER_PAGE
@@ -232,12 +165,12 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
     }
 
     const isSearching = activeSearch.trim();
+
     const url = isSearching
-        ? `${API_BASE}/api/search/${modelName}?q=${encodeURIComponent(activeSearch)}&page=${page}&per_page=${PER_PAGE}`
-        : `${API_BASE}${apiEndpoint}?${params}`;
+      ? `${API_BASE}/api/search/${modelName}?q=${encodeURIComponent(activeSearch)}&page=${page}&per_page=${PER_PAGE}`
+      : `${API_BASE}${apiEndpoint}?${params}`;
 
-      fetch(url)
-
+    fetch(url)
       .then(res => res.json())
       .then(data => {
         const raw = data.results || data.data || [];
@@ -250,19 +183,21 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
             ...formatItem(actual, attributesRef.current),
             highlight: item.highlight || null
           };
-        }).filter(Boolean);  
-        
-        
+        }).filter(Boolean);
+
+        setTotal(data.total ?? 0);
+        setPages(data.total_pages ?? data.pages ?? 1);
         setItems(formatted);
         setLoading(false);
       })
       .catch(err => {
-        console.error("Error loading page:", err);
+        console.error("Error loading model data:", err);
         setLoading(false);
       });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, sort, order, filterValues, activeSearch]);
+    console.log("ACTIVE SEARCH:", activeSearch);
+
+  }, [apiEndpoint, modelName, page, sort, order, filterValues, activeSearch]);
 
   const cards = items.map(item => (
     <div className="col-lg-4 col-md-6 col-sm-12 mb-4" key={item.id}>
@@ -270,6 +205,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
         item={item}
         modelName={modelName}
         linkPath={`/${modelName}/${item.id}`}
+        query={activeSearch}
       />
     </div>
   ));
@@ -283,8 +219,8 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
     );
   }
 
-  const start = (page - 1) * PER_PAGE + 1;
-  const end = Math.min(page * PER_PAGE, total);
+  const start = total === 0 ? 0 : (page - 1) * PER_PAGE + 1;
+  const end = total === 0 ? 0 : Math.min(page * PER_PAGE, total);
 
   const activeFilterLines = buildActiveFilterLines(filterValues, filterOptions);
   const applyDisabled =
@@ -301,40 +237,40 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
       <h2 className="text-center mb-4">{title}</h2>
 
       <div className="d-flex justify-content-center mb-3 gap-2">
-          <input
-            type="text"
-            className="form-control"
-            style={{ maxWidth: "400px" }}
-            placeholder={`Search ${modelName}`}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <input
+          type="text"
+          className="form-control"
+          style={{ maxWidth: "400px" }}
+          placeholder={`Search ${modelName}`}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
 
+        <button
+          className="btn btn-primary"
+          onClick={() => {
+            setActiveSearch(searchQuery);
+            setPage(1);
+          }}
+        >
+          Search
+        </button>
+
+        {searchQuery && (
           <button
-            className="btn btn-primary"
+            className="btn btn-secondary"
             onClick={() => {
-              setActiveSearch(searchQuery);
+              setSearchQuery("");
+              setActiveSearch("");
               setPage(1);
             }}
           >
-            Search
+            Clear
           </button>
+        )}
+      </div>
 
-          {searchQuery && (
-            <button
-              className="btn btn-secondary"
-              onClick={() => {
-                setSearchQuery("");
-                setActiveSearch("");
-                setPage(1);
-              }}
-            >
-              Clear
-            </button>
-          )}
-        </div>
-
-        {activeSearch && (
+      {activeSearch && (
         <p className="text-center mb-2">
           Showing results for "<strong>{activeSearch}</strong>"
         </p>
@@ -410,7 +346,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
                   >
                     Apply filters
                   </button>
-                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -456,7 +392,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
         {cards}
       </div>
 
-       {/* PAGINATION */}
+      {/* PAGINATION */}
       <div className="d-flex justify-content-center mt-4 gap-3">
 
         <button

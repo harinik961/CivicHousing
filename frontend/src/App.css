@@ -32,6 +32,12 @@ body {
   color: #61dafb;
 }
 
+mark {
+  background-color: #ffb3c1;  /* your color */
+  color: black;              /* text color */
+  padding: 0 2px;
+  border-radius: 3px;
+}
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);
