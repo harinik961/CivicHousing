@@ -57,7 +57,7 @@ export default function GlobalSearch() {
       );
       const data = await res.json();
 
-      const formatted = (data.results || []).map(formatItem); //harini changed data.data to data.results
+      const formatted = (data.results || []).map(formatItem); 
       setItems(formatted);
       setTotal(data.total || 0);
       setPages(data.pages || 1);
