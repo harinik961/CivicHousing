@@ -8,7 +8,12 @@ from sqlalchemy import cast, Integer
 from sqlalchemy.sql import func
 from models import db, Housing, Community, Transportation
 from flask_migrate import Migrate
-from search import search_housing, search_communities, search_transportation, global_search
+from search import (
+    search_housing,
+    search_communities,
+    search_transportation,
+    global_search,
+)
 
 load_dotenv()
 
@@ -184,9 +189,7 @@ def transportation_filter_conditions(args):
     if transport_type:
         conditions.append(Transportation.transport_type == transport_type)
     if wheelchair_accessible:
-        conditions.append(
-            Transportation.wheelchair_accessible == wheelchair_accessible
-        )
+        conditions.append(Transportation.wheelchair_accessible == wheelchair_accessible)
     if num_routes_min is not None:
         conditions.append(Transportation.num_routes >= num_routes_min)
     if num_routes_max is not None:
@@ -293,7 +296,7 @@ def create_app():
         return redirect(
             "https://documenter.getpostman.com/view/52514232/2sBXcDHMyK", code=302
         )
-    
+
     @app.route("/api/search", methods=["GET"])
     def global_search_route():
         query = request.args.get("q", "")
@@ -302,12 +305,9 @@ def create_app():
 
         results, total, pages = global_search(query, page=page, per_page=per_page)
 
-        return jsonify({
-            "results": results,
-            "total": total,
-            "page": page,
-            "pages": pages
-        })
+        return jsonify(
+            {"results": results, "total": total, "page": page, "pages": pages}
+        )
 
     # -----------------------------
     # HOUSING
@@ -396,7 +396,7 @@ def create_app():
             )
 
         return jsonify(payload)
-    
+
     @app.route("/api/search/housing", methods=["GET"])
     def housing_search_route():
         q = request.args.get("q", "")
@@ -415,12 +415,9 @@ def create_app():
             order=order,
         )
 
-        return jsonify({
-            "results": results,
-            "total": total,
-            "page": page,
-            "pages": pages
-        })
+        return jsonify(
+            {"results": results, "total": total, "page": page, "pages": pages}
+        )
 
     # -----------------------------
     # COMMUNITY
@@ -460,7 +457,7 @@ def create_app():
         community = Community.query.get_or_404(id)
 
         return jsonify(community.to_dict(include_relations=True))
-    
+
     @app.route("/api/search/community", methods=["GET"])
     def community_search_route():
         q = request.args.get("q", "")
@@ -479,12 +476,9 @@ def create_app():
             order=order,
         )
 
-        return jsonify({
-            "results": results,
-            "total": total,
-            "page": page,
-            "pages": pages
-        })
+        return jsonify(
+            {"results": results, "total": total, "page": page, "pages": pages}
+        )
 
     # -----------------------------
     # TRANSPORTATION
@@ -507,7 +501,7 @@ def create_app():
         if sort in TRANSPORT_SORT_MAP:
             column = TRANSPORT_SORT_MAP[sort]
             query = query.order_by(column.desc() if order == "desc" else column.asc())
-            
+
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
         return jsonify(
@@ -525,7 +519,7 @@ def create_app():
         transportation = Transportation.query.get_or_404(id)
 
         return jsonify(transportation.to_dict(include_relations=True))
-    
+
     @app.route("/api/search/transportation", methods=["GET"])
     def transportation_search_route():
         q = request.args.get("q", "")
@@ -544,12 +538,9 @@ def create_app():
             order=order,
         )
 
-        return jsonify({
-            "results": results,
-            "total": total,
-            "page": page,
-            "pages": pages
-        })
+        return jsonify(
+            {"results": results, "total": total, "page": page, "pages": pages}
+        )
 
     return app
 
@@ -559,4 +550,3 @@ application = app
 
 if __name__ == "__main__":  # pragma: no cover
     app.run(host="0.0.0.0", port=0, debug=True)
-

@@ -47,6 +47,7 @@ DESTINATIONS = {
 # HELPER FUNCTIONS
 # ----------------------------------------
 
+
 def get_zip_code(lat, lon):
     try:
         url = "https://maps.googleapis.com/maps/api/geocode/json"
@@ -69,6 +70,7 @@ def get_zip_code(lat, lon):
         print(f"Zip lookup failed for {lat},{lon}: {e}")
 
     return None
+
 
 def get_transit_time(origin_lat, origin_lon, dest_lat, dest_lon):
     try:
@@ -151,7 +153,9 @@ def seed_transportation(transportation_data):
             existing.travel_time_downtown_minutes = record.get(
                 "travel_time_downtown_minutes"
             )
-            existing.travel_time_domain_minutes = record.get("travel_time_domain_minutes")
+            existing.travel_time_domain_minutes = record.get(
+                "travel_time_domain_minutes"
+            )
             existing.zip_code = record.get("zip_code")
             updated += 1
         else:

@@ -368,7 +368,9 @@ class TestRoutes(unittest.TestCase):
 
         stop_fragment = (rows[0].get("stop_name") or "bus")[:8]
         q = quote(stop_fragment)
-        response = self.client.get(f"/api/search/transportation?q={q}&transport_type=Bus")
+        response = self.client.get(
+            f"/api/search/transportation?q={q}&transport_type=Bus"
+        )
         self.assertEqual(response.status_code, 200)
         body = response.get_json()
         self.assertIn("results", body)

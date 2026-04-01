@@ -265,7 +265,8 @@ class Transportation(db.Model):
 event.listen(
     Community.__table__,
     "after_create",
-    DDL("""
+    DDL(
+        """
         CREATE OR REPLACE FUNCTION community_ts_vector_update() RETURNS trigger AS $$
         BEGIN
             NEW.ts_vector :=
@@ -291,13 +292,15 @@ event.listen(
         CREATE TRIGGER community_ts_vector_trigger
         BEFORE INSERT OR UPDATE ON communities
         FOR EACH ROW EXECUTE FUNCTION community_ts_vector_update();
-    """)
+    """
+    ),
 )
 
 event.listen(
     Housing.__table__,
     "after_create",
-    DDL("""
+    DDL(
+        """
         CREATE OR REPLACE FUNCTION housing_ts_vector_update() RETURNS trigger AS $$
         BEGIN
             NEW.ts_vector :=
@@ -322,13 +325,15 @@ event.listen(
         CREATE TRIGGER housing_ts_vector_trigger
         BEFORE INSERT OR UPDATE ON housing
         FOR EACH ROW EXECUTE FUNCTION housing_ts_vector_update();
-    """)
+    """
+    ),
 )
 
 event.listen(
     Transportation.__table__,
     "after_create",
-    DDL("""
+    DDL(
+        """
         CREATE OR REPLACE FUNCTION transportation_ts_vector_update() RETURNS trigger AS $$
         BEGIN
             NEW.ts_vector :=
@@ -356,5 +361,6 @@ event.listen(
         CREATE TRIGGER transportation_ts_vector_trigger
         BEFORE INSERT OR UPDATE ON transportation
         FOR EACH ROW EXECUTE FUNCTION transportation_ts_vector_update();
-    """)
+    """
+    ),
 )
