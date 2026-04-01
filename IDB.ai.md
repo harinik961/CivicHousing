@@ -22,6 +22,7 @@ Conceptual Clarification
 - Understood why GET requests should not have a body in REST API design
 - Learned the difference between hot reloading vs restarting the dev server
 - Learned how to use GitLab API to retrieve number of commits and issues closed and the why one is tracked via Gitlab usernames and the other with user emails
+- Learned how list filtering fits REST APIs (optional query parameters on GET, encoding in the URL, and matching what the backend parses)
 
 Code Improvement
 - Built out the home page carousel using React Bootstrap's Carousel component with
@@ -31,6 +32,8 @@ Code Improvement
 - Updated ModelCard.js to use a per-model attribute map instead of relying on string splitting
 - seed_housing.py scraper — AI helped with the housing seed/scraper script (structure, data flow, or debugging as used in the project)
 - Setting up docker-compose.yml — AI assisted with configuring docker-compose (services, environment, or build steps) for local development
+- Filtering — AI helped work through how to implement filtering (e.g., query parameters on list endpoints, wiring frontend controls to API calls, and keeping filter state consistent with navigation or URLs)
+- Postman documentation — AI helped structure and write descriptions for the Postman collection (requests, variables, example bodies or responses) so the API was easier for the team to test and share
 
 
 UI Layout and Masonry Implementation
@@ -45,7 +48,9 @@ The carousel section of the home page was heavily guided by AI. AI helped set
 up the React Bootstrap Carousel component with overlay text and buttons linking 
 to each model page.
 
-With the help of AI interaction I was able to understand what may be failing our pipeline, and it was due to our package-lock.json not having updated information from whenever we do npm install because it doesn't save react-scripts and that was breaking when running the pipeline. So based on it's inputs I ran npm install with  --save-dev react-scripts and pushed the package-lock file with the updated information. 
+With the help of AI interaction I was able to understand what may be failing our pipeline, and it was due to our package-lock.json not having updated information from whenever we do npm install because it doesn't save react-scripts and that was breaking when running the pipeline. So based on it's inputs I ran npm install with  --save-dev react-scripts and pushed the package-lock file with the updated information.
+
+For filtering, AI clarified how list endpoints and query strings fit together, which shortened the trial-and-error when connecting UI filters to the backend. For Postman, AI suggestions made it easier to document each request clearly so teammates could import the collection and reproduce calls without guessing parameters. 
 
 How did you decide what to keep or ignore?
 
