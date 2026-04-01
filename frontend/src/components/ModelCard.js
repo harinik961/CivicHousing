@@ -35,57 +35,52 @@ export default function ModelCard({ item, modelName, query }) {
         )}
       </div>
 
-              {/* ATTRIBUTE SECTION */}
-        <div className="card-body">
+      {/* ATTRIBUTE SECTION */}
+      <div className="card-body">
 
-          <h5
-            className="mb-3"
-            dangerouslySetInnerHTML={{
-              __html: highlightText(item.name, query)
+        <h5
+          className="mb-3"
+          dangerouslySetInnerHTML={{
+            __html: highlightText(item.name, query)
+          }}
+        />
+
+        {item.attributes.map((attr, index) => (
+          <div
+            key={index}
+            className="border-bottom py-2"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "130px 1fr",
+              columnGap: "16px",
+              alignItems: "start"
             }}
-          />
-
-          {item.attributes.map((attr, index) => (
-            <div
-              key={index}
-              className="border-bottom py-2"
+          >
+            <span className="text-muted">{attr.title}</span>
+            <span
+              className="fw-semibold"
               style={{
-                display: "grid",
-                gridTemplateColumns: "130px 1fr",
-                columnGap: "16px",
-                alignItems: "start"
+                textAlign: "right",
+                wordBreak: "break-word"
               }}
             >
               <span
-                className="text-muted"
-                dangerouslySetInnerHTML={{
-                  __html: query
-                    ? highlightText(String(attr.title), query)
-                    : String(attr.title)
+               dangerouslySetInnerHTML={{
+                  __html: highlightText(String(attr.value), query)
                 }}
               />
-
-              <span
-                className="fw-semibold"
-                style={{
-                  textAlign: "right",
-                  wordBreak: "break-word"
-                }}
-                dangerouslySetInnerHTML={{
-                  __html: query
-                    ? highlightText(String(attr.value), query)
-                    : String(attr.value)
-                }}
-              />
-            </div>
-          ))}
-        </div>
+            </span>
+          </div>
+        ))}
 
        <Link to={`/${modelName}/${item.id}`} className="btn btn-primary mt-3">
         View
       </Link>
 
       </div>
+
+    </div>
+
     
   );
 

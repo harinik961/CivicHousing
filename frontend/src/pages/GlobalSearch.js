@@ -6,7 +6,9 @@ const API_BASE = "https://api.civichousing.me";
 const PER_PAGE = 12;
 
 function normalizeImage(item) {
-  const candidate = item.street_view_url || item.street_view_image || item.image || null;
+  const candidate =
+    item.street_view_url || item.street_view_image || item.image || null;
+
   if (!candidate) return null;
 
   if (
@@ -20,21 +22,23 @@ function normalizeImage(item) {
 }
 
 function formatItem(result) {
-
   const type = result.type;
   const item = result.data;
   const attrs = MODEL_ATTRIBUTES[type] || [];
 
   return {
-    id: item.id, 
-    type, 
-    name: item.project_name || item.project_name || item.stop_name || item.zip_code || `Item ${item.id}`,
+    id: item.id,
+    type,
+    name:
+      item.project_name ||
+      item.stop_name ||
+      item.zip_code ||
+      `Item ${item.id}`,
     image: normalizeImage(item),
-    attributes: attrs.map((attr)=> ({
-      title: attr.title, 
+    attributes: attrs.map((attr) => ({
+      title: attr.title,
       value: item[attr.key] ?? "",
     })),
-
   };
 }
 
@@ -53,11 +57,13 @@ export default function GlobalSearch() {
     setLoading(true);
     try {
       const res = await fetch(
-        `${API_BASE}/api/search?q=${encodeURIComponent(searchTerm)}&page=${page}&per_page=${PER_PAGE}`
+        `${API_BASE}/api/search?q=${encodeURIComponent(
+          searchTerm
+        )}&page=${page}&per_page=${PER_PAGE}`
       );
       const data = await res.json();
 
-      const formatted = (data.results || []).map(formatItem); 
+      const formatted = (data.results || []).map(formatItem);
       setItems(formatted);
       setTotal(data.total || 0);
       setPages(data.pages || 1);
@@ -85,65 +91,121 @@ export default function GlobalSearch() {
   };
 
   const cards = items.map((item) => (
-    <div className="col-lg-4 col-md-6 col-sm-12 mb-4" key={`${item.type}-${item.id}`}>
-      <ModelCard item={item} modelName={item.type} />
+    <div
+      className="col-lg-4 col-md-6 col-sm-12 mb-4"
+      key={`${item.type}-${item.id}`}
+    >
+      <ModelCard
+        item={item}
+        modelName={item.type}
+        query={searchTerm} // 🔥 FIX: enables highlighting
+      />
     </div>
   ));
 
-  const start = (page - 1) * PER_PAGE + 1;
+  const start = total === 0 ? 0 : (page - 1) * PER_PAGE + 1;
   const end = Math.min(page * PER_PAGE, total);
 
   return (
-    <div className="container mt-4">
+    <div className="container mt-5 mb-5">
+      {/* Title */}
+      <h1 className="text-center fw-bold mb-3">Global Search</h1>
+
       {/* Search Bar */}
-      <form className="d-flex mb-4 justify-content-center" onSubmit={handleSearchSubmit}>
-        <input
-          type="text"
-          className="form-control"
-          placeholder="Search for housing, communities, or transportation..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          style={{ maxWidth: "500px" }}
-        />
-        <button type="submit" className="btn btn-primary ms-2">
-          Search
-        </button>
+      <form
+        className="d-flex justify-content-center mb-5"
+        onSubmit={handleSearchSubmit}
+      >
+        <div className="d-flex w-100" style={{ maxWidth: "600px" }}>
+          <input
+            type="text"
+            className="form-control rounded-start-pill px-4 py-2"
+            placeholder="Search housing, communities, transportation..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+
+          <button
+            type="submit"
+            className="btn btn-primary rounded-end-pill px-4"
+          >
+            Search
+          </button>
+        </div>
       </form>
 
+      {/* Loading */}
       {loading && (
         <div className="text-center">
-          <p>Loading results...</p>
+          <p className="text-muted">Searching...</p>
         </div>
       )}
 
+      {/* Results */}
       {!loading && searchTerm && (
         <>
-          <p className="text-muted small text-center mb-1">
-            Showing {start}-{end} of {total} results
+          <p className="text-center text-muted mb-3">
+            Showing <strong>{start}-{end}</strong> of{" "}
+            <strong>{total}</strong> results
           </p>
 
-          <h2 className="text-center mb-4">Search Results for "{searchTerm}"</h2>
+          <h4 className="text-center mb-4">
+            Results for <span className="text-primary">"{searchTerm}"</span>
+          </h4>
 
-          <div className="row">{cards}</div>
+          {/* Empty state */}
+          {items.length === 0 && (
+            <div className="text-center mt-5">
+              <h5>No results found</h5>
+              <p className="text-muted">
+                Try a different keyword or check spelling.
+              </p>
+            </div>
+          )}
+
+          {/* Cards */}
+          <div className="row g-4">{cards}</div>
 
           {/* Pagination */}
-          <div className="d-flex justify-content-center mt-4 gap-3">
-            <button className="btn btn-primary" disabled={page === 1} onClick={() => setPage(1)}>
-              First
-            </button>
-            <button className="btn btn-primary" disabled={page === 1} onClick={() => setPage(page - 1)}>
-              Previous
-            </button>
-            <span className="align-self-center">
-              Page {page} of {pages}
-            </span>
-            <button className="btn btn-primary" disabled={page === pages} onClick={() => setPage(page + 1)}>
-              Next
-            </button>
-            <button className="btn btn-primary" disabled={page === pages} onClick={() => setPage(pages)}>
-              Last
-            </button>
-          </div>
+          {pages > 1 && (
+            <div className="d-flex justify-content-center mt-5 gap-2 flex-wrap">
+              <button
+                className="btn btn-outline-primary"
+                disabled={page === 1}
+                onClick={() => setPage(1)}
+              >
+                First
+              </button>
+
+              <button
+                className="btn btn-outline-primary"
+                disabled={page === 1}
+                onClick={() => setPage(page - 1)}
+              >
+                Previous
+              </button>
+
+              <span className="align-self-center px-3">
+                Page <strong>{page}</strong> of <strong>{pages}</strong>
+              </span>
+
+              <button
+                className="btn btn-outline-primary"
+                disabled={page === pages}
+                onClick={() => setPage(page + 1)}
+              >
+                Next
+              </button>
+
+              <button
+                className="btn btn-outline-primary"
+                disabled={page === pages}
+                onClick={() => setPage(pages)}
+              >
+                Last
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

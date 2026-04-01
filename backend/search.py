@@ -1,139 +1,162 @@
 from models import db, Housing, Community, Transportation
-from sqlalchemy import cast, String, func, or_
+from sqlalchemy import func, or_, desc, cast, String
 
 
-def build_ts_query(query):
-    # supports partial matching: bloom -> bloom:*
-    terms = query.strip().split()
-    ts_query = " & ".join([f"{term}:*" for term in terms])
-    return func.to_tsquery('english', ts_query)
+# -------------------------------
+# Build full-text queries
+# -------------------------------
+def build_queries(query):
+    query = query.strip()
+
+    phrase_query = func.phraseto_tsquery('english', query)
+    plain_query = func.plainto_tsquery('english', query)
+
+    terms = [term for term in query.split() if term.strip()]
+    if terms:
+        or_query = func.to_tsquery('english', " | ".join(terms))
+    else:
+        or_query = plain_query
+
+    return phrase_query, plain_query, or_query
 
 
-def search_model(model, query, highlight_field, page=1, per_page=12):
-  if not query or query.strip() == "":
-    return [], 0, 0
+# -------------------------------
+# Dynamic ILIKE fallback 
+# -------------------------------
+def build_ilike_filter(model, query):
+    filters = []
 
-  ts_query = build_ts_query(query)
+    for column in model.__table__.columns:
+        col = getattr(model, column.name)
 
-    # Ranking
-  rank = func.ts_rank(model.ts_vector, ts_query).label("rank")
+        # Cast everything to string so it works for ints, floats, etc.
+        filters.append(cast(col, String).ilike(f"%{query}%"))
 
-    # Highlight ONLY a clean field (no giant concatenation)
-  highlight_column = getattr(model, highlight_field)
+    return or_(*filters)
 
-  headline = func.ts_headline(
-    'english',
-     cast(highlight_column, String),
-     ts_query,
-    'StartSel=<mark>, StopSel=</mark>'
-    ).label("highlight")
 
-    # Base query
-  base_query = (
-    db.session.query(model, rank, headline)
-    .filter(model.ts_vector.op('@@')(ts_query))
-    .order_by(rank.desc())
+# -------------------------------
+# Core search logic
+# -------------------------------
+def search_model(model, query, page=1, per_page=12):
+    if not query or query.strip() == "":
+        return [], 0, 0
+
+    phrase_q, plain_q, or_q = build_queries(query)
+
+    # Ranking (ONLY full-text)
+    rank = (
+        func.ts_rank(model.ts_vector, phrase_q) * 3.0 +
+        func.ts_rank(model.ts_vector, plain_q) * 2.0 +
+        func.ts_rank(model.ts_vector, or_q)
+    ).label("rank")
+
+    # Combined filter
+    filter_condition = or_(
+        model.ts_vector.op('@@')(phrase_q),
+        model.ts_vector.op('@@')(plain_q),
+        model.ts_vector.op('@@')(or_q),
+        build_ilike_filter(model, query)  # fallback for substrings
+    )
+
+    base_query = (
+        db.session.query(model, rank)
+        .filter(filter_condition)
+        .order_by(desc(rank))
     )
 
     # Efficient count
-  count_query = db.session.query(func.count()).filter(
-      model.ts_vector.op('@@')(ts_query)
+    total = db.session.query(func.count()).select_from(model).filter(filter_condition).scalar()
+    total_pages = (total + per_page - 1) // per_page
+
+    results = (
+        base_query
+        .limit(per_page)
+        .offset((page - 1) * per_page)
+        .all()
     )
 
-  total = count_query.scalar()
-  total_pages = (total + per_page - 1) // per_page
-
-  results = (
-    base_query
-    .limit(per_page)
-    .offset((page - 1) * per_page)
-    .all()
-  )
-
-  return results, total, total_pages
+    return results, total, total_pages
 
 
 # -------------------------------
-# Model-specific search functions
+# Model-specific search
 # -------------------------------
-
 def search_housing(query, page=1, per_page=12):
-  results, total, total_pages = search_model(
-    Housing, query, highlight_field="project_name", page=page, per_page=per_page
-  )
+    results, total, total_pages = search_model(Housing, query, page, per_page)
 
-  return [
-    {
-      "data": housing.to_dict(),
-      "highlight": highlight,
-      "rank": rank
-    }
-    for housing, rank, highlight in results
-  ], total, total_pages
+    return [
+        {
+            "data": housing.to_dict(),
+            "rank": rank
+        }
+        for housing, rank in results
+    ], total, total_pages
 
 
 def search_communities(query, page=1, per_page=12):
-  results, total, total_pages = search_model(
-    Community, query, highlight_field="county", page=page, per_page=per_page
-  )
+    results, total, total_pages = search_model(Community, query, page, per_page)
 
-  return [
-    {
-      "data": community.to_dict(),
-      "highlight": highlight,
-      "rank": rank
-    }
-    for community, rank, highlight in results
-  ], total, total_pages
+    return [
+        {
+            "data": community.to_dict(),
+            "rank": rank
+        }
+        for community, rank in results
+    ], total, total_pages
 
 
 def search_transportation(query, page=1, per_page=12):
-  results, total, total_pages = search_model(
-    Transportation, query, highlight_field="stop_name", page=page, per_page=per_page
-  )
+    results, total, total_pages = search_model(Transportation, query, page, per_page)
 
-  return [
-    {
-      "data": transportation.to_dict(),
-      "highlight": highlight,
-      "rank": rank
-    }
-    for transportation, rank, highlight in results
-  ], total, total_pages
+    return [
+        {
+            "data": transportation.to_dict(),
+            "rank": rank
+        }
+        for transportation, rank in results
+    ], total, total_pages
+
 
 # -------------------------------
 # Global search
 # -------------------------------
 def global_search(query, page=1, per_page=20):
-  # fetch all matches per model
-  max_fetch = 1000  # arbitrary large number
-  housing_results, _, _ = search_model(Housing, query, "project_name", page=1, per_page=max_fetch)
-  community_results, _, _ = search_model(Community, query, "county", page=1, per_page=max_fetch)
-  transport_results, _, _ = search_model(Transportation, query, "stop_name", page=1, per_page=max_fetch)
+    if not query or query.strip() == "":
+        return [], 0, 0
 
-  combined = []
-  for item, rank, highlight in housing_results:
-    combined.append(("housing", item, rank, highlight))
-  for item, rank, highlight in community_results:
-    combined.append(("community", item, rank, highlight))
-  for item, rank, highlight in transport_results:
-    combined.append(("transportation", item, rank, highlight))
+    max_fetch = 200
 
-  combined.sort(key=lambda x: x[2], reverse=True)
+    housing_results, _, _ = search_model(Housing, query, 1, max_fetch)
+    community_results, _, _ = search_model(Community, query, 1, max_fetch)
+    transport_results, _, _ = search_model(Transportation, query, 1, max_fetch)
 
-  total = len(combined)
-  total_pages = (total + per_page - 1) // per_page
+    combined = []
 
-  start = (page - 1) * per_page
-  end = start + per_page
-  paginated = combined[start:end]
+    for item, rank in housing_results:
+        combined.append(("housing", item, rank))
 
-  return [
-    {
-      "type": t,
-      "data": obj.to_dict(),
-      "highlight": highlight,
-      "rank": rank
-    }
-    for t, obj, rank, highlight in paginated
-  ], total, total_pages
+    for item, rank in community_results:
+        combined.append(("community", item, rank))
+
+    for item, rank in transport_results:
+        combined.append(("transportation", item, rank))
+
+    # Global ranking
+    combined.sort(key=lambda x: x[2], reverse=True)
+
+    total = len(combined)
+    total_pages = (total + per_page - 1) // per_page
+
+    start = (page - 1) * per_page
+    end = start + per_page
+    paginated = combined[start:end]
+
+    return [
+        {
+            "type": model_type,
+            "data": obj.to_dict(),
+            "rank": rank
+        }
+        for model_type, obj, rank in paginated
+    ], total, total_pages
