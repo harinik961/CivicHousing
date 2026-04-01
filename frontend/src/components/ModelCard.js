@@ -1,6 +1,22 @@
 import { Link } from "react-router-dom";
 
-function FrequencyBadge({frequency}) {
+function LabelType({ type }) {
+  const labels = {
+    housing: "🏠 Housing",
+    transportation: "🚍 Transportation",
+    community: "🏘️ Community",
+  };
+  if (!labels[type]) {
+    return null;
+  }
+  return (
+    <span style={{ fontWeight: 600, fontSize: "0.8rem", color: "#6b7280" }}>
+      {labels[type]}
+    </span>
+  );
+}
+
+function FrequencyBadge({ frequency }) {
   let minutes = null;
   if (frequency && frequency.startsWith("Every")) {
     minutes = parseInt(frequency.replace("Every ", ""));
@@ -9,11 +25,11 @@ function FrequencyBadge({frequency}) {
   if (minutes === null)
     return null;
   const isHighFreq = minutes <= 15;
-  const color = isHighFreq ? "green": "orange";
+  const color = isHighFreq ? "green" : "orange";
 
   return (
-    <span style={{ color, fontWeight:600, fontSize: "0.8rem"}}>
-      {isHighFreq ? "⚡️ High Frequency":"🐢 Low Frequency"}
+    <span style={{ color, fontWeight: 600, fontSize: "0.8rem" }}>
+      {isHighFreq ? "⚡️ High Frequency" : "🐢 Low Frequency"}
     </span>
   )
 }
@@ -24,7 +40,7 @@ export default function ModelCard({ item, modelName, query }) {
     <div className="card h-100 shadow-sm">
 
       {/* IMAGE HEADER */}
-      <div style={{ height: "300px", overflow: "hidden" , padding: "20px"}}>
+      <div style={{ height: "300px", overflow: "hidden", padding: "20px" }}>
         {item.image ? (
           <img
             src={item.image}
@@ -57,10 +73,15 @@ export default function ModelCard({ item, modelName, query }) {
       {/* ATTRIBUTE SECTION */}
       <div className="card-body">
 
-        <h5 className="mb-3" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          {highlightText(item.name, query)}
-          {modelName === "transportation" && <FrequencyBadge frequency={item.frequency} />}
-        </h5>
+        <div className="mb-3">
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+            {item.type && <LabelType type={item.type} />}
+            {modelName === "transportation" && <FrequencyBadge frequency={item.frequency} />}
+          </div>
+          <h5 style={{ margin: 0 }}>
+            {highlightText(item.name, query)}
+          </h5>
+        </div>
 
         {item.attributes.map((attr, index) => (
           <div
@@ -88,22 +109,22 @@ export default function ModelCard({ item, modelName, query }) {
           </div>
         ))}
 
-       <Link to={`/${modelName}/${item.id}`} className="btn btn-primary mt-3">
-        View
-      </Link>
+        <Link to={`/${modelName}/${item.id}`} className="btn btn-primary mt-3">
+          View
+        </Link>
 
       </div>
 
     </div>
 
-    
+
   );
 
   function highlightText(text, query) {
-    if (!text || !query) 
+    if (!text || !query)
       return text;
     const trimmed = query.trim();
-    if (!trimmed) 
+    if (!trimmed)
       return text;
 
     const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
