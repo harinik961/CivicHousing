@@ -38,12 +38,9 @@ export default function ModelCard({ item, modelName, query }) {
       {/* ATTRIBUTE SECTION */}
       <div className="card-body">
 
-        <h5
-          className="mb-3"
-          dangerouslySetInnerHTML={{
-            __html: highlightText(item.name, query)
-          }}
-        />
+        <h5 className="mb-3">
+          {highlightText(item.name, query)}
+        </h5>
 
         {item.attributes.map((attr, index) => (
           <div
@@ -64,11 +61,9 @@ export default function ModelCard({ item, modelName, query }) {
                 wordBreak: "break-word"
               }}
             >
-              <span
-               dangerouslySetInnerHTML={{
-                  __html: highlightText(String(attr.value), query)
-                }}
-              />
+              <span>
+                {highlightText(String(attr.value), query)}
+              </span>
             </span>
           </div>
         ))}
@@ -84,18 +79,39 @@ export default function ModelCard({ item, modelName, query }) {
     
   );
 
-    function highlightText(text, query) {
-    if (!text || !query) return text;
+  function highlightText(text, query) {
+    if (!text || !query) 
+      return text;
+    const trimmed = query.trim();
+    if (!trimmed) 
+      return text;
 
-    const terms = query.trim().split(/\s+/);
+    const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const terms = trimmed.split(/\s+/).map(escape);
+    const pattern = [escape(trimmed), ...terms].join("|");
+    const regex = new RegExp(`(${pattern})`, "gi");
 
-    let result = text;
+    const result = [];
+    let lastIndex = 0;
+    let match;
 
-    terms.forEach(term => {
-      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const regex = new RegExp(`(${escaped})`, "gi");
-      result = result.replace(regex, "<mark>$1</mark>");
-    });
+    while ((match = regex.exec(text)) !== null) {
+      const start = match.index;
+      const end = regex.lastIndex;
+
+      if (start > lastIndex) {
+        result.push(text.slice(lastIndex, start));
+      }
+      result.push(
+        <mark key={start} style={{ display: "inline", padding: 0, margin: 0 }}>
+          {text.slice(start, end)}
+        </mark>
+      );
+      lastIndex = end;
+    }
+
+    if (lastIndex < text.length)
+      result.push(text.slice(lastIndex));
 
     return result;
   }
