@@ -7,23 +7,26 @@ class communities {
   population : integer
   crime_index : double
   park_count : integer
+  health_count : integer
   map_embed_url : text
   street_view_url : text
-  health_count : integer
   transit_score : integer
   latitude : double
   longitude : double
+  community_total_affordable_units: integer
+  community_housing_count": integer
+  transportation_count": integer
 }
 
 class housing {
   id : integer <<PK>>
+  project_name : varchar
   address : varchar
+  zip_code : varchar
   unit_type : varchar
+  housing_tenure : varchar
   income_restriction_level : varchar
   total_affordable_units : integer
-  project_name : varchar
-  zip_code : varchar
-  housing_tenure : varchar
   total_ada_units : integer
   council_district : varchar
   latitude : double
@@ -51,6 +54,11 @@ class transportation {
   travel_time_ut : varchar
   travel_time_downtown : varchar
   travel_time_domain : varchar
+  travel_time_ut_minutes: integer
+  travel_time_downtown_minutes : integer
+  travel_time_domain_minutes : integer
+  zipcode: varchar
+
 }
 
 
