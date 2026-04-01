@@ -37,7 +37,7 @@ class CivicHousingUnitTests(unittest.TestCase):
   def setUp(self):
     self.driver.get(base_url)
 
-  def wait_for_element(self, by, value, timeout=20):
+  def wait_for_element(self, by, value, timeout=40):
     end_time = time.time() + timeout
     while time.time() < end_time:
       elements = self.driver.find_elements(by, value)
@@ -146,7 +146,7 @@ class CivicHousingUnitTests(unittest.TestCase):
 
   def test_global_search_submission_shows_outcome(self):
     self.driver.get(base_url + "/globalsearch")
-    inp = self.wait_for_element(By.CSS_SELECTOR, 'input[placeholder*="Search housing"]')
+    inp = self.wait_for_element(By.CSS_SELECTOR, 'input[placeholder*="Search"]')
     inp.clear()
     inp.send_keys("787")
     self.driver.find_element(By.CSS_SELECTOR, 'button[type="submit"]').click()

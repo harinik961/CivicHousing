@@ -84,8 +84,8 @@ def fetch_street_view(address=None, latitude=None, longitude=None):
     return None
 
 
-
 # STEP 1: Fetch all data from SODA 2 API
+
 
 def fetch_housing_data():
     all_records = []
@@ -123,6 +123,7 @@ def fetch_housing_data():
 
 
 # STEP 2: Merge records by project_name before sending to DB
+
 
 def merge_records_by_project_name(records):
     """
@@ -167,8 +168,8 @@ def merge_records_by_project_name(records):
     return merged
 
 
-
 # STEP 3: Helper for income restriction
+
 
 def get_income_restriction(record):
     mfi_fields = {
@@ -194,8 +195,8 @@ def get_income_restriction(record):
     return ", ".join(levels) if levels else "Not Specified"
 
 
-
 # STEP 4: Load data into database (Upsert)
+
 
 def seed_housing(records):
     """
@@ -302,6 +303,7 @@ def seed_housing(records):
 
 # Refresh street view images only (no API pull, no merge)
 
+
 def refresh_street_views():
     """Re-fetch street view images for all existing Housing rows. Does not touch other data."""
     print("Refreshing street view images for all housing records...")
@@ -330,7 +332,6 @@ def refresh_street_views():
             print(f"  Processed {i + 1}/{len(rows)}...")
     db.session.commit()
     print(f"Done. Updated {updated} images, {failed} skipped or failed.")
-
 
 
 # MAIN

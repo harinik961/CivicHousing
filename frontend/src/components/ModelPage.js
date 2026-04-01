@@ -431,7 +431,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
           id="select"
           name="select"
           className="form-select"
-          style={{ width: "260px" }}
+          style={{ maxWidth: "260px" }}
           value={sortValue}
           onChange={(e) => {
             const value = e.target.value;

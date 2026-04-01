@@ -8,12 +8,12 @@ from sqlalchemy import func, or_, and_, desc, asc, cast, String
 def build_queries(query):
     query = query.strip()
 
-    phrase_query = func.phraseto_tsquery('english', query)
-    plain_query = func.plainto_tsquery('english', query)
+    phrase_query = func.phraseto_tsquery("english", query)
+    plain_query = func.plainto_tsquery("english", query)
 
     terms = [term for term in query.split() if term.strip()]
     if terms:
-        or_query = func.to_tsquery('english', " | ".join(terms))
+        or_query = func.to_tsquery("english", " | ".join(terms))
     else:
         or_query = plain_query
 
@@ -21,7 +21,7 @@ def build_queries(query):
 
 
 # -------------------------------
-# Dynamic ILIKE fallback 
+# Dynamic ILIKE fallback
 # -------------------------------
 def build_ilike_filter(model, query):
     filters = []
@@ -54,17 +54,17 @@ def search_model(
 
     # Ranking (ONLY full-text)
     rank = (
-        func.ts_rank(model.ts_vector, phrase_q) * 3.0 +
-        func.ts_rank(model.ts_vector, plain_q) * 2.0 +
-        func.ts_rank(model.ts_vector, or_q)
+        func.ts_rank(model.ts_vector, phrase_q) * 3.0
+        + func.ts_rank(model.ts_vector, plain_q) * 2.0
+        + func.ts_rank(model.ts_vector, or_q)
     ).label("rank")
 
     # Combined filter
     filter_condition = or_(
-        model.ts_vector.op('@@')(phrase_q),
-        model.ts_vector.op('@@')(plain_q),
-        model.ts_vector.op('@@')(or_q),
-        build_ilike_filter(model, query)  # fallback for substrings
+        model.ts_vector.op("@@")(phrase_q),
+        model.ts_vector.op("@@")(plain_q),
+        model.ts_vector.op("@@")(or_q),
+        build_ilike_filter(model, query),  # fallback for substrings
     )
 
     if extra_filters:
@@ -83,17 +83,10 @@ def search_model(
         base_query = base_query.order_by(desc(rank))
 
     # Efficient count
-    total = (
-        db.session.query(func.count()).select_from(model).filter(combined).scalar()
-    )
+    total = db.session.query(func.count()).select_from(model).filter(combined).scalar()
     total_pages = (total + per_page - 1) // per_page
 
-    results = (
-        base_query
-        .limit(per_page)
-        .offset((page - 1) * per_page)
-        .all()
-    )
+    results = base_query.limit(per_page).offset((page - 1) * per_page).all()
 
     return results, total, total_pages
 
@@ -119,13 +112,11 @@ def search_housing(
         order=order,
     )
 
-    return [
-        {
-            "data": housing.to_dict(),
-            "rank": rank
-        }
-        for housing, rank in results
-    ], total, total_pages
+    return (
+        [{"data": housing.to_dict(), "rank": rank} for housing, rank in results],
+        total,
+        total_pages,
+    )
 
 
 def search_communities(
@@ -146,13 +137,11 @@ def search_communities(
         order=order,
     )
 
-    return [
-        {
-            "data": community.to_dict(),
-            "rank": rank
-        }
-        for community, rank in results
-    ], total, total_pages
+    return (
+        [{"data": community.to_dict(), "rank": rank} for community, rank in results],
+        total,
+        total_pages,
+    )
 
 
 def search_transportation(
@@ -173,13 +162,14 @@ def search_transportation(
         order=order,
     )
 
-    return [
-        {
-            "data": transportation.to_dict(),
-            "rank": rank
-        }
-        for transportation, rank in results
-    ], total, total_pages
+    return (
+        [
+            {"data": transportation.to_dict(), "rank": rank}
+            for transportation, rank in results
+        ],
+        total,
+        total_pages,
+    )
 
 
 # -------------------------------
@@ -216,11 +206,11 @@ def global_search(query, page=1, per_page=20):
     end = start + per_page
     paginated = combined[start:end]
 
-    return [
-        {
-            "type": model_type,
-            "data": obj.to_dict(),
-            "rank": rank
-        }
-        for model_type, obj, rank in paginated
-    ], total, total_pages
+    return (
+        [
+            {"type": model_type, "data": obj.to_dict(), "rank": rank}
+            for model_type, obj, rank in paginated
+        ],
+        total,
+        total_pages,
+    )

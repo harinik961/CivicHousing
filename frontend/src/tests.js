@@ -154,7 +154,7 @@ test('Global Search submit calls search API', async () => {
   render(<GlobalSearch />);
   const user = userEvent.setup();
   await user.type(
-    screen.getByPlaceholderText(/Search housing, communities, transportation/i),
+    screen.getByPlaceholderText(/Search communities, housing, transportation/i),
     '787'
   );
   await user.click(screen.getByRole('button', { name: /^search$/i }));

@@ -98,7 +98,7 @@ export default function GlobalSearch() {
       <ModelCard
         item={item}
         modelName={item.type}
-        query={searchTerm} // 🔥 FIX: enables highlighting
+        query={searchTerm}
       />
     </div>
   ));
@@ -120,7 +120,7 @@ export default function GlobalSearch() {
           <input
             type="text"
             className="form-control rounded-start-pill px-4 py-2"
-            placeholder="Search housing, communities, transportation..."
+            placeholder="Search communities, housing, transportation..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />

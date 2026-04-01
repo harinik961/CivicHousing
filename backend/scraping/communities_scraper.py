@@ -24,10 +24,11 @@ GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 WALK_SCORE_API_KEY = os.getenv("WALK_SCORE_API_KEY")
 WALKABILITY_URL = "https://api.walkscore.com/score"
 
+
 def compute_housing_stats():
     """
     Aggregates housing stats per zip code from the Housing table.
-    Returns a DataFrame with: zip, community_total_affordable_units, 
+    Returns a DataFrame with: zip, community_total_affordable_units,
     community_housing_count
     """
     results = (
@@ -51,6 +52,7 @@ def compute_housing_stats():
 
     df["zip"] = df["zip"].astype(str)
     return df
+
 
 def compute_transportation_stats():
     """
@@ -76,6 +78,7 @@ def compute_transportation_stats():
 
     df["zip"] = df["zip"].astype(str)
     return df
+
 
 def fetch_walkability_score(address, lat, lon):
     """
@@ -355,7 +358,9 @@ def seed_communities(df):
             existing.transit_score = row["transit_score"]
             existing.latitude = row["latitude"]
             existing.longitude = row["longitude"]
-            existing.community_total_affordable_units = row["community_total_affordable_units"]
+            existing.community_total_affordable_units = row[
+                "community_total_affordable_units"
+            ]
             existing.community_housing_count = row["community_housing_count"]
             existing.transportation_count = row["transportation_count"]
             updated += 1
@@ -373,9 +378,11 @@ def seed_communities(df):
                 transit_score=row["transit_score"],
                 latitude=row["latitude"],
                 longitude=row["longitude"],
-                community_total_affordable_units=row["community_total_affordable_units"], 
-                community_housing_count=row["community_housing_count"], 
-                transportation_count=row["transportation_count"]
+                community_total_affordable_units=row[
+                    "community_total_affordable_units"
+                ],
+                community_housing_count=row["community_housing_count"],
+                transportation_count=row["transportation_count"],
             )
             db.session.add(community)
             inserted += 1
