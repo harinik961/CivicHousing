@@ -160,6 +160,8 @@ A challenge we faced was how to design the instance page where all the informati
 
 Additionally, during Phase II, one of the main challenges we faced was finding the appropriate data sources to scrape our data from. One of our user stories asked for walk scores and transit scores. The Walk Score API we wanted and ended up using only gave API keys to accounts that had email addresses in the same domain as their website domains. This added an extra layer of work just to access that API key since we needed ot set up email services with AWS and store the email inbox contents in an AWS S3 bucket to access this API. 
 
+During Phase III, one of the main challenges we faced was implementing the search feature and properly aligning it with the ts_vector in the database. We encountered issues where search results were incomplete or not ranked correctly due to inconsistencies in how the ts_vector was generated and updated across models. To fix this, we recreated the triggers to ensure all relevant fields were included and debugged migration issues that caused missing functions. We also refined the ranking logic by combining ts_rank with both plain and phrase queries to improve accuracy. This process gave us a deeper understanding of PostgreSQL full-text search and the importance of keeping database logic consistent.
+
 Alongside this struggle, we also struggled a bit with creating associations between instances. Austin’s transit system is a bit lacking, and as a result, not all ZIP codes actually contain transit stops or even affordable housing units. As a result, when no affordable housing units or transit stops were available within a ZIP code, we would have to associate it with the nearest affordable housing unit or transit stop. 
 
 ## Implementations of Phase II Features
@@ -213,3 +215,55 @@ As a UT student who's never lived off-campus before, I want the Transportation m
 As a social worker helping clients find housing, I want the Housing instance pages to show me when a listing was last updated or verified so I know if the information is still current. Affordable units in Austin get snapped up fast. If a listing hasn't been refreshed in 6 months, I could be sending a client to chase a unit that's been filled since last summer.
 
 **How we handled it:** For this user story, we added a `last_synced_at` column to the Housing model. Each time the housing data scraping script runs, we update this timestamp for every Housing record that was synced, and we display the last-updated date and time on each Housing instance page so case workers can see how current the listing is.
+
+## PHASE III
+
+
+## Implementations of Phase III Features
+
+MModel associations: Many-to-many links via community_housing, community_transportation, and housing_transportation, built through association logic connecting models based on shared attributes and relationships.
+
+Search, sorting, and filtering: Implemented in Phase III using search.py for handling full-text search queries and ranking logic, and models.py for defining and maintaining ts_vector fields with triggers to keep them updated. Search supports both plain and phrase queries with relevance-based ranking, while list endpoints now include dynamic sorting and filtering through query parameters such as sort, order, and model-specific filters.
+
+API enhancements: All model endpoints now support integrated search, sorting, and filtering, allowing users to query data more efficiently. Pagination remains supported, and search results include highlighted matches using PostgreSQL full-text search functions.
+
+Frontend: Model pages were updated to include interactive search bars, sorting options, and filter controls, enabling users to dynamically refine and explore data across housing, community, and transportation models.
+
+Backend: Phase III backend work focused on integrating full-text search with PostgreSQL using ts_vector, implementing trigger functions in models.py to keep search indexes updated, and building reusable query logic in search.py. Additional improvements include consistent handling of query parameters for sorting and filtering, ensuring efficient and scalable data retrieval across all endpoints.
+
+
+## User Stories (Phase III)
+
+### Communities : Show number of connected transit stops on neighborhood cards
+As a car free renter, I want each neighborhood card to display how many transit stops serve that area so I can quickly gauge transit access while browsing. A neighborhood with 2 bus or transit stops is very different from one with 20 in terms of transportability and quality of life. 
+
+**How we handled it:** 
+For this user story, we used our existing many-to-many associations between communities and transportation stops to count how many transit stops are linked to each community. This count is computed on the backend and returned through the API, then displayed directly on each community card so users can quickly compare transit access across neighborhoods.
+
+
+### Housing : Show income restriction levels on Housing Cards
+As a single parent browsing the housing model page, I want each housing card to show the income restriction tier, like 30% AMI, or 60% AMI for example. That way, I can immediately tell which properties I might qualify for without clicking into every listing. 
+
+**How we handled it:**
+ For this user story, we included the income_restriction_level attribute in our Housing model and ensured it is returned in the housing list API. We then displayed this value directly on each housing card and instance page so users can immediately identify which properties match their eligibility without needing to click into each listing.
+
+
+### Housing : Link to Google Maps directions from housing instance pages
+As a prospective tenant visiting a property in person, I want a "Get Directions" link on each housing instance page that opens Google Maps with the property address pre-filled, so I don't have to copy-paste the address manually. 
+
+**How we handled it:**
+For this user story, we generated a Google Maps directions URL using each housing instance’s address and exposed it through the API. On the Housing instance page, we added a “Get Directions” button that opens Google Maps with the destination pre-filled, allowing users to easily navigate to the property without manual input.
+
+
+### Transportation : Color Code Transit routes by type or frequency
+As a daily bus rider, I want transit route cards to have a visual indicator, like maybe a colored badge or icon, distinguishing high frequency routes from infrequent ones, so I can spot the reliable routes at a glance while browsing the model page. 
+
+**How we handled it:** 
+For this user story, we implemented frontend-based styling for the frequency field on transportation cards. The frequency text is displayed with different colors and includes an emoji indicator to visually distinguish high-frequency routes from less frequent ones. This allows users to quickly identify more reliable transit options at a glance without needing to interpret the raw numbers.
+
+
+### Model Pages : Data Freshness badge (date) on model pages
+As a social services coordinator, I want to see a "Data as of [date]" badge on each model page so that I know whether I'm working with current information before I start recommending housing or transit options to clients. 
+
+**How we handled it:** 
+For this user story, we tracked a last_synced_at timestamp for our data during scraping and exposed it through the API. On the frontend, we displayed a “Data as of” badge on model and instance pages using this timestamp so users can easily understand how current the data is before making decisions.
