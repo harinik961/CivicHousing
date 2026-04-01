@@ -276,6 +276,12 @@ def create_app():
                         "list": "/api/transportation",
                         "detail": "/api/transportation/<id>",
                     },
+                    "search": {
+                        "list": "/api/search",
+                        "detail": "/api/search/community",
+                        "detail": "/api/search/housing",
+                        "detail": "/api/search/transportation",
+                    },
                 },
                 "system": {"health": "/health"},
                 "documentation": "/docs",
