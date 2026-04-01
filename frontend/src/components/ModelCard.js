@@ -1,5 +1,24 @@
 import { Link } from "react-router-dom";
 
+function FrequencyBadge({frequency}) {
+  let minutes = null;
+  if (frequency && frequency.startsWith("Every")) {
+    minutes = parseInt(frequency.replace("Every ", ""));
+  }
+
+  if (minutes === null)
+    return null;
+  const isHighFreq = minutes <= 15;
+  const color = isHighFreq ? "green": "orange";
+
+  return (
+    <span style={{ color, fontWeight:600, fontSize: "0.8rem"}}>
+      {isHighFreq ? "⚡️ High Frequency":"🐢 Low Frequency"}
+    </span>
+  )
+}
+
+
 export default function ModelCard({ item, modelName, query }) {
   return (
     <div className="card h-100 shadow-sm">
@@ -38,8 +57,9 @@ export default function ModelCard({ item, modelName, query }) {
       {/* ATTRIBUTE SECTION */}
       <div className="card-body">
 
-        <h5 className="mb-3">
+        <h5 className="mb-3" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           {highlightText(item.name, query)}
+          {modelName === "transportation" && <FrequencyBadge frequency={item.frequency} />}
         </h5>
 
         {item.attributes.map((attr, index) => (
