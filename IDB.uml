@@ -1,0 +1,82 @@
+@startuml
+class communities {
+  id : integer <<PK>>
+  county : varchar
+  zip_code : varchar
+  median_housing_price : double
+  population : integer
+  crime_index : double
+  park_count : integer
+  map_embed_url : text
+  street_view_url : text
+  health_count : integer
+  transit_score : integer
+  latitude : double
+  longitude : double
+}
+
+class housing {
+  id : integer <<PK>>
+  address : varchar
+  unit_type : varchar
+  income_restriction_level : varchar
+  total_affordable_units : integer
+  project_name : varchar
+  zip_code : varchar
+  housing_tenure : varchar
+  total_ada_units : integer
+  council_district : varchar
+  latitude : double
+  longitude : double
+  street_view_image : text
+  last_synced_at : timestamp
+  walk_score : integer
+}
+
+class transportation {
+  id : integer <<PK>>
+  stop_id : varchar
+  stop_name : varchar
+  latitude : double
+  longitude : double
+  stop_url : varchar
+  map_embed_url : varchar
+  street_view_url : varchar
+  transport_type : varchar
+  routes : varchar
+  frequency : varchar
+  num_routes : integer
+  wheelchair_accessible : varchar
+  service_days : varchar
+  travel_time_ut : varchar
+  travel_time_downtown : varchar
+  travel_time_domain : varchar
+}
+
+
+
+class community_housing {
+  community_id : integer <<FK>>
+  housing_id : integer <<FK>>
+}
+
+class community_transportation {
+  community_id : integer <<FK>>
+  transportation_id : integer <<FK>>
+}
+
+class housing_transportation {
+  housing_id : integer <<FK>>
+  transportation_id : integer <<FK>>
+}
+
+
+community_housing --> communities
+community_housing --> housing
+
+community_transportation --> communities
+community_transportation --> transportation
+
+housing_transportation --> housing
+housing_transportation --> transportation
+@enduml
