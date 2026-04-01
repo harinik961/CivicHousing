@@ -96,6 +96,122 @@ def get_google_walking_distance_miles(
         return None
 
 
+HOUSING_SORT_MAP = {
+    "walk_score": Housing.walk_score,
+    "total_affordable_units": cast(
+        func.coalesce(Housing.total_affordable_units, 0),
+        Integer,
+    ),
+    "id": Housing.id,
+    "income_restriction_level": cast(
+        func.split_part(
+            func.replace(Housing.income_restriction_level, "% AMI", ""),
+            ",",
+            1,
+        ),
+        Integer,
+    ),
+}
+
+
+def housing_filter_conditions(args):
+    conditions = []
+    unit_type = args.get("unit_type")
+    housing_tenure = args.get("housing_tenure")
+    zip_code = args.get("zip_code")
+    if unit_type:
+        conditions.append(Housing.unit_type == unit_type)
+    if housing_tenure:
+        conditions.append(Housing.housing_tenure == housing_tenure)
+    if zip_code:
+        conditions.append(Housing.zip_code == zip_code)
+    return conditions
+
+
+COMMUNITY_SORT_MAP = {
+    "median_housing_price": Community.median_housing_price,
+    "health_count": Community.health_count,
+    "crime_index": Community.crime_index,
+    "park_count": Community.park_count,
+}
+
+
+def community_filter_conditions(args):
+    conditions = []
+    median_housing_price = args.get("median_housing_price", type=int)
+    crime_index = args.get("crime_index", type=int)
+    transit_score = args.get("transit_score", type=int)
+    population_min = args.get("population_min", type=int)
+    population_max = args.get("population_max", type=int)
+    health_count = args.get("health_count", type=int)
+    if median_housing_price:
+        conditions.append(Community.median_housing_price == median_housing_price)
+    if crime_index:
+        conditions.append(Community.crime_index == crime_index)
+    if transit_score:
+        conditions.append(Community.transit_score == transit_score)
+    if health_count:
+        conditions.append(Community.health_count == health_count)
+    if population_min:
+        conditions.append(Community.population >= population_min)
+    if population_max:
+        conditions.append(Community.population <= population_max)
+    return conditions
+
+
+TRANSPORT_SORT_MAP = {
+    "num_routes": Transportation.num_routes,
+    "travel_time_ut_minutes": Transportation.travel_time_ut_minutes,
+    "travel_time_downtown_minutes": Transportation.travel_time_downtown_minutes,
+    "travel_time_domain_minutes": Transportation.travel_time_domain_minutes,
+}
+
+
+def transportation_filter_conditions(args):
+    conditions = []
+    transport_type = args.get("transport_type")
+    wheelchair_accessible = args.get("wheelchair_accessible")
+    num_routes_min = args.get("num_routes_min", type=int)
+    num_routes_max = args.get("num_routes_max", type=int)
+    travel_time_ut_minutes_min = args.get("travel_time_ut_minutes_min", type=int)
+    travel_time_ut_minutes_max = args.get("travel_time_ut_minutes_max", type=int)
+    travel_time_downtown_minutes_min = args.get(
+        "travel_time_downtown_minutes_min", type=int
+    )
+    travel_time_downtown_minutes_max = args.get(
+        "travel_time_downtown_minutes_max", type=int
+    )
+    if transport_type:
+        conditions.append(Transportation.transport_type == transport_type)
+    if wheelchair_accessible:
+        conditions.append(
+            Transportation.wheelchair_accessible == wheelchair_accessible
+        )
+    if num_routes_min is not None:
+        conditions.append(Transportation.num_routes >= num_routes_min)
+    if num_routes_max is not None:
+        conditions.append(Transportation.num_routes <= num_routes_max)
+    if travel_time_ut_minutes_min is not None:
+        conditions.append(
+            Transportation.travel_time_ut_minutes >= travel_time_ut_minutes_min
+        )
+    if travel_time_ut_minutes_max is not None:
+        conditions.append(
+            Transportation.travel_time_ut_minutes <= travel_time_ut_minutes_max
+        )
+    if travel_time_downtown_minutes_min is not None:
+        conditions.append(
+            Transportation.travel_time_downtown_minutes
+            >= travel_time_downtown_minutes_min
+        )
+    if travel_time_downtown_minutes_max is not None:
+        conditions.append(
+            Transportation.travel_time_downtown_minutes
+            <= travel_time_downtown_minutes_max
+        )
+    return conditions
+
+
 def create_app():
 
     app = Flask(__name__)
@@ -202,22 +318,9 @@ def create_app():
         page = request.args.get("page", 1, type=int)
         per_page = 50
 
-        # --- FILTER PARAMS (MATCH FRONTEND EXACTLY) ---
-        unit_type = request.args.get("unit_type")
-        housing_tenure = request.args.get("housing_tenure")
-        zip_code = request.args.get("zip_code")
-
         query = Housing.query
-
-        # --- FILTERS ---
-        if unit_type:
-            query = query.filter(Housing.unit_type == unit_type)
-
-        if housing_tenure:
-            query = query.filter(Housing.housing_tenure == housing_tenure)
-
-        if zip_code:
-            query = query.filter(Housing.zip_code == zip_code)
+        for condition in housing_filter_conditions(request.args):
+            query = query.filter(condition)
 
         # --- SORTING ---
         sort = request.args.get("sort")
@@ -226,25 +329,8 @@ def create_app():
             sort = "id"
             order = "asc"
 
-        SORT_MAP = {
-            "walk_score": Housing.walk_score,
-            "total_affordable_units": cast(
-                func.coalesce(Housing.total_affordable_units, 0),
-                Integer
-            ),           
-            "id": Housing.id,
-            "income_restriction_level": cast(
-                func.split_part(
-                    func.replace(Housing.income_restriction_level, "% AMI", ""),
-                    ",",
-                    1
-                ),
-                Integer
-            )
-        }
-
-        if sort in SORT_MAP:
-            column = SORT_MAP[sort]
+        if sort in HOUSING_SORT_MAP:
+            column = HOUSING_SORT_MAP[sort]
             query = query.order_by(column.desc() if order == "desc" else column.asc())
 
         # --- PAGINATION (ALWAYS LAST) ---
@@ -313,11 +399,21 @@ def create_app():
     
     @app.route("/api/search/housing", methods=["GET"])
     def housing_search_route():
-        query = request.args.get("q", "")
+        q = request.args.get("q", "")
         page = int(request.args.get("page", 1))
         per_page = int(request.args.get("per_page", 50))
+        sort = request.args.get("sort")
+        order = request.args.get("order", "asc")
+        sort_col = HOUSING_SORT_MAP.get(sort) if sort else None
 
-        results, total, pages = search_housing(query, page=page, per_page=per_page)
+        results, total, pages = search_housing(
+            q,
+            page=page,
+            per_page=per_page,
+            extra_filters=housing_filter_conditions(request.args),
+            sort_column=sort_col,
+            order=order,
+        )
 
         return jsonify({
             "results": results,
@@ -334,50 +430,16 @@ def create_app():
 
         page = request.args.get("page", 1, type=int)
         per_page = 50
-        median_housing_price = request.args.get("median_housing_price", type = int)
-        crime_index = request.args.get("crime_index", type=int)
-        transit_score = request.args.get("transit_score", type = int)
-        population = request.args.get("population", type = int)
-        population_min = request.args.get("population_min", type=int)
-        population_max = request.args.get("population_max", type=int)
-
-        health_count = request.args.get("health_count", type = int)
-        zipcode = request.args.get("zipcode")
-
-
-
 
         query = Community.query
-
-        #filtering 
-        if median_housing_price:
-            query = query.filter(Community.median_housing_price == median_housing_price)
-        if crime_index:
-            query = query.filter(Community.crime_index == crime_index)
-        if transit_score:
-            query = query.filter(Community.transit_score == transit_score)
-        if health_count:
-            query = query.filter(Community.health_count == health_count)
-        if population_min: 
-            query = query.filter(Community.population >= population_min)
-        if population_max:
-            query = query.filter(Community.population <= population_max)
-
+        for condition in community_filter_conditions(request.args):
+            query = query.filter(condition)
 
         sort = request.args.get("sort")
         order = request.args.get("order", "asc")
-        print(f"DEBUG sort={sort} order={order}")
 
-        SORT_MAP = {
-           "median_housing_price": Community.median_housing_price,
-           "health_count": Community.health_count,
-           "crime_index": Community.crime_index,
-           "park_count": Community.park_count,
-
-        }
-
-        if sort in SORT_MAP:
-            column = SORT_MAP[sort]
+        if sort in COMMUNITY_SORT_MAP:
+            column = COMMUNITY_SORT_MAP[sort]
             query = query.order_by(column.desc() if order == "desc" else column.asc())
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
@@ -401,11 +463,21 @@ def create_app():
     
     @app.route("/api/search/community", methods=["GET"])
     def community_search_route():
-        query = request.args.get("q", "")
+        q = request.args.get("q", "")
         page = int(request.args.get("page", 1))
         per_page = int(request.args.get("per_page", 50))
+        sort = request.args.get("sort")
+        order = request.args.get("order", "asc")
+        sort_col = COMMUNITY_SORT_MAP.get(sort) if sort else None
 
-        results, total, pages = search_communities(query, page=page, per_page=per_page)
+        results, total, pages = search_communities(
+            q,
+            page=page,
+            per_page=per_page,
+            extra_filters=community_filter_conditions(request.args),
+            sort_column=sort_col,
+            order=order,
+        )
 
         return jsonify({
             "results": results,
@@ -424,52 +496,16 @@ def create_app():
         page = request.args.get("page", 1, type=int)
         per_page = 50
 
-        transport_type = request.args.get("transport_type")
-        wheelchair_accessible = request.args.get("wheelchair_accessible")
-        num_routes_min = request.args.get("num_routes_min", type=int)
-        num_routes_max = request.args.get("num_routes_max", type=int)
-        travel_time_ut_minutes_min = request.args.get("travel_time_ut_minutes_min", type=int)
-        travel_time_ut_minutes_max = request.args.get("travel_time_ut_minutes_max", type=int)
-        travel_time_downtown_minutes_min = request.args.get("travel_time_downtown_minutes_min", type=int)
-        travel_time_downtown_minutes_max = request.args.get("travel_time_downtown_minutes_max", type=int)
-
         query = Transportation.query
-
-        # --- FILTERS ---
-        if transport_type:
-            query = query.filter(Transportation.transport_type == transport_type)
-        if wheelchair_accessible:
-            query = query.filter(Transportation.wheelchair_accessible == wheelchair_accessible)
-        if num_routes_min is not None:
-            query = query.filter(Transportation.num_routes >= num_routes_min)
-        if num_routes_max is not None:
-            query = query.filter(Transportation.num_routes <= num_routes_max)
-        if travel_time_ut_minutes_min is not None:
-            query = query.filter(Transportation.travel_time_ut_minutes >= travel_time_ut_minutes_min)
-        if travel_time_ut_minutes_max is not None:
-            query = query.filter(Transportation.travel_time_ut_minutes <= travel_time_ut_minutes_max)
-        if travel_time_downtown_minutes_min is not None:
-            query = query.filter(
-                Transportation.travel_time_downtown_minutes >= travel_time_downtown_minutes_min
-            )
-        if travel_time_downtown_minutes_max is not None:
-            query = query.filter(
-                Transportation.travel_time_downtown_minutes <= travel_time_downtown_minutes_max
-            )
+        for condition in transportation_filter_conditions(request.args):
+            query = query.filter(condition)
 
         # --- SORTING ---
         sort = request.args.get("sort")
         order = request.args.get("order", "asc")
 
-        SORT_MAP = {
-            "num_routes": Transportation.num_routes,
-            "travel_time_ut_minutes": Transportation.travel_time_ut_minutes,
-            "travel_time_downtown_minutes": Transportation.travel_time_downtown_minutes,
-            "travel_time_domain_minutes": Transportation.travel_time_domain_minutes,
-        }
-
-        if sort in SORT_MAP:
-            column = SORT_MAP[sort]
+        if sort in TRANSPORT_SORT_MAP:
+            column = TRANSPORT_SORT_MAP[sort]
             query = query.order_by(column.desc() if order == "desc" else column.asc())
             
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
@@ -492,11 +528,21 @@ def create_app():
     
     @app.route("/api/search/transportation", methods=["GET"])
     def transportation_search_route():
-        query = request.args.get("q", "")
+        q = request.args.get("q", "")
         page = int(request.args.get("page", 1))
         per_page = int(request.args.get("per_page", 50))
+        sort = request.args.get("sort")
+        order = request.args.get("order", "asc")
+        sort_col = TRANSPORT_SORT_MAP.get(sort) if sort else None
 
-        results, total, pages = search_transportation(query, page=page, per_page=per_page)
+        results, total, pages = search_transportation(
+            q,
+            page=page,
+            per_page=per_page,
+            extra_filters=transportation_filter_conditions(request.args),
+            sort_column=sort_col,
+            order=order,
+        )
 
         return jsonify({
             "results": results,

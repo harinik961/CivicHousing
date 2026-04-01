@@ -1,5 +1,5 @@
 from models import db, Housing, Community, Transportation
-from sqlalchemy import func, or_, desc, cast, String
+from sqlalchemy import func, or_, and_, desc, asc, cast, String
 
 
 # -------------------------------
@@ -38,7 +38,15 @@ def build_ilike_filter(model, query):
 # -------------------------------
 # Core search logic
 # -------------------------------
-def search_model(model, query, page=1, per_page=12):
+def search_model(
+    model,
+    query,
+    page=1,
+    per_page=12,
+    extra_filters=None,
+    sort_column=None,
+    order="asc",
+):
     if not query or query.strip() == "":
         return [], 0, 0
 
@@ -59,14 +67,25 @@ def search_model(model, query, page=1, per_page=12):
         build_ilike_filter(model, query)  # fallback for substrings
     )
 
-    base_query = (
-        db.session.query(model, rank)
-        .filter(filter_condition)
-        .order_by(desc(rank))
-    )
+    if extra_filters:
+        combined = and_(filter_condition, *extra_filters)
+    else:
+        combined = filter_condition
+
+    base_query = db.session.query(model, rank).filter(combined)
+
+    if sort_column is not None:
+        if order == "desc":
+            base_query = base_query.order_by(desc(sort_column), desc(rank))
+        else:
+            base_query = base_query.order_by(asc(sort_column), desc(rank))
+    else:
+        base_query = base_query.order_by(desc(rank))
 
     # Efficient count
-    total = db.session.query(func.count()).select_from(model).filter(filter_condition).scalar()
+    total = (
+        db.session.query(func.count()).select_from(model).filter(combined).scalar()
+    )
     total_pages = (total + per_page - 1) // per_page
 
     results = (
@@ -82,8 +101,23 @@ def search_model(model, query, page=1, per_page=12):
 # -------------------------------
 # Model-specific search
 # -------------------------------
-def search_housing(query, page=1, per_page=12):
-    results, total, total_pages = search_model(Housing, query, page, per_page)
+def search_housing(
+    query,
+    page=1,
+    per_page=12,
+    extra_filters=None,
+    sort_column=None,
+    order="asc",
+):
+    results, total, total_pages = search_model(
+        Housing,
+        query,
+        page,
+        per_page,
+        extra_filters=extra_filters,
+        sort_column=sort_column,
+        order=order,
+    )
 
     return [
         {
@@ -94,8 +128,23 @@ def search_housing(query, page=1, per_page=12):
     ], total, total_pages
 
 
-def search_communities(query, page=1, per_page=12):
-    results, total, total_pages = search_model(Community, query, page, per_page)
+def search_communities(
+    query,
+    page=1,
+    per_page=12,
+    extra_filters=None,
+    sort_column=None,
+    order="asc",
+):
+    results, total, total_pages = search_model(
+        Community,
+        query,
+        page,
+        per_page,
+        extra_filters=extra_filters,
+        sort_column=sort_column,
+        order=order,
+    )
 
     return [
         {
@@ -106,8 +155,23 @@ def search_communities(query, page=1, per_page=12):
     ], total, total_pages
 
 
-def search_transportation(query, page=1, per_page=12):
-    results, total, total_pages = search_model(Transportation, query, page, per_page)
+def search_transportation(
+    query,
+    page=1,
+    per_page=12,
+    extra_filters=None,
+    sort_column=None,
+    order="asc",
+):
+    results, total, total_pages = search_model(
+        Transportation,
+        query,
+        page,
+        per_page,
+        extra_filters=extra_filters,
+        sort_column=sort_column,
+        order=order,
+    )
 
     return [
         {

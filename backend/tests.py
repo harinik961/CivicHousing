@@ -8,6 +8,7 @@ from app import (
 from models import Housing
 from unittest.mock import patch
 from datetime import datetime
+from urllib.parse import quote
 
 
 class TestRoutes(unittest.TestCase):
@@ -272,6 +273,39 @@ class TestRoutes(unittest.TestCase):
 
         if len(values) > 1:
             self.assertEqual(values, sorted(values, reverse=True))
+
+    def test_housing_search_with_filter_enforces_unit_type(self):
+        sample = self.client.get("/api/housing?unit_type=Multifamily&per_page=1")
+        self.assertEqual(sample.status_code, 200)
+        rows = sample.get_json().get("data") or []
+        if not rows:
+            self.skipTest("no Multifamily housing rows in DB")
+        z = rows[0].get("zip_code") or "787"
+        response = self.client.get(
+            f"/api/search/housing?q={z}&unit_type=Multifamily&per_page=50"
+        )
+        self.assertEqual(response.status_code, 200)
+        body = response.get_json()
+        self.assertIn("results", body)
+        self.assertIn("total", body)
+        for row in body["results"]:
+            self.assertEqual(row["data"]["unit_type"], "Multifamily")
+
+    def test_transportation_search_with_filter_enforces_type(self):
+        sample = self.client.get("/api/transportation?transport_type=Bus&per_page=1")
+        self.assertEqual(sample.status_code, 200)
+        rows = sample.get_json().get("data") or []
+        if not rows:
+            self.skipTest("no Bus transportation rows in DB")
+
+        stop_fragment = (rows[0].get("stop_name") or "bus")[:8]
+        q = quote(stop_fragment)
+        response = self.client.get(f"/api/search/transportation?q={q}&transport_type=Bus")
+        self.assertEqual(response.status_code, 200)
+        body = response.get_json()
+        self.assertIn("results", body)
+        for row in body["results"]:
+            self.assertEqual(row["data"]["transport_type"], "Bus")
 
 
 if __name__ == "__main__":

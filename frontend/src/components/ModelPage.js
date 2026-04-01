@@ -124,7 +124,6 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
   const filterOptionsRef = useRef(filterOptions);
 
   const PER_PAGE = 50;
-  const isCommunity = apiEndpoint === "/api/community";
 
   useEffect(() => {
     fetch(`${API_BASE}/api/data-as-of`)
@@ -167,9 +166,11 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
     }
 
       const isSearching = activeSearch.trim();
-
+      if (isSearching) {
+        params.set("q", activeSearch.trim());
+      }
       const url = isSearching
-        ? `${API_BASE}/api/search/${modelName}?q=${encodeURIComponent(activeSearch)}&page=${page}&per_page=${PER_PAGE}`
+        ? `${API_BASE}/api/search/${modelName}?${params}`
         : `${API_BASE}${apiEndpoint}?${params}`;
 
       fetch(url)
@@ -198,7 +199,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
 
     console.log("ACTIVE SEARCH:", activeSearch);
 
-  }, [apiEndpoint, modelName, page, isCommunity, sort, order, filterValues, activeSearch]);
+  }, [apiEndpoint, modelName, sort, order, filterValues, activeSearch]);
 
   // Handle page changes - fetch new page from server
   useEffect(() => {
@@ -233,8 +234,11 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
     }
 
     const isSearching = activeSearch.trim();
+    if (isSearching) {
+      params.set("q", activeSearch.trim());
+    }
     const url = isSearching
-        ? `${API_BASE}/api/search/${modelName}?q=${encodeURIComponent(activeSearch)}&page=${page}&per_page=${PER_PAGE}`
+        ? `${API_BASE}/api/search/${modelName}?${params}`
         : `${API_BASE}${apiEndpoint}?${params}`;
 
       fetch(url)
