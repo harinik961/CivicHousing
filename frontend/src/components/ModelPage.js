@@ -275,6 +275,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
         item={item}
         modelName={modelName}
         linkPath={`/${modelName}/${item.id}`}
+        query={activeSearch}
       />
     </div>
   ));
