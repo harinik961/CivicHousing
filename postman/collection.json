@@ -2,7 +2,7 @@
     "info": {
       "_postman_id": "973a85ce-f6a6-4930-9477-046fe66b530a",
       "name": "Civic Housing API",
-      "description": "## Overview\n\nThe CivicHousing API provides access to affordable housing, community, and transportation data across Austin, Texas. This API is designed to help residents, planners, and policymakers explore where affordability and transit accessibility intersect — or fail to.\n\n## About CivicHousing\n\nCivicHousing is a data-driven web platform that highlights affordable housing availability and transportation accessibility gaps across Austin, Texas. It integrates public housing inventory data, transit infrastructure data, sidewalk and walkability metrics, and community-level indicators to reveal where affordability and mobility intersect.\n\n## Models\n\n- **Community** — Austin neighborhoods with demographic, economic, and accessibility data\n    \n- **Housing** — Affordable housing units including apartments and rentals across Austin\n    \n- **Transportation** — CapMetro bus and train stops with accessibility and service data\n    \n\n## Base URL\n\n`https://civichousing.me/api`\n\n## Available Endpoints\n\n| Method | Endpoint | Description |\n| --- | --- | --- |\n| GET | `/community` | Get all communities |\n| GET | `/community/:id` | Get a specific community |\n| GET | `/housing` | Get all housing listings |\n| GET | `/housing/:id` | Get a specific housing listing |\n| GET | `/transportation` | Get all transit stops |\n| GET | `/transportation/:id` | Get a specific transit stop |\n\n## Data Sources\n\n- [Austin Affordable Housing Inventory](https://data.austintexas.gov/Housing-and-Real-Estate/Affordable-Housing-Inventory/ifzc-3xz8/about_data)\n    \n- [CapMetro GTFS Data](https://data.texas.gov/dataset/CapMetro-GTFS/r4v4-vz24/about_data)\n    \n- [U.S. Census API](https://www.census.gov/data/developers/data-sets.html)\n    \n- [Google Maps API](https://mapsplatform.google.com/lp/maps-apis/)\n    \n\n## Website\n\n[civichousing.me](https://civichousing.me)",
+      "description": "## Overview\n\nThe CivicHousing API provides access to affordable housing, community, and transportation data across Austin, Texas. This API is designed to help residents, planners, and policymakers explore where affordability and transit accessibility intersect — or fail to.\n\n## About CivicHousing\n\nCivicHousing is a data-driven web platform that highlights affordable housing availability and transportation accessibility gaps across Austin, Texas. It integrates public housing inventory data, transit infrastructure data, sidewalk and walkability metrics, and community-level indicators to reveal where affordability and mobility intersect.\n\n## Models\n\n- **Community** — Austin neighborhoods with demographic, economic, and accessibility data\n    \n- **Housing** — Affordable housing units including apartments and rentals across Austin\n    \n- **Transportation** — CapMetro bus and train stops with accessibility and service data\n    \n\n## Base URL\n\n[https://api.civichousing.me/api/](https://api.civichousing.me/api/)\n\n## Available Endpoints\n\n| Method | Endpoint | Description |\n| --- | --- | --- |\n| GET | `/community` | Get all communities |\n| GET | `/community/:id` | Get a specific community |\n| GET | `/housing` | Get all housing listings |\n| GET | `/housing/:id` | Get a specific housing listing |\n| GET | `/transportation` | Get all transit stops |\n| GET | `/transportation/:id` | Get a specific transit stop |\n\n## Data Sources\n\n- [Austin Affordable Housing Inventory](https://data.austintexas.gov/Housing-and-Real-Estate/Affordable-Housing-Inventory/ifzc-3xz8/about_data)\n    \n- [CapMetro GTFS Data](https://data.texas.gov/dataset/CapMetro-GTFS/r4v4-vz24/about_data)\n    \n- [U.S. Census API](https://www.census.gov/data/developers/data-sets.html)\n    \n- [Google Maps API](https://mapsplatform.google.com/lp/maps-apis/)\n    \n\n## Website\n\n[civichousing.me](https://civichousing.me)",
       "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
       "_exporter_id": "52514232",
       "_collection_link": "https://go.postman.co/collection/52514232-973a85ce-f6a6-4930-9477-046fe66b530a?source=collection_link"
@@ -17,11 +17,14 @@
               {
                 "listen": "test",
                 "script": {
-                  "type": "text/javascript",
                   "exec": [
+                    "pm.test('Status is 200', function () {",
+                    "    pm.response.to.have.status(200);",
+                    "});",
+                    "",
                     "pm.test('Response is JSON', function () {",
                     "    pm.response.to.be.json;",
-                    "})",
+                    "});",
                     "",
                     "pm.test('Response has pagination fields', function () {",
                     "    var json = pm.response.json();",
@@ -29,20 +32,65 @@
                     "    pm.expect(json).to.have.property('total').that.is.a('number');",
                     "    pm.expect(json).to.have.property('page').that.is.a('number');",
                     "    pm.expect(json).to.have.property('pages').that.is.a('number');",
-                    "})",
+                    "});",
                     "",
-                    "pm.test('Data array is not empty', function () {",
+                    "pm.test('Page size is at most 50', function () {",
                     "    var json = pm.response.json();",
-                    "    pm.expect(json.data).to.have.length.above(0);",
-                    "})",
+                    "    pm.expect(json.data.length).to.be.at.most(50);",
+                    "});",
                     "",
-                    "pm.test('Each item in data has an id field', function () {",
+                    "pm.test('When total > 0 and page is 1, data is not empty', function () {",
+                    "    var json = pm.response.json();",
+                    "    if (json.total > 0 && json.page === 1) {",
+                    "        pm.expect(json.data.length).to.be.above(0);",
+                    "    }",
+                    "});",
+                    "",
+                    "pm.test('List items omit nested housing / transportation', function () {",
                     "    var json = pm.response.json();",
                     "    json.data.forEach(function (item) {",
-                    "        pm.expect(item).to.have.property('id');",
+                    "        pm.expect(item).to.not.have.property('housing');",
+                    "        pm.expect(item).to.not.have.property('transportation');",
                     "    });",
-                    "})"
-                  ]
+                    "});",
+                    "",
+                    "pm.test('Each item has documented community fields', function () {",
+                    "    var json = pm.response.json();",
+                    "    var keys = [",
+                    "        'id',",
+                    "        'zip_code',",
+                    "        'county',",
+                    "        'population',",
+                    "        'median_housing_price',",
+                    "        'crime_index',",
+                    "        'park_count',",
+                    "        'health_count',",
+                    "        'transit_score',",
+                    "        'latitude',",
+                    "        'longitude',",
+                    "        'community_total_affordable_units',",
+                    "        'community_housing_count',",
+                    "        'transportation_count',",
+                    "        'map_embed_url',",
+                    "        'street_view_url'",
+                    "    ];",
+                    "    json.data.forEach(function (item) {",
+                    "        keys.forEach(function (key) {",
+                    "            pm.expect(item).to.have.property(key);",
+                    "        });",
+                    "    });",
+                    "});"
+                  ],
+                  "type": "text/javascript",
+                  "packages": {},
+                  "requests": {}
+                }
+              },
+              {
+                "listen": "prerequest",
+                "script": {
+                  "packages": {},
+                  "type": "text/javascript"
                 }
               }
             ],
@@ -50,9 +98,10 @@
               "method": "GET",
               "header": [],
               "url": {
-                "raw": "https://civichousing.me/api/community",
+                "raw": "https://api.civichousing.me/api/community",
                 "protocol": "https",
                 "host": [
+                  "api",
                   "civichousing",
                   "me"
                 ],
@@ -61,7 +110,7 @@
                   "community"
                 ]
               },
-              "description": "## Get All Communities\n\n## Overview\n\nThis endpoint retrieves **paginated** Community instances from the CivicHousing database. Each community corresponds to an Austin-area **ZIP code** and includes demographic, housing-market, safety, amenities, health-access, and mobility/accessibility metrics, plus map/media links.\n\n## Endpoint Details\n\n- **Method:** `GET`\n    \n- **URL:** `https://api.civichousing.me/api/community`\n    \n\n## Query Parameters\n\n- **page** (integer, optional): Page number (default `1`)\n    \n\n## Response Format\n\nReturns a **paginated object** (not a raw array):\n\n- **data** (array): List of community objects\n    \n- **total** (integer): Total number of communities\n    \n- **page** (integer): Current page\n    \n- **pages** (integer): Total pages available\n    \n\nEach community object includes (typical fields):\n\n- **id** (integer): Unique identifier\n    \n- **zip_code** (string): ZIP code for the community\n    \n- **county** (string): County (currently seeded as Travis County)\n    \n- **population** (integer): Population estimate\n    \n- **median_housing_price** (number): Median housing price/value\n    \n- **crime_index** (number): Normalized crime index\n    \n- **park_count** (integer): Parks count\n    \n- **health_count** (integer): Healthcare establishments count\n    \n- **walk_score** (number): Walk Score\n    \n- **transit_score** (number): Transit Score\n    \n- **bike_score** (number): Bike Score\n    \n- **latitude** (number): ZIP centroid latitude\n    \n- **longitude** (number): ZIP centroid longitude\n    \n- **map_embed_url** (string): Google Maps embed URL\n    \n- **street_view_url** (string): Google Street View image URL\n    \n\n## Related models included\n\n- **housing (array)**: Housing records associated with this community.\n    \n- **transportation (array)**: Transportation stop records associated with this community.\n    \n\n## Related Endpoints\n\n- `GET /api/community/:id` - Get a specific community by ID\n    \n- `GET /api/housing` - Get all housing listings (paginated)\n    \n- `GET /api/transportation` - Get all transit stops (paginated)"
+              "description": "## Get All Communities\n\n## Overview\n\nThis endpoint retrieves **paginated** Community instances from the CivicHousing database. Each community corresponds to an Austin-area **ZIP code** and includes demographic, housing-market, safety, amenities, health-access, and mobility/accessibility metrics, plus map/media links.\n\nList responses return **summary objects only** (no nested `housing` or `transportation` arrays). Use `GET /api/community/{id}` for a single community with related models.\n\n## Endpoint Details\n\n- **Method:** `GET`\n- **URL:** `https://api.civichousing.me/api/community`\n\n## Query Parameters\n\n| Parameter | Type | Required | Description |\n|-----------|------|----------|-------------|\n| `page` | integer | No | Page number (1-based). Default: `1`. |\n| `sort` | string | No | One of: `median_housing_price`, `health_count`, `crime_index`, `park_count`. If omitted or invalid, order is not guaranteed. |\n| `order` | string | No | `asc` or `desc`. Default: `asc`. |\n| `median_housing_price` | integer | No | Exact match filter. |\n| `crime_index` | integer | No | Exact match filter. |\n| `transit_score` | integer | No | Exact match filter. |\n| `health_count` | integer | No | Exact match filter. |\n| `population_min` | integer | No | Only communities with `population >=` this value. |\n| `population_max` | integer | No | Only communities with `population <=` this value. |\n\n**Pagination note:** Page size is fixed at **50** records per page. This route does **not** accept `per_page`.\n\n## Example Requests\n\n- `https://api.civichousing.me/api/community?page=1`\n- `https://api.civichousing.me/api/community?page=2&sort=crime_index&order=asc`\n- `https://api.civichousing.me/api/community?population_min=15000&population_max=60000&sort=park_count&order=desc`\n- `https://api.civichousing.me/api/community?transit_score=60&sort=median_housing_price&order=asc`\n\n## Response Format\n\nReturns a **paginated object** (not a raw **array** at the top level):\n\n- **data** (array): Community objects for this page (no nested `housing` / `transportation` on list items).\n- **total** (integer): Total number of communities matching the filters.\n- **page** (integer): Current page.\n- **pages** (integer): Total number of pages.\n\nTypical fields on each object in **data**:\n\n- **id** (integer): Unique identifier  \n- **zip_code** (string): ZIP code for the community  \n- **county** (string): County (e.g. Travis County)  \n- **population** (integer): Population estimate  \n- **median_housing_price** (number): Median housing price/value  \n- **crime_index** (number): Normalized crime index  \n- **park_count** (integer): Parks count  \n- **health_count** (integer): Healthcare establishments count  \n- **walk_score** (number): Walk Score  \n- **transit_score** (number): Transit Score  \n- **bike_score** (number): Bike Score  \n- **latitude** (number): ZIP centroid latitude  \n- **longitude** (number): ZIP centroid longitude  \n- **map_embed_url** (string): Google Maps embed URL  \n- **street_view_url** (string): Google Street View image URL  \n\n## Related Endpoints\n\n- `GET https://api.civichousing.me/api/community/{id}` — Single community **with** related `housing` and `transportation` when provided by the API  \n- `GET https://api.civichousing.me/api/housing` — All housing listings (paginated)  \n- `GET https://api.civichousing.me/api/transportation` — All transit stops (paginated)  "
             },
             "response": [
               {
@@ -70,9 +119,10 @@
                   "method": "GET",
                   "header": [],
                   "url": {
-                    "raw": "https://civichousing.me/api/community",
+                    "raw": "https://api.civichousing.me/api/community",
                     "protocol": "https",
                     "host": [
+                      "api",
                       "civichousing",
                       "me"
                     ],
@@ -101,6 +151,30 @@
                   }
                 ],
                 "body": "{\r\n  \"data\": [\r\n         {\r\n            \"county\": \"Travis County\",\r\n            \"crime_index\": 11.51,\r\n            \"health_count\": 335,\r\n            \"housing\": [\r\n                {\r\n                    \"address\": \"10400 Research Blvd\",\r\n                    \"council_district\": \"10\",\r\n                    \"housing_tenure\": \"Rental\",\r\n                    \"id\": 215,\r\n                    \"income_restriction_level\": \"80% AMI\",\r\n                    \"last_synced_at\": \"Tue, 10 Mar 2026 03:23:18 GMT\",\r\n                    \"latitude\": 30.39659,\r\n                    \"longitude\": -97.74743,\r\n                    \"project_name\": \"Arboretum VMU\",\r\n                    \"street_view_image\": \"https://maps.googleapis.com/maps/api/streetview?size=600x400&location=30.39659,-97.74743&fov=80&heading=70&pitch=0&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n                    \"total_ada_units\": 0,\r\n                    \"total_affordable_units\": 26,\r\n                    \"unit_type\": \"Multifamily\",\r\n                    \"walk_score\": 68,\r\n                    \"zip_code\": \"78759\"\r\n                }\r\n            ],\r\n            \"id\": 31,\r\n            \"latitude\": 30.402665,\r\n            \"longitude\": -97.761062,\r\n            \"map_embed_url\": \"https://www.google.com/maps/embed/v1/place?q=30.402665,-97.761062&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n            \"median_housing_price\": 632301.92,\r\n            \"park_count\": 12,\r\n            \"population\": 43182,\r\n            \"street_view_url\": \"https://maps.googleapis.com/maps/api/streetview?size=400x300&location=30.402665,-97.761062&radius=5000&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n            \"transit_score\": 26,\r\n            \"transportation\": [\r\n                {\r\n                    \"frequency\": \"Every 28 Minutes\",\r\n                    \"id\": 1917,\r\n                    \"latitude\": 30.396981,\r\n                    \"longitude\": -97.750138,\r\n                    \"map_embed_url\": \"https://www.google.com/maps/embed/v1/place?q=30.396981,-97.750138&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n                    \"num_routes\": 3,\r\n                    \"routes\": \"3, 383, 982\",\r\n                    \"service_days\": \"Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday\",\r\n                    \"stop_id\": \"6093\",\r\n                    \"stop_name\": \"10300 Jollyville/Great Hills\",\r\n                    \"stop_url\": \"https://www.capmetro.org/stopdetail/index.php?stop=6093\",\r\n                    \"street_view_url\": \"https://maps.googleapis.com/maps/api/streetview?size=400x300&location=30.396981,-97.750138&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n                    \"transport_type\": \"Bus\",\r\n                    \"travel_time_domain\": \"26 mins\",\r\n                    \"travel_time_downtown\": \"58 mins\",\r\n                    \"travel_time_ut\": \"53 mins\",\r\n                    \"wheelchair_accessible\": \"Wheelchair Accessible\"\r\n                }\r\n            ],\r\n            \"zip_code\": \"78759\"\r\n        }\r\n    ],\r\n    \"page\": 1,\r\n    \"pages\": 1,\r\n    \"total\": 1\r\n}"
+              },
+              {
+                "name": "GetAllCommunitySearch",
+                "originalRequest": {
+                  "method": "GET",
+                  "header": [],
+                  "url": {
+                    "raw": "https://api.civichousing.me/api/community",
+                    "protocol": "https",
+                    "host": [
+                      "api",
+                      "civichousing",
+                      "me"
+                    ],
+                    "path": [
+                      "api",
+                      "community"
+                    ]
+                  }
+                },
+                "_postman_previewlanguage": null,
+                "header": null,
+                "cookie": [],
+                "body": null
               }
             ]
           },
@@ -113,21 +187,75 @@
                   "exec": [
                     "pm.test('Status code is 200', function () {",
                     "    pm.response.to.have.status(200);",
-                    "})",
+                    "});",
                     "",
                     "pm.test('Response is JSON', function () {",
                     "    pm.response.to.be.json;",
-                    "})",
+                    "});",
                     "",
-                    "pm.test('Response has an id field', function () {",
+                    "pm.test('Response is a single object (not paginated envelope)', function () {",
                     "    var json = pm.response.json();",
-                    "    pm.expect(json).to.have.property('id');",
-                    "})",
+                    "    pm.expect(json).to.be.an('object');",
+                    "    pm.expect(json).to.not.have.property('data');",
+                    "    pm.expect(json).to.not.have.property('pages');",
+                    "});",
                     "",
-                    "pm.test('Response has a zip_code field (string)', function () {",
+                    "pm.test('Response has core community fields', function () {",
                     "    var json = pm.response.json();",
-                    "    pm.expect(json).to.have.property('zip_code').that.is.a('string');",
-                    "})"
+                    "    var keys = [",
+                    "        'id',",
+                    "        'zip_code',",
+                    "        'county',",
+                    "        'population',",
+                    "        'median_housing_price',",
+                    "        'crime_index',",
+                    "        'park_count',",
+                    "        'health_count',",
+                    "        'transit_score',",
+                    "        'latitude',",
+                    "        'longitude',",
+                    "        'community_total_affordable_units',",
+                    "        'community_housing_count',",
+                    "        'transportation_count',",
+                    "        'map_embed_url',",
+                    "        'street_view_url'",
+                    "    ];",
+                    "    keys.forEach(function (key) {",
+                    "        pm.expect(json).to.have.property(key);",
+                    "    });",
+                    "});",
+                    "",
+                    "pm.test('id is a number', function () {",
+                    "    var json = pm.response.json();",
+                    "    pm.expect(json.id).to.be.a('number');",
+                    "});",
+                    "",
+                    "pm.test('zip_code is string or_null', function () {",
+                    "    var json = pm.response.json();",
+                    "    pm.expect(json.zip_code === null || typeof json.zip_code === 'string').to.be.true;",
+                    "});",
+                    "",
+                    "pm.test('related housing and transportation are arrays (each 0 or 1 item)', function () {",
+                    "    var json = pm.response.json();",
+                    "    pm.expect(json).to.have.property('housing').that.is.an('array');",
+                    "    pm.expect(json).to.have.property('transportation').that.is.an('array');",
+                    "    pm.expect(json.housing.length).to.be.at.most(1);",
+                    "    pm.expect(json.transportation.length).to.be.at.most(1);",
+                    "});",
+                    "",
+                    "pm.test('when housing is non-empty, first item has an id', function () {",
+                    "    var json = pm.response.json();",
+                    "    if (json.housing.length > 0) {",
+                    "        pm.expect(json.housing[0]).to.have.property('id');",
+                    "    }",
+                    "});",
+                    "",
+                    "pm.test('when transportation is non-empty, first item has an id', function () {",
+                    "    var json = pm.response.json();",
+                    "    if (json.transportation.length > 0) {",
+                    "        pm.expect(json.transportation[0]).to.have.property('id');",
+                    "    }",
+                    "});"
                   ],
                   "type": "text/javascript",
                   "packages": {},
@@ -139,9 +267,10 @@
               "method": "GET",
               "header": [],
               "url": {
-                "raw": "https://civichousing.me/api/community/1",
+                "raw": "https://api.civichousing.me/api/community/1",
                 "protocol": "https",
                 "host": [
+                  "api",
                   "civichousing",
                   "me"
                 ],
@@ -151,7 +280,7 @@
                   "1"
                 ]
               },
-              "description": "# Get Community by ID\n\n## Overview\n\nThis endpoint retrieves a **single Community** instance by its `id` from the CivicHousing database. Communities represent Austin-area **ZIP-code communities** and include demographics, housing economics, safety, amenities, health access, transit score, and map/media links.\n\n## Endpoint Details\n\n- **Method:** `GET`\n    \n- **URL:** `https://api.civichousing.me/api/community/:id`\n    \n\n## Path Parameter\n\n| Parameter | Type | Required | Description |\n| --- | --- | --- | --- |\n| `id` | integer | Yes | Unique identifier of the community to retrieve |\n\n## Example Request\n\n`GET https://api.civichousing.me/api/community/1`\n\n## Response Format\n\nReturns a **single JSON object** representing the community.\n\n### Response Fields (typical)\n\n- **id** (integer): Unique identifier\n    \n- **zip_code** (string): ZIP code for the community\n    \n- **county** (string): County (currently seeded as Travis County)\n    \n- **population** (integer): Population estimate\n    \n- **median_housing_price** (number): Median housing price/value\n    \n- **crime_index** (number): Normalized crime index\n    \n- **park_count** (integer): Parks count\n    \n- **health_count** (integer): Healthcare establishments count\n    \n- **transit_score** (integer): Transit Score\n    \n- **latitude** (number): ZIP centroid latitude\n    \n- **longitude** (number): ZIP centroid longitude\n    \n- **map_embed_url** (string): Google Maps embed URL\n    \n- **street_view_url** (string): Google Street View image URL\n    \n\n## Related models included\n\n- **housing** (array): Up to one sample housing record associated with this community.\n    \n- **transportation** (array): Up to one sample transportation stop associated with this community.\n    \n\n## Related Endpoints\n\n- `GET /api/community` - Get all communities (paginated)\n    \n- `GET /api/housing` - Get all housing listings (paginated)\n    \n- `GET /api/transportation` - Get all transit stops (paginated)\n    \n\n## Use Cases\n\n- **Compare ZIP communities**: Evaluate areas by transit score, safety, and amenities\n    \n- **Accessibility planning**: Identify communities with weaker transit access\n    \n- **Market + demographic snapshots**: Use median housing price and population to compare Austin ZIP areas\n    \n- **Map-based exploration**: Use embed/street-view links for quick geographic context"
+              "description": "# Get Community by ID\n\n## Overview\n\nThis endpoint retrieves a **single Community** instance by numeric `id` from the CivicHousing database. Communities represent Austin-area **ZIP-code communities** and include demographics, housing economics, safety, amenities, health access, transit score, aggregate counts, and map/media links.\n\nWhen relations are included, the API returns **at most one** linked housing row and **at most one** linked transportation row (not the full lists for the ZIP).\n\n## Endpoint Details\n\n- **Method:** `GET`\n- **URL:** `https://api.civichousing.me/api/community/{id}`\n\n(`{id}` is the path segment; e.g. `.../community/1`.)\n\n## Path Parameters\n\n| Parameter | Type | Required | Description |\n| --- | --- | --- | --- |\n| `id` | integer | Yes | Primary key of the community to retrieve |\n\n## Example Request\n\n`GET https://api.civichousing.me/api/community/1`\n\n## Errors\n\n- **404 Not Found** if no community exists for the given `id`.\n\n## Response Format\n\nReturns a **single JSON object** (not wrapped in `data`).\n\n### Response fields (scalar / aggregate)\n\n- **id** (integer): Unique identifier  \n- **zip_code** (string): ZIP code for the community  \n- **county** (string): County (e.g. Travis County)  \n- **population** (integer): Population estimate  \n- **median_housing_price** (number): Median housing price/value (USD)  \n- **crime_index** (number): Normalized crime index  \n- **park_count** (integer): Parks count  \n- **health_count** (integer): Healthcare establishments count  \n- **transit_score** (integer): Transit accessibility score  \n- **latitude** (number): ZIP centroid latitude  \n- **longitude** (number): ZIP centroid longitude  \n- **map_embed_url** (string): Google Maps embed URL  \n- **street_view_url** (string): Google Street View image URL  \n- **community_total_affordable_units** (integer): Total affordable units associated with this community (aggregated)  \n- **community_housing_count** (integer): Count of housing projects linked to this community  \n- **transportation_count** (integer): Count of transit stops linked to this community  \n\n### Related objects (included on this endpoint)\n\n- **housing** (array): Zero or **one** housing object (`to_dict` without nested relations). Empty if none linked.  \n- **transportation** (array): Zero or **one** transportation object (`to_dict` without nested relations). Empty if none linked.  \n\nUse `GET /api/housing` and `GET /api/transportation` (with filters) or the community list/detail flows on the frontend for full collections.\n\n## Related Endpoints\n\n- `GET https://api.civichousing.me/api/community` — All communities (paginated)  \n- `GET https://api.civichousing.me/api/housing` — All housing listings (paginated)  \n- `GET https://api.civichousing.me/api/transportation` — All transit stops (paginated)  \n\n## Use Cases\n\n- **Compare ZIP communities**: Evaluate areas by transit score, safety, and amenities  \n- **Accessibility planning**: Identify communities with weaker transit access  \n- **Market + demographic snapshots**: Use median housing price and population to compare Austin ZIP areas  \n- **Map-based exploration**: Use embed and street-view URLs for geographic context  "
             },
             "response": [
               {
@@ -160,9 +289,10 @@
                   "method": "GET",
                   "header": [],
                   "url": {
-                    "raw": "https://civichousing.me/api/community/1",
+                    "raw": "https://api.civichousing.me/api/community/1",
                     "protocol": "https",
                     "host": [
+                      "api",
                       "civichousing",
                       "me"
                     ],
@@ -207,15 +337,14 @@
               {
                 "listen": "test",
                 "script": {
-                  "type": "text/javascript",
                   "exec": [
                     "pm.test('Status code is 200', function () {",
                     "    pm.response.to.have.status(200);",
-                    "})",
+                    "});",
                     "",
                     "pm.test('Response is JSON', function () {",
                     "    pm.response.to.be.json;",
-                    "})",
+                    "});",
                     "",
                     "pm.test('Response has pagination fields', function () {",
                     "    var json = pm.response.json();",
@@ -223,20 +352,57 @@
                     "    pm.expect(json).to.have.property('total').that.is.a('number');",
                     "    pm.expect(json).to.have.property('page').that.is.a('number');",
                     "    pm.expect(json).to.have.property('pages').that.is.a('number');",
-                    "})",
+                    "});",
                     "",
-                    "pm.test('Data array is not empty', function () {",
+                    "pm.test('Page size is at most 50', function () {",
                     "    var json = pm.response.json();",
-                    "    pm.expect(json.data).to.have.length.above(0);",
-                    "})",
+                    "    pm.expect(json.data.length).to.be.at.most(50);",
+                    "});",
                     "",
-                    "pm.test('Each item in data has an id field', function () {",
+                    "pm.test('When total > 0 and page is 1, data is not empty', function () {",
+                    "    var json = pm.response.json();",
+                    "    if (json.total > 0 && json.page === 1) {",
+                    "        pm.expect(json.data.length).to.be.above(0);",
+                    "    }",
+                    "});",
+                    "",
+                    "pm.test('List items omit nested communities / transportation', function () {",
                     "    var json = pm.response.json();",
                     "    json.data.forEach(function (item) {",
-                    "        pm.expect(item).to.have.property('id');",
+                    "        pm.expect(item).to.not.have.property('communities');",
+                    "        pm.expect(item).to.not.have.property('transportation');",
                     "    });",
-                    "})"
-                  ]
+                    "});",
+                    "",
+                    "pm.test('Each item has documented housing list fields', function () {",
+                    "    var json = pm.response.json();",
+                    "    var keys = [",
+                    "        'id',",
+                    "        'project_name',",
+                    "        'address',",
+                    "        'zip_code',",
+                    "        'unit_type',",
+                    "        'housing_tenure',",
+                    "        'income_restriction_level',",
+                    "        'total_ada_units',",
+                    "        'total_affordable_units',",
+                    "        'council_district',",
+                    "        'latitude',",
+                    "        'longitude',",
+                    "        'street_view_image',",
+                    "        'last_synced_at',",
+                    "        'walk_score'",
+                    "    ];",
+                    "    json.data.forEach(function (item) {",
+                    "        keys.forEach(function (key) {",
+                    "            pm.expect(item).to.have.property(key);",
+                    "        });",
+                    "    });",
+                    "});"
+                  ],
+                  "type": "text/javascript",
+                  "packages": {},
+                  "requests": {}
                 }
               }
             ],
@@ -244,9 +410,10 @@
               "method": "GET",
               "header": [],
               "url": {
-                "raw": "https://civichousing.me/api/housing",
+                "raw": "https://api.civichousing.me/api/housing",
                 "protocol": "https",
                 "host": [
+                  "api",
                   "civichousing",
                   "me"
                 ],
@@ -255,7 +422,7 @@
                   "housing"
                 ]
               },
-              "description": "# Get All Housing Listings\n\n## Overview\n\nThis endpoint retrieves **paginated** Housing instances from the CivicHousing database. Each housing record represents an affordable housing development/entry in Austin, TX and includes location + program metadata, affordability totals, and accessibility context (Walk Score + Street View when available).\n\n## Endpoint Details\n\n- **Method:** `GET`\n    \n- **URL:** `https://api.civichousing.me/api/housing`\n    \n\n## Query Parameters\n\n- **page** (integer, optional): Page number (default `1`)\n    \n- **zip** (string, optional): Filter results by ZIP code\n    \n- **district** (string, optional): Filter results by council district\n    \n\n## Response Format\n\nReturns a **paginated object** (not a raw array):\n\n- **data** (array): List of housing objects\n    \n- **total** (integer): Total number of housing records matching the query\n    \n- **page** (integer): Current page\n    \n- **pages** (integer): Total pages available\n    \n\nEach housing object includes (typical fields):\n\n- **id** (integer): Unique identifier\n    \n- **project_name** (string): Housing project/development name\n    \n- **address** (string): Street address\n    \n- **zip_code** (string): ZIP code\n    \n- **council_district** (string): Austin council district\n    \n- **unit_type** (string): e.g., Multifamily\n    \n- **housing_tenure** (string): e.g., Rental\n    \n- **income_restriction_level** (string): AMI restriction labels present (e.g., `80% AMI`)\n    \n- **total_affordable_units** (integer): Total affordable units\n    \n- **total_ada_units** (integer): Total ADA-accessible units\n    \n- **latitude** (number|null): Latitude (if available)\n    \n- **longitude** (number|null): Longitude (if available)\n    \n- **street_view_image** (string|null): Google Street View image URL (if available)\n    \n- **walk_score** (number|null): Walk Score (if available)\n    \n- **last_synced_at** (string datetime): Last time the record was synced/updated\n    \n\n## Related models included\n\n- **community (array)**: Community records associated with this housing.\n    \n- **transportation (array)**: Transportation stop records associated with this housing.\n    \n\n## Related Endpoints\n\n- `GET /api/housing/:id` - Get a specific housing listing by ID (includes relations + nearest-transit extras when available)\n    \n- `GET /api/community` - Get all communities (paginated)\n    \n- `GET /api/transportation` - Get all transit stops (paginated)"
+              "description": "## Get All Housing Listings\n\n## Overview\n\nThis endpoint retrieves **paginated** Housing instances from the CivicHousing database. Each record represents an affordable housing development/entry in Austin, TX and includes location and program metadata, affordability totals, Walk Score, and Street View when available.\n\nList items are **summary objects only**: nested **communities** and **transportation** are **not** included. Use `GET /api/housing/{id}` for a single listing with relations and optional nearest-transit extras.\n\n## Endpoint Details\n\n- **Method:** `GET`\n    \n- **URL:** `https://api.civichousing.me/api/housing`\n    \n\n## Query Parameters\n\n| Parameter | Type | Required | Description |\n| --- | --- | --- | --- |\n| `page` | integer | No | Page number (1-based). Default: `1`. |\n| `sort` | string | No | Sort field. Allowed: `walk_score`, `total_affordable_units`, `id`, `income_restriction_level`. If omitted, defaults to **`id`** ascending. If set to an unknown value, sort order may be undefined. |\n| `order` | string | No | `asc` or `desc`. Default: `asc` (when `sort` is omitted, ordering is ascending by `id`). |\n| `zip_code` | string | No | Exact match on ZIP code. |\n| `unit_type` | string | No | Exact match on unit type (e.g. Multifamily). |\n| `housing_tenure` | string | No | Exact match on tenure (e.g. Rental). |\n\n**Pagination:** Page size is fixed at **50** records. This route does **not** accept `per_page`.\n\n**Note:** Filtering by council district is **not** supported as a query parameter on this endpoint (district appears only on each row as `council_district`).\n\n## Example Requests\n\n- `https://api.civichousing.me/api/housing?page=1`\n    \n- `https://api.civichousing.me/api/housing?zip_code=78705&sort=walk_score&order=desc`\n    \n- `https://api.civichousing.me/api/housing?unit_type=Multifamily&housing_tenure=Rental&sort=total_affordable_units&order=desc`\n    \n\n## Response Format\n\nReturns a **paginated object** (not a top-level array):\n\n- **data** (array): Housing objects for this page (no nested relations).\n    \n- **total** (integer): Total rows matching the filters.\n    \n- **page** (integer): Current page.\n    \n- **pages** (integer): Total pages.\n    \n\nTypical fields on each object in **data** (matches `Housing.to_dict` without relations):\n\n- **id** (integer): Unique identifier\n    \n- **project_name** (string): Project/development name\n    \n- **address** (string): Street address\n    \n- **zip_code** (string): ZIP code\n    \n- **unit_type** (string): Unit type (e.g. Multifamily)\n    \n- **housing_tenure** (string): Tenure (e.g. Rental)\n    \n- **income_restriction_level** (string): AMI / restriction labels (e.g. `80% AMI`)\n    \n- **total_affordable_units** (integer): Total affordable units\n    \n- **total_ada_units** (integer): ADA-accessible units\n    \n- **council_district** (string): Austin council district\n    \n- **latitude** (number | null): Latitude when present\n    \n- **longitude** (number | null): Longitude when present\n    \n- **street_view_image** (string | null): Street View image URL when present\n    \n- **walk_score** (integer): Walk Score (column default `0` when unset in DB)\n    \n- **last_synced_at** (string | null): Last sync time (JSON-serialized datetime when present)\n    \n\n## Related Endpoints\n\n- `GET https://api.civichousing.me/api/housing/{id}` — One listing (relations + nearest-transit fields when applicable)\n    \n- `GET https://api.civichousing.me/api/community` — All communities (paginated)\n    \n- `GET https://api.civichousing.me/api/transportation` — All transit stops (paginated)"
             },
             "response": [
               {
@@ -264,9 +431,10 @@
                   "method": "GET",
                   "header": [],
                   "url": {
-                    "raw": "https://civichousing.me/api/housing",
+                    "raw": "https://api.civichousing.me/api/housing",
                     "protocol": "https",
                     "host": [
+                      "api",
                       "civichousing",
                       "me"
                     ],
@@ -295,6 +463,30 @@
                   }
                 ],
                 "body": "{\r\n  \"data\": [\r\n    {\r\n      \"address\": \"2401 Longview Street\",\r\n      \"council_district\": \"9\",\r\n      \"housing_tenure\": \"Rental\",\r\n      \"id\": 26,\r\n      \"income_restriction_level\": \"80% AMI\",\r\n      \"last_synced_at\": \"Tue, 10 Mar 2026 03:21:43 GMT\",\r\n      \"latitude\": 30.28868985,\r\n      \"longitude\": -97.75048641,\r\n      \"project_name\": \"2401 Longview\",\r\n      \"street_view_image\": \"https://maps.googleapis.com/maps/api/streetview?size=600x400&location=30.28868985,-97.75048641&fov=80&heading=70&pitch=0&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n      \"total_ada_units\": 0,\r\n      \"total_affordable_units\": 7,\r\n      \"unit_type\": \"Multifamily\",\r\n      \"walk_score\": 86,\r\n      \"zip_code\": \"78705\"\r\n    }\r\n  ],\r\n  \"page\": 1,\r\n  \"pages\": 1,\r\n  \"total\": 1\r\n}"
+              },
+              {
+                "name": "GetAllHousingSearch",
+                "originalRequest": {
+                  "method": "GET",
+                  "header": [],
+                  "url": {
+                    "raw": "https://api.civichousing.me/api/housing",
+                    "protocol": "https",
+                    "host": [
+                      "api",
+                      "civichousing",
+                      "me"
+                    ],
+                    "path": [
+                      "api",
+                      "housing"
+                    ]
+                  }
+                },
+                "_postman_previewlanguage": null,
+                "header": null,
+                "cookie": [],
+                "body": null
               }
             ]
           },
@@ -304,26 +496,98 @@
               {
                 "listen": "test",
                 "script": {
-                  "type": "text/javascript",
                   "exec": [
                     "pm.test('Status code is 200', function () {",
                     "    pm.response.to.have.status(200);",
-                    "})",
+                    "});",
                     "",
                     "pm.test('Response is JSON', function () {",
                     "    pm.response.to.be.json;",
-                    "})",
+                    "});",
                     "",
-                    "pm.test('Response has an id field', function () {",
+                    "pm.test('Response is a single object (not paginated envelope)', function () {",
                     "    var json = pm.response.json();",
-                    "    pm.expect(json).to.have.property('id');",
-                    "})",
+                    "    pm.expect(json).to.be.an('object');",
+                    "    pm.expect(json).to.not.have.property('data');",
+                    "    pm.expect(json).to.not.have.property('pages');",
+                    "});",
                     "",
-                    "pm.test('Response has a zip_code field (string)', function () {",
+                    "pm.test('Response has core housing fields', function () {",
                     "    var json = pm.response.json();",
-                    "    pm.expect(json).to.have.property('zip_code').that.is.a('string');",
-                    "})"
-                  ]
+                    "    var keys = [",
+                    "        'id',",
+                    "        'project_name',",
+                    "        'address',",
+                    "        'zip_code',",
+                    "        'unit_type',",
+                    "        'housing_tenure',",
+                    "        'income_restriction_level',",
+                    "        'total_ada_units',",
+                    "        'total_affordable_units',",
+                    "        'council_district',",
+                    "        'latitude',",
+                    "        'longitude',",
+                    "        'street_view_image',",
+                    "        'last_synced_at',",
+                    "        'walk_score'",
+                    "    ];",
+                    "    keys.forEach(function (key) {",
+                    "        pm.expect(json).to.have.property(key);",
+                    "    });",
+                    "});",
+                    "",
+                    "pm.test('id is a number', function () {",
+                    "    var json = pm.response.json();",
+                    "    pm.expect(json.id).to.be.a('number');",
+                    "});",
+                    "",
+                    "pm.test('zip_code is string or null', function () {",
+                    "    var json = pm.response.json();",
+                    "    pm.expect(json.zip_code === null || typeof json.zip_code === 'string').to.be.true;",
+                    "});",
+                    "",
+                    "pm.test('walk_score is a number', function () {",
+                    "    var json = pm.response.json();",
+                    "    pm.expect(json.walk_score).to.satisfy(Number.isFinite);",
+                    "});",
+                    "",
+                    "pm.test('related communities and transportation are arrays (each 0 or 1 item)', function () {",
+                    "    var json = pm.response.json();",
+                    "    pm.expect(json).to.have.property('communities').that.is.an('array');",
+                    "    pm.expect(json).to.have.property('transportation').that.is.an('array');",
+                    "    pm.expect(json.communities.length).to.be.at.most(1);",
+                    "    pm.expect(json.transportation.length).to.be.at.most(1);",
+                    "});",
+                    "",
+                    "pm.test('when communities is non-empty, first item has an id', function () {",
+                    "    var json = pm.response.json();",
+                    "    if (json.communities.length > 0) {",
+                    "        pm.expect(json.communities[0]).to.have.property('id');",
+                    "    }",
+                    "});",
+                    "",
+                    "pm.test('when transportation is non-empty, first item has an id', function () {",
+                    "    var json = pm.response.json();",
+                    "    if (json.transportation.length > 0) {",
+                    "        pm.expect(json.transportation[0]).to.have.property('id');",
+                    "    }",
+                    "});",
+                    "",
+                    "pm.test('nearest-stop extras are consistent when present', function () {",
+                    "    var json = pm.response.json();",
+                    "    if (Object.prototype.hasOwnProperty.call(json, 'closest_stop_frequency')) {",
+                    "        pm.expect(json).to.have.property('walking_distance');",
+                    "        pm.expect(json.walking_distance).to.be.a('string');",
+                    "        pm.expect(json).to.have.property('walking_map_embed_url');",
+                    "        pm.expect(json.walking_map_embed_url === null || typeof json.walking_map_embed_url === 'string').to.be.true;",
+                    "        pm.expect(json.transportation).to.be.an('array');",
+                    "        pm.expect(json.transportation.length).to.eql(1);",
+                    "    }",
+                    "});"
+                  ],
+                  "type": "text/javascript",
+                  "packages": {},
+                  "requests": {}
                 }
               }
             ],
@@ -331,9 +595,10 @@
               "method": "GET",
               "header": [],
               "url": {
-                "raw": "https://civichousing.me/api/housing/1",
+                "raw": "https://api.civichousing.me/api/housing/1",
                 "protocol": "https",
                 "host": [
+                  "api",
                   "civichousing",
                   "me"
                 ],
@@ -343,7 +608,7 @@
                   "1"
                 ]
               },
-              "description": "# Get One Housing\n\n## Overview\n\nThis endpoint retrieves a single Housing instance by its `id` from the CivicHousing database. In addition to the housing record’s core fields, the response includes **related Community and Transportation objects** (when present) and adds **computed nearest-transit fields** such as walking distance and an optional walking directions embed URL.\n\n## Endpoint Details\n\n- **Method:** `GET`\n    \n- **URL:** `https://api.civichousing.me/api/housing/:id`\n    \n\n## Path Parameter\n\n| Parameter | Type | Required | Description |\n| --- | --- | --- | --- |\n| `id` | integer | Yes | Unique identifier of the housing listing |\n\n## Example Request\n\n`GET https://api.civichousing.me/api/housing/26`\n\n## Response Format\n\nReturns a **single JSON object** representing one housing listing.\n\n### Housing fields\n\n- **id** (integer): Unique identifier\n    \n- **project_name** (string): Housing project/development name\n    \n- **address** (string): Street address\n    \n- **zip_code** (string): ZIP code\n    \n- **council_district** (string): Austin council district\n    \n- **unit_type** (string): e.g., Multifamily\n    \n- **housing_tenure** (string): e.g., Rental\n    \n- **income_restriction_level** (string): AMI restriction label(s) (e.g., `80% AMI`)\n    \n- **total_affordable_units** (integer): Total affordable units\n    \n- **total_ada_units** (integer): Total ADA-accessible units\n    \n- **walk_score** (number|null): Walk Score (if available)\n    \n- **latitude** (number|null): Latitude (if available)\n    \n- **longitude** (number|null): Longitude (if available)\n    \n- **street_view_image** (string|null): Google Street View image URL (if available)\n    \n- **last_synced_at** (string datetime): Last time the record was synced/updated\n    \n\n### Related models included\n\n- **communities** (array): Community records associated with this housing listing.\n    \n- **transportation** (array): Transportation stop records associated with this housing listing.\n    \n\n## Related Endpoints\n\n- `GET /api/housing` - Get all housing listings (paginated, supports filters)\n    \n- `GET /api/community` - Get all communities (paginated)\n    \n- `GET /api/transportation` - Get all transit stops (paginated)"
+              "description": "# Get One Housing\n\n## Overview\n\nThis endpoint retrieves a **single** Housing instance by numeric `id` from the CivicHousing database. The response always includes the housing row’s core fields. With relations enabled, it includes **up to one** linked **community** and **transportation** object from the database association.\n\nWhen the listing has coordinates and at least one transit stop with coordinates exists in the system, the handler **computes the nearest stop** and may **replace** the **`transportation`** array with that nearest stop and add **walking-distance** and optional **Google Maps embed** fields. If there is no nearest stop (e.g. missing coordinates or no eligible stops), those extra fields are omitted and **`transportation`** stays as from the association (still **at most one** item).\n\n## Endpoint Details\n\n- **Method:** `GET`\n- **URL:** `https://api.civichousing.me/api/housing/{id}`\n\n## Path Parameters\n\n| Parameter | Type | Required | Description |\n| --- | --- | --- | --- |\n| `id` | integer | Yes | Primary key of the housing listing |\n\n## Example Request\n\n`GET https://api.civichousing.me/api/housing/26`\n\n## Errors\n\n- **404 Not Found** if no housing row exists for the given `id`.\n\n## Response Format\n\nReturns a **single JSON object** (not wrapped in `data`).\n\n### Core housing fields\n\n- **id** (integer): Unique identifier  \n- **project_name** (string): Project/development name  \n- **address** (string): Street address  \n- **zip_code** (string): ZIP code  \n- **council_district** (string): Austin council district  \n- **unit_type** (string): e.g. Multifamily  \n- **housing_tenure** (string): e.g. Rental  \n- **income_restriction_level** (string): AMI restriction label(s) (e.g. `80% AMI`)  \n- **total_affordable_units** (integer): Total affordable units  \n- **total_ada_units** (integer): ADA-accessible units  \n- **walk_score** (integer): Walk Score (DB default may be `0`)  \n- **latitude** (number \\| null): Latitude when present  \n- **longitude** (number \\| null): Longitude when present  \n- **street_view_image** (string \\| null): Street View image URL when present  \n- **last_synced_at** (string \\| null): Last sync time (JSON-serialized datetime when present)  \n\n### Related objects (from `to_dict` with relations)\n\n- **communities** (array): Zero or **one** community object (no nested relations on that object).  \n- **transportation** (array): Zero or **one** transportation object **unless** the nearest-stop logic runs successfully—then this array is set to **the nearest stop** (see below).  \n\n### Optional fields (nearest stop — when geospatial + stop data allow it)\n\nPresent only when the API finds a nearest transit stop for this listing:\n\n- **closest_stop_frequency** (string): Frequency label from the nearest stop  \n- **walking_distance** (string): Human-readable walking distance, e.g. `~1.25 miles (walking route)` (may use Google Directions when `GOOGLE_MAPS_API_KEY` is set, otherwise a straight-line approximation)  \n- **walking_map_embed_url** (string \\| null): Google Maps Embed directions URL when an API key is configured; otherwise `null`  \n- **transportation** (array): In this case, contains **one** object — **`to_dict()` of the nearest stop** (not necessarily the same as the association-only `[:1]` row when both differ)  \n\n## Related Endpoints\n\n- `GET https://api.civichousing.me/api/housing` — All housing listings (paginated, filters + sort)  \n- `GET https://api.civichousing.me/api/community` — All communities (paginated)  \n- `GET https://api.civichousing.me/api/transportation` — All transit stops (paginated)  "
             },
             "response": [
               {
@@ -352,9 +617,10 @@
                   "method": "GET",
                   "header": [],
                   "url": {
-                    "raw": "https://civichousing.me/api/housing/1",
+                    "raw": "https://api.civichousing.me/api/housing/1",
                     "protocol": "https",
                     "host": [
+                      "api",
                       "civichousing",
                       "me"
                     ],
@@ -402,11 +668,11 @@
                   "exec": [
                     "pm.test('Status code is 200', function () {",
                     "    pm.response.to.have.status(200);",
-                    "})",
+                    "});",
                     "",
                     "pm.test('Response is JSON', function () {",
                     "    pm.response.to.be.json;",
-                    "})",
+                    "});",
                     "",
                     "pm.test('Response has pagination fields', function () {",
                     "    var json = pm.response.json();",
@@ -414,19 +680,59 @@
                     "    pm.expect(json).to.have.property('total').that.is.a('number');",
                     "    pm.expect(json).to.have.property('page').that.is.a('number');",
                     "    pm.expect(json).to.have.property('pages').that.is.a('number');",
-                    "})",
+                    "});",
                     "",
-                    "pm.test('Data array is not empty', function () {",
+                    "pm.test('Page size is at most 50', function () {",
                     "    var json = pm.response.json();",
-                    "    pm.expect(json.data).to.have.length.above(0);",
-                    "})",
+                    "    pm.expect(json.data.length).to.be.at.most(50);",
+                    "});",
                     "",
-                    "pm.test('Each item in data has an id field', function () {",
+                    "pm.test('When total > 0 and page is 1, data is not empty', function () {",
+                    "    var json = pm.response.json();",
+                    "    if (json.total > 0 && json.page === 1) {",
+                    "        pm.expect(json.data.length).to.be.above(0);",
+                    "    }",
+                    "});",
+                    "",
+                    "pm.test('List items omit nested communities / housing', function () {",
                     "    var json = pm.response.json();",
                     "    json.data.forEach(function (item) {",
-                    "        pm.expect(item).to.have.property('id');",
+                    "        pm.expect(item).to.not.have.property('communities');",
+                    "        pm.expect(item).to.not.have.property('housing');",
                     "    });",
-                    "})"
+                    "});",
+                    "",
+                    "pm.test('Each item has documented transportation list fields', function () {",
+                    "    var json = pm.response.json();",
+                    "    var keys = [",
+                    "        'id',",
+                    "        'stop_id',",
+                    "        'stop_name',",
+                    "        'latitude',",
+                    "        'longitude',",
+                    "        'stop_url',",
+                    "        'map_embed_url',",
+                    "        'street_view_url',",
+                    "        'transport_type',",
+                    "        'routes',",
+                    "        'frequency',",
+                    "        'num_routes',",
+                    "        'wheelchair_accessible',",
+                    "        'service_days',",
+                    "        'travel_time_ut',",
+                    "        'travel_time_downtown',",
+                    "        'travel_time_domain',",
+                    "        'travel_time_ut_minutes',",
+                    "        'travel_time_downtown_minutes',",
+                    "        'travel_time_domain_minutes',",
+                    "        'zip_code'",
+                    "    ];",
+                    "    json.data.forEach(function (item) {",
+                    "        keys.forEach(function (key) {",
+                    "            pm.expect(item).to.have.property(key);",
+                    "        });",
+                    "    });",
+                    "});"
                   ],
                   "type": "text/javascript",
                   "packages": {},
@@ -438,9 +744,10 @@
               "method": "GET",
               "header": [],
               "url": {
-                "raw": "https://civichousing.me/api/transportation",
+                "raw": "https://api.civichousing.me/api/transportation",
                 "protocol": "https",
                 "host": [
+                  "api",
                   "civichousing",
                   "me"
                 ],
@@ -449,7 +756,7 @@
                   "transportation"
                 ]
               },
-              "description": "# Get All Transit Stops\n\n## Overview\n\nThis endpoint retrieves **paginated** Transportation (transit stop) instances from the CivicHousing database. Each record represents a real CapMetro stop (bus/rail) and includes service information (routes, days, frequency), accessibility labeling, location, map/street-view links, and estimated transit travel times to key destinations.\n\n## Endpoint Details\n\n- **Method:** `GET`\n    \n- **URL:** `https://api.civichousing.me/api/transportation`\n    \n\n## Query Parameters\n\n- **page** (integer, optional): Page number (default `1`)\n    \n\n## Response Format\n\nReturns a **paginated object** (not a raw array):\n\n- **data** (array): List of transportation stop objects\n    \n- **total** (integer): Total number of stops\n    \n- **page** (integer): Current page\n    \n- **pages** (integer): Total pages available\n    \n\nEach transportation stop object includes (typical fields):\n\n- **id** (integer): Unique identifier\n    \n- **stop_id** (string): CapMetro GTFS stop identifier\n    \n- **stop_name** (string): Stop name\n    \n- **stop_url** (string): CapMetro stop detail URL\n    \n- **transport_type** (string): `Bus`, `Rail`, or `Rail and Bus`\n    \n- **routes** (string): Comma-separated route short names serving the stop\n    \n- **num_routes** (integer): Number of distinct routes serving the stop\n    \n- **frequency** (string): Estimated average frequency (e.g., `Every 28 Minutes`)\n    \n- **service_days** (string): Days with active service\n    \n- **wheelchair_accessible** (string): Accessibility label (e.g., `Wheelchair Accessible`)\n    \n- **latitude** (number): Stop latitude\n    \n- **longitude** (number): Stop longitude\n    \n- **map_embed_url** (string): Google Maps embed URL\n    \n- **street_view_url** (string): Google Street View URL\n    \n- **travel_time_ut** (string|null): Transit travel time to UT\n    \n- **travel_time_downtown** (string|null): Transit travel time to Downtown\n    \n- **travel_time_domain** (string|null): Transit travel time to The Domain\n    \n\n## Related Endpoints\n\n- `GET /api/transportation/:id` - Get a specific transit stop by ID\n    \n- `GET /api/community` - Get all communities (paginated)\n    \n- `GET /api/housing` - Get all housing listings (paginated)"
+              "description": "## Get All Transit Stops\n\n## Overview\n\nThis endpoint retrieves **paginated** Transportation (transit stop) instances from the CivicHousing database. Each record represents a CapMetro stop (e.g. bus/rail) and includes service metadata (routes, days, frequency), accessibility labeling, location, map/street-view links, and transit time estimates to key destinations (as both display strings and numeric minutes where available).\n\nList responses are **summary objects only** (no nested `communities` or `housing`). Use `GET /api/transportation/{id}` for a single stop with optional related objects.\n\n## Endpoint Details\n\n- **Method:** `GET`\n- **URL:** `https://api.civichousing.me/api/transportation`\n\n## Query Parameters\n\n| Parameter | Type | Required | Description |\n|-----------|------|----------|-------------|\n| `page` | integer | No | Page number (1-based). Default: `1`. |\n| `sort` | string | No | One of: `num_routes`, `travel_time_ut_minutes`, `travel_time_downtown_minutes`, `travel_time_domain_minutes`. If omitted or invalid, sort order is not guaranteed. |\n| `order` | string | No | `asc` or `desc`. Default: `asc`. |\n| `transport_type` | string | No | Exact match (e.g. `Bus`, `Rail`, `Rail and Bus` — values depend on stored data). |\n| `wheelchair_accessible` | string | No | Exact match on the stored label (e.g. `Wheelchair Accessible`). |\n| `num_routes_min` | integer | No | Keep stops with `num_routes >=` this value. |\n| `num_routes_max` | integer | No | Keep stops with `num_routes <=` this value. |\n| `travel_time_ut_minutes_min` | integer | No | Lower bound on `travel_time_ut_minutes`. |\n| `travel_time_ut_minutes_max` | integer | No | Upper bound on `travel_time_ut_minutes`. |\n| `travel_time_downtown_minutes_min` | integer | No | Lower bound on `travel_time_downtown_minutes`. |\n| `travel_time_downtown_minutes_max` | integer | No | Upper bound on `travel_time_downtown_minutes`. |\n\n**Pagination:** Page size is fixed at **50**. This route does **not** accept `per_page`.\n\n## Example Requests\n\n- `https://api.civichousing.me/api/transportation?page=1`\n- `https://api.civichousing.me/api/transportation?transport_type=Bus&sort=num_routes&order=desc`\n- `https://api.civichousing.me/api/transportation?wheelchair_accessible=Wheelchair%20Accessible&travel_time_ut_minutes_max=45`\n- `https://api.civichousing.me/api/transportation?num_routes_min=3&sort=travel_time_downtown_minutes&order=asc`\n\n## Response Format\n\nReturns a **paginated object** (not a top-level array):\n\n- **data** (array): Stop objects for this page (no nested relations).\n- **total** (integer): Total stops matching the filters.\n- **page** (integer): Current page.\n- **pages** (integer): Total pages.\n\nTypical fields on each object in **data** (non-relation `to_dict`):\n\n- **id** (integer): Unique identifier  \n- **stop_id** (string): CapMetro / GTFS-style stop identifier  \n- **stop_name** (string): Stop name  \n- **stop_url** (string \\| null): Stop detail URL  \n- **transport_type** (string \\| null): e.g. `Bus`, `Rail`  \n- **routes** (string \\| null): Route label(s) / short names as stored  \n- **num_routes** (integer \\| null): Route count  \n- **frequency** (string \\| null): Service frequency label  \n- **service_days** (string \\| null): Active service days  \n- **wheelchair_accessible** (string \\| null): Accessibility label  \n- **latitude** (number \\| null): Stop latitude  \n- **longitude** (number \\| null): Stop longitude  \n- **map_embed_url** (string \\| null): Google Maps embed URL  \n- **street_view_url** (string \\| null): Street View URL  \n- **travel_time_ut** (string \\| null): Display travel time to UT  \n- **travel_time_downtown** (string \\| null): Display travel time to Downtown  \n- **travel_time_domain** (string \\| null): Display travel time to The Domain  \n- **travel_time_ut_minutes** (integer \\| null): Minutes to UT (when populated)  \n- **travel_time_downtown_minutes** (integer \\| null): Minutes to Downtown  \n- **travel_time_domain_minutes** (integer \\| null): Minutes to The Domain  \n- **zip_code** (string \\| null): ZIP associated with the stop as stored  \n\n## Related Endpoints\n\n- `GET https://api.civichousing.me/api/transportation/{id}` — One stop (may include related `communities` / `housing`)  \n- `GET https://api.civichousing.me/api/community` — All communities (paginated)  \n- `GET https://api.civichousing.me/api/housing` — All housing listings (paginated)  "
             },
             "response": [
               {
@@ -458,9 +765,10 @@
                   "method": "GET",
                   "header": [],
                   "url": {
-                    "raw": "https://civichousing.me/api/transportation",
+                    "raw": "https://api.civichousing.me/api/transportation",
                     "protocol": "https",
                     "host": [
+                      "api",
                       "civichousing",
                       "me"
                     ],
@@ -489,6 +797,30 @@
                   }
                 ],
                 "body": "{\r\n  \"data\": [\r\n    {\r\n      \"frequency\": \"Every 23 Minutes\",\r\n      \"id\": 2346,\r\n      \"latitude\": 30.306697,\r\n      \"longitude\": -97.729732,\r\n      \"map_embed_url\": \"https://www.google.com/maps/embed/v1/place?q=30.306697,-97.729732&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n      \"num_routes\": 1,\r\n      \"routes\": \"656\",\r\n      \"service_days\": \"Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday\",\r\n      \"stop_id\": \"981\",\r\n      \"stop_name\": \"4300 Speedway/43rd\",\r\n      \"stop_url\": \"https://www.capmetro.org/stopdetail/index.php?stop=981\",\r\n      \"street_view_url\": \"https://maps.googleapis.com/maps/api/streetview?size=400x300&location=30.306697,-97.729732&key=AIzaSyDwEtb3evrLE0ry5I1sQCbBPe2EtSYLFpI\",\r\n      \"transport_type\": \"Bus\",\r\n      \"travel_time_domain\": \"55 mins\",\r\n      \"travel_time_downtown\": \"29 mins\",\r\n      \"travel_time_ut\": \"13 mins\",\r\n      \"wheelchair_accessible\": \"Wheelchair Accessible\"\r\n    }\r\n  ],\r\n  \"page\": 1,\r\n  \"pages\": 1,\r\n  \"total\": 1\r\n}"
+              },
+              {
+                "name": "GetAllTransportationSearch",
+                "originalRequest": {
+                  "method": "GET",
+                  "header": [],
+                  "url": {
+                    "raw": "https://api.civichousing.me/api/transportation",
+                    "protocol": "https",
+                    "host": [
+                      "api",
+                      "civichousing",
+                      "me"
+                    ],
+                    "path": [
+                      "api",
+                      "transportation"
+                    ]
+                  }
+                },
+                "_postman_previewlanguage": null,
+                "header": null,
+                "cookie": [],
+                "body": null
               }
             ]
           },
@@ -501,16 +833,75 @@
                   "exec": [
                     "pm.test('Status code is 200', function () {",
                     "    pm.response.to.have.status(200);",
-                    "})",
+                    "});",
                     "",
                     "pm.test('Response is JSON', function () {",
                     "    pm.response.to.be.json;",
-                    "})",
+                    "});",
                     "",
-                    "pm.test('Response has an id field', function () {",
+                    "pm.test('Response is a single object (not paginated envelope)', function () {",
                     "    var json = pm.response.json();",
-                    "    pm.expect(json).to.have.property('id');",
-                    "})"
+                    "    pm.expect(json).to.be.an('object');",
+                    "    pm.expect(json).to.not.have.property('data');",
+                    "    pm.expect(json).to.not.have.property('pages');",
+                    "});",
+                    "",
+                    "pm.test('Response has core transportation fields', function () {",
+                    "    var json = pm.response.json();",
+                    "    var keys = [",
+                    "        'id',",
+                    "        'stop_id',",
+                    "        'stop_name',",
+                    "        'latitude',",
+                    "        'longitude',",
+                    "        'stop_url',",
+                    "        'map_embed_url',",
+                    "        'street_view_url',",
+                    "        'transport_type',",
+                    "        'routes',",
+                    "        'frequency',",
+                    "        'num_routes',",
+                    "        'wheelchair_accessible',",
+                    "        'service_days',",
+                    "        'travel_time_ut',",
+                    "        'travel_time_downtown',",
+                    "        'travel_time_domain',",
+                    "        'travel_time_ut_minutes',",
+                    "        'travel_time_downtown_minutes',",
+                    "        'travel_time_domain_minutes',",
+                    "        'zip_code'",
+                    "    ];",
+                    "    keys.forEach(function (key) {",
+                    "        pm.expect(json).to.have.property(key);",
+                    "    });",
+                    "});",
+                    "",
+                    "pm.test('id is a number', function () {",
+                    "    var json = pm.response.json();",
+                    "    pm.expect(json.id).to.be.a('number');",
+                    "});",
+                    "",
+                    "pm.test('related communities and housing are arrays (each 0 or 1 item)', function () {",
+                    "    var json = pm.response.json();",
+                    "    pm.expect(json).to.have.property('communities').that.is.an('array');",
+                    "    pm.expect(json).to.have.property('housing').that.is.an('array');",
+                    "    pm.expect(json.communities.length).to.be.at.most(1);",
+                    "    pm.expect(json.housing.length).to.be.at.most(1);",
+                    "});",
+                    "",
+                    "pm.test('when communities is non-empty, first item has an id', function () {",
+                    "    var json = pm.response.json();",
+                    "    if (json.communities.length > 0) {",
+                    "        pm.expect(json.communities[0]).to.have.property('id');",
+                    "    }",
+                    "});",
+                    "",
+                    "pm.test('when housing is non-empty, first item has an id', function () {",
+                    "    var json = pm.response.json();",
+                    "    if (json.housing.length > 0) {",
+                    "        pm.expect(json.housing[0]).to.have.property('id');",
+                    "    }",
+                    "});"
                   ],
                   "type": "text/javascript",
                   "packages": {},
@@ -522,9 +913,10 @@
               "method": "GET",
               "header": [],
               "url": {
-                "raw": "https://civichousing.me/api/transportation/1",
+                "raw": "https://api.civichousing.me/api/transportation/1",
                 "protocol": "https",
                 "host": [
+                  "api",
                   "civichousing",
                   "me"
                 ],
@@ -534,7 +926,7 @@
                   "1"
                 ]
               },
-              "description": "# Get One Transit Stop\n\n## Overview\n\nThis endpoint retrieves a single Transportation (transit stop) instance by its `id` from the CivicHousing database. The stop represents a real CapMetro GTFS stop and includes service details (routes, days, frequency), accessibility labeling, location, map/street-view links, and estimated transit travel times to key destinations.\n\n## Endpoint Details\n\n- **Method:** `GET`\n    \n- **URL:** `https://api.civichousing.me/api/transportation/:id`\n    \n\n## Path Parameter\n\n| Parameter | Type | Required | Description |\n| --- | --- | --- | --- |\n| `id` | integer | Yes | Unique identifier of the transit stop |\n\n## Example Request\n\n`GET https://api.civichousing.me/api/transportation/1`\n\n## Response Format\n\nReturns a **single JSON object** representing one transit stop.\n\n### Response Fields (typical)\n\n- **id** (integer): Unique identifier\n    \n- **stop_id** (string): CapMetro GTFS stop identifier\n    \n- **stop_name** (string): Stop name\n    \n- **stop_url** (string): CapMetro stop detail URL\n    \n- **transport_type** (string): `Bus`, `Rail`, or `Rail and Bus`\n    \n- **routes** (string): Comma-separated route short names serving the stop\n    \n- **num_routes** (integer): Number of distinct routes serving the stop\n    \n- **frequency** (string): Estimated average frequency (e.g., `Every 28 Minutes`)\n    \n- **service_days** (string): Days with active service\n    \n- **wheelchair_accessible** (string): Accessibility label (e.g., `Wheelchair Accessible`)\n    \n- **latitude** (number): Stop latitude\n    \n- **longitude** (number): Stop longitude\n    \n- **map_embed_url** (string): Google Maps embed URL\n    \n- **street_view_url** (string): Google Street View URL\n    \n- **travel_time_ut** (string|null): Transit travel time to UT\n    \n- **travel_time_downtown** (string|null): Transit travel time to Downtown\n    \n- **travel_time_domain** (string|null): Transit travel time to The Domain\n    \n\n## Related Endpoints\n\n- `GET /api/transportation` - Get all transit stops (paginated)\n    \n- `GET /api/community` - Get all communities (paginated)\n    \n- `GET /api/housing` - Get all housing listings (paginated)"
+              "description": "# Get One Transit Stop\n\n## Overview\n\nThis endpoint retrieves a **single** Transportation (transit stop) instance by numeric `id` from the CivicHousing database. The stop represents a CapMetro GTFS-based stop and includes service details (routes, days, frequency), accessibility labeling, location, map/street-view links, and travel-time estimates to key destinations (string labels and numeric minutes when populated).\n\nThe response includes **related** **community** and **housing** rows from the association table, **at most one of each** (not full cross-links for the whole ZIP or corridor).\n\n## Endpoint Details\n\n- **Method:** `GET`\n- **URL:** `https://api.civichousing.me/api/transportation/{id}`\n\n## Path Parameters\n\n| Parameter | Type | Required | Description |\n| --- | --- | --- | --- |\n| `id` | integer | Yes | Primary key of the transit stop |\n\n## Example Request\n\n`GET https://api.civichousing.me/api/transportation/1`\n\n## Errors\n\n- **404 Not Found** if no stop exists for the given `id`.\n\n## Response Format\n\nReturns a **single JSON object** (not wrapped in `data`).\n\n### Stop fields (scalar)\n\n- **id** (integer): Unique identifier  \n- **stop_id** (string \\| null): CapMetro / GTFS-style stop identifier  \n- **stop_name** (string \\| null): Stop name  \n- **stop_url** (string \\| null): Stop detail URL  \n- **transport_type** (string \\| null): e.g. `Bus`, `Rail`, `Rail and Bus` (values depend on stored data)  \n- **routes** (string \\| null): Routes as stored (often comma-separated short names)  \n- **num_routes** (integer \\| null): Number of routes serving the stop  \n- **frequency** (string \\| null): e.g. `Every 28 Minutes`  \n- **service_days** (string \\| null): Days with active service  \n- **wheelchair_accessible** (string \\| null): e.g. `Wheelchair Accessible`  \n- **latitude** (number \\| null): Stop latitude  \n- **longitude** (number \\| null): Stop longitude  \n- **map_embed_url** (string \\| null): Google Maps embed URL  \n- **street_view_url** (string \\| null): Google Street View URL  \n- **travel_time_ut** (string \\| null): Display transit time to UT  \n- **travel_time_downtown** (string \\| null): Display transit time to Downtown  \n- **travel_time_domain** (string \\| null): Display transit time to The Domain  \n- **travel_time_ut_minutes** (integer \\| null): Minutes to UT  \n- **travel_time_downtown_minutes** (integer \\| null): Minutes to Downtown  \n- **travel_time_domain_minutes** (integer \\| null): Minutes to The Domain  \n- **zip_code** (string \\| null): ZIP as stored on the stop  \n\n### Related objects (`include_relations=True`)\n\n- **communities** (array): Zero or **one** community object (`to_dict` **without** nested relations on that object).  \n- **housing** (array): Zero or **one** housing object (`to_dict` **without** nested relations on that object).  \n\n## Related Endpoints\n\n- `GET https://api.civichousing.me/api/transportation` — All transit stops (paginated; filters + sort)  \n- `GET https://api.civichousing.me/api/community` — All communities (paginated)  \n- `GET https://api.civichousing.me/api/housing` — All housing listings (paginated)  "
             },
             "response": [
               {
@@ -543,9 +935,10 @@
                   "method": "GET",
                   "header": [],
                   "url": {
-                    "raw": "https://civichousing.me/api/transportation/1",
+                    "raw": "https://api.civichousing.me/api/transportation/1",
                     "protocol": "https",
                     "host": [
+                      "api",
                       "civichousing",
                       "me"
                     ],
@@ -580,6 +973,542 @@
           }
         ],
         "description": "## Overview\n\nThe Transportation model represents **CapMetro transit stops** (bus and rail) across Austin, Texas. Each instance corresponds to a real stop from CapMetro’s GTFS feed and combines stop location details with service characteristics such as **routes served, service days, and estimated frequency**. The model also enriches stops with **map/street-view links** and **estimated transit travel times** from the stop to key destinations (UT, Downtown, and The Domain).\n\n## Attributes\n\n- **Stop ID** (string): CapMetro GTFS stop identifier\n    \n- **Stop Name** (string): Name of the transit stop\n    \n- **Transport Type** (string): `Bus`, `Rail`, or `Rail and Bus` (based on route types)\n    \n- **Routes** (string): Comma-separated list of route short names serving the stop\n    \n- **Route Count** (integer): Number of distinct routes serving the stop (`num_routes`)\n    \n- **Service Days** (string): Days the stop has active service (derived from GTFS calendar exceptions)\n    \n- **Frequency** (string): Estimated average arrival frequency (e.g., `Every 28 Minutes`)\n    \n- **Wheelchair Accessible** (string): Accessibility label (e.g., `Wheelchair Accessible`)\n    \n- **Stop URL** (string): CapMetro stop detail page link\n    \n- **Latitude / Longitude** (number): Stop coordinates\n    \n- **Map Embed URL** (string): Google Maps embed link for the stop\n    \n- **Street View URL** (string): Google Street View image link for the stop\n    \n- **Travel Time to UT** (string): Estimated transit time to UT (`travel_time_ut`)\n    \n- **Travel Time to Downtown** (string): Estimated transit time to Downtown (`travel_time_downtown`)\n    \n- **Travel Time to The Domain** (string): Estimated transit time to The Domain (`travel_time_domain`)\n    \n\n## Connected Models\n\n- **Communities** — Transit stops are linked to ZIP-based communities they serve\n    \n- **Housing** — Transit stops are linked to nearby/related affordable housing listings\n    \n\n## Available Endpoints\n\n- `GET /api/transportation` - Retrieve all transit stops (paginated)\n    \n- `GET /api/transportation/:id` - Retrieve a specific transit stop by ID\n    \n\n## Data Sources / APIs Used\n\n- [CapMetro GTFS Data](https://data.texas.gov/dataset/CapMetro-GTFS/r4v4-vz24/about_data)\n    \n- [Google Maps Directions API](https://mapsplatform.google.com/lp/maps-apis/)"
+      },
+      {
+        "name": "Search",
+        "item": [
+          {
+            "name": "Search",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Status 200', () => pm.response.to.have.status(200));\r",
+                    "pm.test('JSON search envelope', () => {\r",
+                    "    const j = pm.response.json();\r",
+                    "    pm.expect(j).to.have.property('results').that.is.an('array');\r",
+                    "    pm.expect(j).to.have.property('total').that.is.a('number');\r",
+                    "    pm.expect(j).to.have.property('page').that.is.a('number');\r",
+                    "    pm.expect(j).to.have.property('pages').that.is.a('number');\r",
+                    "});\r",
+                    "pm.test('Global rows have type + data when non-empty', () => {\r",
+                    "    (pm.response.json().results || []).forEach((row) => {\r",
+                    "        pm.expect(row).to.have.property('type');\r",
+                    "        pm.expect(['housing', 'community', 'transportation']).to.include(row.type);\r",
+                    "        pm.expect(row).to.have.property('data');\r",
+                    "    });\r",
+                    "});"
+                  ],
+                  "type": "text/javascript",
+                  "packages": {},
+                  "requests": {}
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://api.civichousing.me/api/search?q=787",
+                "protocol": "https",
+                "host": [
+                  "api",
+                  "civichousing",
+                  "me"
+                ],
+                "path": [
+                  "api",
+                  "search"
+                ],
+                "query": [
+                  {
+                    "key": "q",
+                    "value": "787"
+                  }
+                ]
+              },
+              "description": "## Search — global (`GET`)\n\n**URL:** `https://api.civichousing.me/api/search`\n\nSearches **housing**, **community**, and **transportation** in one request. Matches use PostgreSQL full-text search (plus ILIKE fallback). Up to **200** hits per model are merged, sorted by **relevance** (`rank`), then paginated.\n\n### Query parameters\n\n| Parameter | Required | Description |\n| --- | --- | --- |\n| `q` | Yes (for non-empty results) | Search text. Empty or whitespace → `results: []`, `total: 0`. |\n| `page` | No | Page number, default `1`. |\n| `per_page` | No | Page size, default `50`. |\n\nNo filters or `sort` / `order` on this route.\n\n### Response\n\nJSON object:\n\n- `results` — array of `{ \"type\": \"housing\" \\| \"community\" \\| \"transportation\", \"data\": { ... }, \"rank\": }`\n    \n- `total` — count after merging (bounded by per-model fetch limits)\n    \n- `page`, `pages` — pagination\n    \n\n### Example\n\n`https://api.civichousing.me/api/search?q=787`"
+            },
+            "response": [
+              {
+                "name": "Search",
+                "originalRequest": {
+                  "method": "GET",
+                  "header": [],
+                  "url": {
+                    "raw": "https://api.civichousing.me/api/search",
+                    "protocol": "https",
+                    "host": [
+                      "api",
+                      "civichousing",
+                      "me"
+                    ],
+                    "path": [
+                      "api",
+                      "search"
+                    ]
+                  }
+                },
+                "_postman_previewlanguage": null,
+                "header": null,
+                "cookie": [],
+                "body": null
+              }
+            ]
+          },
+          {
+            "name": "SearchCommunity",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Status 200', () => pm.response.to.have.status(200));\r",
+                    "pm.test('JSON search envelope', () => {\r",
+                    "    const j = pm.response.json();\r",
+                    "    pm.expect(j).to.have.property('results').that.is.an('array');\r",
+                    "    pm.expect(j).to.have.property('total').that.is.a('number');\r",
+                    "    pm.expect(j).to.have.property('page').that.is.a('number');\r",
+                    "    pm.expect(j).to.have.property('pages').that.is.a('number');\r",
+                    "});\r",
+                    "pm.test('Each hit has data + rank when non-empty', () => {\r",
+                    "    (pm.response.json().results || []).forEach((row) => {\r",
+                    "        pm.expect(row).to.have.property('data');\r",
+                    "        pm.expect(row).to.have.property('rank');\r",
+                    "        pm.expect(row.data).to.have.property('zip_code');\r",
+                    "    });\r",
+                    "});"
+                  ],
+                  "type": "text/javascript",
+                  "packages": {},
+                  "requests": {}
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://api.civichousing.me/api/search/community?q=Travis",
+                "protocol": "https",
+                "host": [
+                  "api",
+                  "civichousing",
+                  "me"
+                ],
+                "path": [
+                  "api",
+                  "search",
+                  "community"
+                ],
+                "query": [
+                  {
+                    "key": "q",
+                    "value": "Travis"
+                  }
+                ]
+              },
+              "description": "## Search — community (`GET`)\n\n**URL:** `https://api.civichousing.me/api/search/community`\n\nFull-text / ILIKE search **only** on community rows. Each item is `{ \"data\": { ... }, \"rank\": }` (no `type` field).\n\n### Query parameters\n\n| Parameter | Required | Description |\n| --- | --- | --- |\n| `q` | Yes (for non-empty results) | Search text. |\n| `page` | No | Default `1`. |\n| `per_page` | No | Default `50`. |\n| `sort` | No | One of: `median_housing_price`, `health_count`, `crime_index`, `park_count`. |\n| `order` | No | `asc` or `desc`, default `asc`. |\n\n**Optional filters (AND with search):** `median_housing_price`, `crime_index`, `transit_score`, `health_count` (exact int), `population_min`, `population_max`.\n\n### Response\n\n`results`, `total`, `page`, `pages` — same envelope as other search routes.\n\n### Example\n\n`https://api.civichousing.me/api/search/community?q=Travis&per_page=10`"
+            },
+            "response": [
+              {
+                "name": "SearchCommunity",
+                "originalRequest": {
+                  "method": "GET",
+                  "header": [],
+                  "url": {
+                    "raw": "https://api.civichousing.me/api/search/community",
+                    "protocol": "https",
+                    "host": [
+                      "api",
+                      "civichousing",
+                      "me"
+                    ],
+                    "path": [
+                      "api",
+                      "search",
+                      "community"
+                    ]
+                  }
+                },
+                "_postman_previewlanguage": null,
+                "header": null,
+                "cookie": [],
+                "body": null
+              }
+            ]
+          },
+          {
+            "name": "SearchHousing",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Status 200', () => pm.response.to.have.status(200));\r",
+                    "pm.test('JSON search envelope', () => {\r",
+                    "    const j = pm.response.json();\r",
+                    "    pm.expect(j).to.have.property('results').that.is.an('array');\r",
+                    "    pm.expect(j).to.have.property('total').that.is.a('number');\r",
+                    "    pm.expect(j).to.have.property('page').that.is.a('number');\r",
+                    "    pm.expect(j).to.have.property('pages').that.is.a('number');\r",
+                    "});\r",
+                    "pm.test('Each hit has data + rank when non-empty', () => {\r",
+                    "    (pm.response.json().results || []).forEach((row) => {\r",
+                    "        pm.expect(row).to.have.property('data');\r",
+                    "        pm.expect(row).to.have.property('rank');\r",
+                    "        pm.expect(row.data).to.have.property('project_name');\r",
+                    "    });\r",
+                    "});"
+                  ],
+                  "type": "text/javascript",
+                  "packages": {},
+                  "requests": {}
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://api.civichousing.me/api/search/housing?q=78705",
+                "protocol": "https",
+                "host": [
+                  "api",
+                  "civichousing",
+                  "me"
+                ],
+                "path": [
+                  "api",
+                  "search",
+                  "housing"
+                ],
+                "query": [
+                  {
+                    "key": "q",
+                    "value": "78705"
+                  }
+                ]
+              },
+              "description": "## Search — housing (`GET`)\n\n**URL:** `https://api.civichousing.me/api/search/housing`\n\nFull-text / ILIKE search **only** on housing rows. Each item is `{ \"data\": { ... }, \"rank\": }`.\n\n### Query parameters\n\n| Parameter | Required | Description |\n| --- | --- | --- |\n| `q` | Yes (for non-empty results) | Search text. |\n| `page` | No | Default `1`. |\n| `per_page` | No | Default `50`. |\n| `sort` | No | One of: `walk_score`, `total_affordable_units`, `id`, `income_restriction_level`. |\n| `order` | No | `asc` or `desc`, default `asc`. |\n\n**Optional filters:** `unit_type`, `housing_tenure`, `zip_code`.\n\n### Response\n\n`results`, `total`, `page`, `pages`.\n\n### Example\n\n`https://api.civichousing.me/api/search/housing?q=78705&unit_type=Multifamily&per_page=10`"
+            },
+            "response": [
+              {
+                "name": "SearchHousing",
+                "originalRequest": {
+                  "method": "GET",
+                  "header": [],
+                  "url": {
+                    "raw": "https://api.civichousing.me/api/search/housing",
+                    "protocol": "https",
+                    "host": [
+                      "api",
+                      "civichousing",
+                      "me"
+                    ],
+                    "path": [
+                      "api",
+                      "search",
+                      "housing"
+                    ]
+                  }
+                },
+                "_postman_previewlanguage": null,
+                "header": null,
+                "cookie": [],
+                "body": null
+              }
+            ]
+          },
+          {
+            "name": "SearchTransportation",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Status 200', () => pm.response.to.have.status(200));\r",
+                    "pm.test('JSON search envelope', () => {\r",
+                    "    const j = pm.response.json();\r",
+                    "    pm.expect(j).to.have.property('results').that.is.an('array');\r",
+                    "    pm.expect(j).to.have.property('total').that.is.a('number');\r",
+                    "    pm.expect(j).to.have.property('page').that.is.a('number');\r",
+                    "    pm.expect(j).to.have.property('pages').that.is.a('number');\r",
+                    "});\r",
+                    "pm.test('Each hit has data + rank when non-empty', () => {\r",
+                    "    (pm.response.json().results || []).forEach((row) => {\r",
+                    "        pm.expect(row).to.have.property('data');\r",
+                    "        pm.expect(row).to.have.property('rank');\r",
+                    "        pm.expect(row.data).to.have.property('stop_name');\r",
+                    "    });\r",
+                    "});"
+                  ],
+                  "type": "text/javascript",
+                  "packages": {},
+                  "requests": {}
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://api.civichousing.me/api/search/transportation?q=Bus",
+                "protocol": "https",
+                "host": [
+                  "api",
+                  "civichousing",
+                  "me"
+                ],
+                "path": [
+                  "api",
+                  "search",
+                  "transportation"
+                ],
+                "query": [
+                  {
+                    "key": "q",
+                    "value": "Bus"
+                  }
+                ]
+              },
+              "description": "## Search — transportation (`GET`)\n\n**URL:** `https://api.civichousing.me/api/search/transportation`\n\nFull-text / ILIKE search **only** on transit stop rows. Each item is `{ \"data\": { ... }, \"rank\": }`.\n\n### Query parameters\n\n| Parameter | Required | Description |\n| --- | --- | --- |\n| `q` | Yes (for non-empty results) | Search text. |\n| `page` | No | Default `1`. |\n| `per_page` | No | Default `50`. |\n| `sort` | No | One of: `num_routes`, `travel_time_ut_minutes`, `travel_time_downtown_minutes`, `travel_time_domain_minutes`. |\n| `order` | No | `asc` or `desc`, default `asc`. |\n\n**Optional filters:** `transport_type`, `wheelchair_accessible`, `num_routes_min`, `num_routes_max`, `travel_time_ut_minutes_min`, `travel_time_ut_minutes_max`, `travel_time_downtown_minutes_min`, `travel_time_downtown_minutes_max`.\n\n### Response\n\n`results`, `total`, `page`, `pages`.\n\n### Example\n\n`https://api.civichousing.me/api/search/transportation?q=Bus&transport_type=Bus&per_page=10`"
+            },
+            "response": [
+              {
+                "name": "SearchTransportation",
+                "originalRequest": {
+                  "method": "GET",
+                  "header": [],
+                  "url": {
+                    "raw": "https://api.civichousing.me/api/search/transportation",
+                    "protocol": "https",
+                    "host": [
+                      "api",
+                      "civichousing",
+                      "me"
+                    ],
+                    "path": [
+                      "api",
+                      "search",
+                      "transportation"
+                    ]
+                  }
+                },
+                "_postman_previewlanguage": null,
+                "header": null,
+                "cookie": [],
+                "body": null
+              }
+            ]
+          }
+        ],
+        "description": "## Overview\n\n**Search** runs text queries against CivicHousing data using PostgreSQL **full-text** search (with an **ILIKE** fallback on stringified columns). Use **global search** to search all resource types in one ranked list, or **scoped search** to limit results to communities, housing, or transportation—optionally combined with the same **filters** and **sort** options as the corresponding list endpoints.\n\n## How it works\n\n- **`q`** is the search string. If it is empty or whitespace-only, you get **no hits** (empty `results`, `total` 0).\n    \n- Each hit includes a **`rank`** (relevance). Scoped routes may also apply **`sort`** / **`order`** on a real column, then break ties by rank.\n    \n- **Global** search merges up to **200** matches per model type, sorts everything by rank, then paginates. **Scoped** search paginates inside a single table.\n    \n\n## Response shape (all search routes)\n\nEvery search endpoint returns the same top-level envelope:\n\n| Field | Meaning |\n| --- | --- |\n| `results` | Array of hits (shape differs slightly for global vs scoped—see below). |\n| `total` | Number of matching rows for that endpoint’s logic. |\n| `page` | Current page (1-based). |\n| `pages` | Total pages for the given `per_page`. |\n\n## Endpoints\n\nAssume base URL **`https://api.civichousing.me`**. Paths below are under `/api`.\n\n### Global search\n\n| Method | Path | Purpose |\n| --- | --- | --- |\n| `GET` | `/search` | Search **housing**, **community**, and **transportation** together; results are tagged by type and ordered by relevance. |\n\n**Query parameters**\n\n| Parameter | Required | Description |\n| --- | --- | --- |\n| `q` | Yes (for results) | Search text. |\n| `page` | No | Page number (default `1`). |\n| `per_page` | No | Page size (default `50`). |\n\n**Each item in** **`results`****:** `{ \"type\": \"housing\" \\| \"community\" \\| \"transportation\", \"data\": { ... }, \"rank\": number }`  \n`data` is the same summary object shape as the corresponding list/detail serializers (no extra relation bundles unless `to_dict` includes them).\n\n### Scoped search\n\n| Method | Path | Purpose |\n| --- | --- | --- |\n| `GET` | `/search/housing` | Search **housing** only. |\n| `GET` | `/search/community` | Search **communities** only. |\n| `GET` | `/search/transportation` | Search **transit stops** only. |\n\n**Common query parameters**\n\n| Parameter | Required | Description |\n| --- | --- | --- |\n| `q` | Yes (for results) | Search text. |\n| `page` | No | Page number (default `1`). |\n| `per_page` | No | Page size (default `50`). |\n| `sort` | No | Column to sort by (allowed values depend on resource—see below). |\n| `order` | No | `asc` or `desc` (default `asc`). |\n\n**Each item in** **`results`****:** `{ \"data\": { ... }, \"rank\": number }` (no `type` field—the path implies the resource).\n\n**Optional filters (same names as list routes)**\n\n- **Housing:** `unit_type`, `housing_tenure`, `zip_code`\n    \n- **Community:** `median_housing_price`, `crime_index`, `transit_score`, `health_count`, `population_min`, `population_max`\n    \n- **Transportation:** `transport_type`, `wheelchair_accessible`, `num_routes_min`, `num_routes_max`, `travel_time_ut_minutes_min`, `travel_time_ut_minutes_max`, `travel_time_downtown_minutes_min`, `travel_time_downtown_minutes_max`\n    \n\n**Allowed** **`sort`** **values**\n\n- **Housing:** `walk_score`, `total_affordable_units`, `id`, `income_restriction_level`\n    \n- **Community:** `median_housing_price`, `health_count`, `crime_index`, `park_count`\n    \n- **Transportation:** `num_routes`, `travel_time_ut_minutes`, `travel_time_downtown_minutes`, `travel_time_domain_minutes`\n    \n\n## Related documentation\n\nFor field-level definitions of **Community**, **Housing**, and **Transportation** objects, use the model docs on the list/detail endpoints; search only changes **how rows are found and ordered**, not the underlying field meanings."
+      },
+      {
+        "name": "System Endpoints",
+        "item": [
+          {
+            "name": "Base",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                    "pm.test('Root JSON shape', () => {",
+                    "    const j = pm.response.json();",
+                    "    pm.expect(j).to.have.property('message');",
+                    "    pm.expect(j).to.have.property('api');",
+                    "    pm.expect(j).to.have.property('docs');",
+                    "    pm.expect(j).to.have.property('health');",
+                    "});"
+                  ],
+                  "type": "text/javascript",
+                  "packages": {},
+                  "requests": {}
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://api.civichousing.me",
+                "protocol": "https",
+                "host": [
+                  "api",
+                  "civichousing",
+                  "me"
+                ]
+              },
+              "description": "## API root\n\n**Method:** `GET`  \n**URL:** `https://api.civichousing.me/`\n\nReturns a small JSON object with a human-readable message and relative paths for the main entry points.\n\n### Response (example shape)\n\n- `message` — string (e.g. confirms CivicHousing API is running)\n    \n- `api` — path to API metadata (e.g. `/api`)\n    \n- `docs` — path to docs redirect (e.g. `/docs`)\n    \n- `health` — path to health check (e.g. `/health`)\n    \n\n### Typical checks (Postman Tests)\n\n- Status `200`\n    \n- Body is JSON and includes `message`, `api`, `docs`, `health`"
+            },
+            "response": []
+          },
+          {
+            "name": "API",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                    "pm.test('API discovery JSON', () => {",
+                    "    const j = pm.response.json();",
+                    "    pm.expect(j).to.have.property('name');",
+                    "    pm.expect(j).to.have.property('resources');",
+                    "    pm.expect(j.resources).to.have.property('housing');",
+                    "    pm.expect(j.resources).to.have.property('community');",
+                    "    pm.expect(j.resources).to.have.property('transportation');",
+                    "});"
+                  ],
+                  "type": "text/javascript",
+                  "packages": {},
+                  "requests": {}
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://api.civichousing.me/api",
+                "protocol": "https",
+                "host": [
+                  "api",
+                  "civichousing",
+                  "me"
+                ],
+                "path": [
+                  "api"
+                ]
+              },
+              "description": "## API info\n\n**Method:** `GET`  \n**URL:** `https://api.civichousing.me/api`\n\n### Response (conceptual)\n\n- `name`, `version`, `description`\n    \n- `resources` — nested object with `housing`, `community`, `transportation`, each with `list` and `detail` path patterns\n    \n- `system` — e.g. health path\n    \n- `documentation` — docs path\n    \n\n### Typical checks\n\n- Status `200`\n    \n- JSON includes `name`, `resources`, and each resource has list/detail entries"
+            },
+            "response": []
+          },
+          {
+            "name": "Health",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                    "pm.test('Health payload', () => {",
+                    "    const j = pm.response.json();",
+                    "    pm.expect(j).to.have.property('status', 'ok');",
+                    "});"
+                  ],
+                  "type": "text/javascript",
+                  "packages": {},
+                  "requests": {}
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://api.civichousing.me/health",
+                "protocol": "https",
+                "host": [
+                  "api",
+                  "civichousing",
+                  "me"
+                ],
+                "path": [
+                  "health"
+                ]
+              },
+              "description": "## Health\n\n**Method:** `GET`  \n**URL:** `https://api.civichousing.me/health`\n\n### Response (example)\n\nJSON object with a `status` field (e.g. `\"ok\"`).\n\n### Typical checks\n\n- Status `200`\n    \n- JSON includes `status`"
+            },
+            "response": []
+          },
+          {
+            "name": "Data as of",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                    "pm.test('Has last_synced_at', () => {",
+                    "    const j = pm.response.json();",
+                    "    pm.expect(j).to.have.property('last_synced_at');",
+                    "});"
+                  ],
+                  "type": "text/javascript",
+                  "packages": {},
+                  "requests": {}
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://api.civichousing.me/api/data-as-of",
+                "protocol": "https",
+                "host": [
+                  "api",
+                  "civichousing",
+                  "me"
+                ],
+                "path": [
+                  "api",
+                  "data-as-of"
+                ]
+              },
+              "description": "## Data as of\n\n**Method:** `GET`  \n**URL:** `https://api.civichousing.me/api/data-as-of`\n\n### Response\n\n- `last_synced_at` — ISO 8601 datetime string, or `null` if there is no housing data\n    \n\n### Typical checks\n\n- Status `200`\n    \n- JSON has key `last_synced_at`"
+            },
+            "response": []
+          },
+          {
+            "name": "Docs",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "pm.test('Docs responds (redirect or OK)', () => {",
+                    "    pm.expect(pm.response.code).to.be.oneOf([200, 301, 302, 303, 307, 308]);",
+                    "});",
+                    "pm.test('Redirect has Location when 3xx', () => {",
+                    "    if (pm.response.code >= 300 && pm.response.code < 400) {",
+                    "        pm.expect(pm.response.headers.get('Location')).to.exist;",
+                    "    }",
+                    "});"
+                  ],
+                  "type": "text/javascript",
+                  "packages": {},
+                  "requests": {}
+                }
+              }
+            ],
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "https://api.civichousing.me/docs",
+                "protocol": "https",
+                "host": [
+                  "api",
+                  "civichousing",
+                  "me"
+                ],
+                "path": [
+                  "docs"
+                ]
+              },
+              "description": "## Documentation redirect\n\n**Method:** `GET`  \n**URL:** `https://api.civichousing.me/docs`\n\nRedirects to published API docs (typical HTTP 302 with `Location` header)."
+            },
+            "response": []
+          }
+        ],
+        "description": "## System endpoints\n\nThese routes are served by the **CivicHousing API** app (same deployment as `/api/housing`, `/api/search`, etc.). They expose a tiny **root index**, a **liveness** check, **API discovery** metadata, **data freshness**, and a shortcut to **published documentation**.\n\n**Base URL (typical):** `https://api.civichousing.me`\n\n| Name | Path | Purpose |\n| --- | --- | --- |\n| API root | `GET /` | Short JSON describing that the API is up and where to go next. |\n| Health | `GET /health` | Simple OK payload for monitoring / smoke tests. |\n| API info | `GET /api` | Machine-readable list of resource paths and system links. |\n| Data as of | `GET /api/data-as-of` | Latest housing sync timestamp from the database. |\n| Docs | `GET /docs` | HTTP redirect (or proxied response) to external API documentation. |\n\n**Auth:** None required for these GETs."
       }
     ]
   }

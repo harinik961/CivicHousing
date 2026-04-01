@@ -1,7 +1,9 @@
 import '@testing-library/jest-dom';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import NavBar from './components/Navbar';
+import GlobalSearch from './pages/GlobalSearch';
 import Communities from './pages/Communities/Community';
 import Housing from './pages/Housing/Housing';
 import Transportation from './pages/Transportation/Transportation';
@@ -43,6 +45,12 @@ jest.mock('./pages/Transportation/Transport-Instance', () => {
   };
 });
 
+jest.mock('./components/ModelCard', () => {
+  return function MockModelCard() {
+    return <div data-testid="model-card">card</div>;
+  };
+});
+
 // Test #1
 test('NavBar renders the logo', () => {
   render(<MemoryRouter><NavBar /></MemoryRouter>);
@@ -64,6 +72,7 @@ test('NavBar renders all links', () => {
   expect(links.some(link => /housing/i.test(link.textContent))).toBe(true);
   expect(links.some(link => /transportation/i.test(link.textContent))).toBe(true);
   expect(links.some(link => /about/i.test(link.textContent))).toBe(true);
+  expect(links.some(link => /^search$/i.test((link.textContent || '').trim()))).toBe(true);
 });
 
 // Test #4
@@ -75,6 +84,7 @@ test('NavBar links point to correct routes', () => {
   expect(links.find(link => /housing/i.test(link.textContent))).toHaveAttribute('href', '/housing');
   expect(links.find(link => /transportation/i.test(link.textContent))).toHaveAttribute('href', '/transportation');
   expect(links.find(link => /about/i.test(link.textContent))).toHaveAttribute('href', '/about');
+  expect(links.find(link => /^search$/i.test((link.textContent || '').trim()))).toHaveAttribute('href', '/globalsearch');
 });
 
 // Test #5
@@ -123,4 +133,60 @@ test('About page renders', async () => {
 test('Home page renders', async () => {
   render(<MemoryRouter><Home /></MemoryRouter>);
   expect(await screen.findByText(/Welcome to Civic Housing/)).toBeInTheDocument();
+});
+
+test('Global Search page renders title', () => {
+  render(<GlobalSearch />);
+  expect(screen.getByRole('heading', { name: /global search/i })).toBeInTheDocument();
+});
+
+test('Global Search submit calls search API', async () => {
+  const fetchMock = jest.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({
+      results: [{ type: 'housing', data: { id: 1, project_name: 'X', zip_code: '78701' } }],
+      total: 1,
+      page: 1,
+      pages: 1,
+    }),
+  });
+  global.fetch = fetchMock;
+  render(<GlobalSearch />);
+  const user = userEvent.setup();
+  await user.type(
+    screen.getByPlaceholderText(/Search housing, communities, transportation/i),
+    '787'
+  );
+  await user.click(screen.getByRole('button', { name: /^search$/i }));
+  await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+  expect(fetchMock.mock.calls[0][0]).toMatch(/\/api\/search\?q=/);
+});
+
+test('Global Search shows result summary after fetch', async () => {
+  global.fetch = jest.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({
+      results: [{ type: 'community', data: { id: 1, zip_code: '78705' } }],
+      total: 2,
+      page: 1,
+      pages: 1,
+    }),
+  });
+  render(<GlobalSearch />);
+  const user = userEvent.setup();
+  await user.type(screen.getByRole('textbox'), 'travis');
+  await user.click(screen.getByRole('button', { name: /^search$/i }));
+  expect(await screen.findByText(/Showing/)).toBeInTheDocument();
+});
+
+test('Global Search empty results message', async () => {
+  global.fetch = jest.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({ results: [], total: 0, page: 1, pages: 1 }),
+  });
+  render(<GlobalSearch />);
+  const user = userEvent.setup();
+  await user.type(screen.getByRole('textbox'), 'nomatchzz');
+  await user.click(screen.getByRole('button', { name: /^search$/i }));
+  expect(await screen.findByText(/No results found/)).toBeInTheDocument();
 });

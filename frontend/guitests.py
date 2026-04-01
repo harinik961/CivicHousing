@@ -139,5 +139,58 @@ class CivicHousingUnitTests(unittest.TestCase):
     badge = self.wait_for_element(By.XPATH, "//*[contains(text(), 'Data as of')]")
     self.assertIn("Data as of", badge.text)
 
+  def test_global_search_page_title(self):
+    self.driver.get(base_url + "/globalsearch")
+    h1 = self.wait_for_element(By.TAG_NAME, "h1")
+    self.assertIn("Global Search", h1.text)
+
+  def test_global_search_submission_shows_outcome(self):
+    self.driver.get(base_url + "/globalsearch")
+    inp = self.wait_for_element(By.CSS_SELECTOR, 'input[placeholder*="Search housing"]')
+    inp.clear()
+    inp.send_keys("787")
+    self.driver.find_element(By.CSS_SELECTOR, 'button[type="submit"]').click()
+    self.wait_for_element(
+      By.XPATH,
+      '//*[contains(text(), "Results for") or contains(text(), "No results found")]'
+    )
+
+  def test_housing_inline_search_shows_banner(self):
+    self.driver.get(base_url + "/housing")
+    inp = self.wait_for_element(By.CSS_SELECTOR, 'input[placeholder*="Search housing"]')
+    inp.clear()
+    inp.send_keys("austin")
+    buttons = self.driver.find_elements(By.XPATH, '//button[contains(text(), "Search")]')
+    self.assertTrue(len(buttons) >= 1)
+    buttons[0].click()
+    banner = self.wait_for_element(By.XPATH, '//*[contains(text(), "Showing results for")]')
+    self.assertIn("Showing results for", banner.text)
+
+  def test_housing_sort_keeps_housing_heading(self):
+    self.driver.get(base_url + "/housing")
+    self.wait_for_element(By.TAG_NAME, "h2")
+    select_el = self.wait_for_element(By.ID, "select")
+    options = select_el.find_elements(By.TAG_NAME, "option")
+    if len(options) > 1:
+      options[1].click()
+    h2 = self.wait_for_element(By.TAG_NAME, "h2")
+    self.assertIn("Housing", h2.text)
+
+  def test_housing_multifamily_filter_applies(self):
+    self.driver.get(base_url + "/housing")
+    self.wait_for_element(By.TAG_NAME, "h2")
+    filters_btn = self.wait_for_element(By.XPATH, '//button[.//span[text()="Filters"]]')
+    filters_btn.click()
+    multifamily = self.wait_for_element(By.ID, "filter-unit_type-2")
+    if not multifamily.is_selected():
+      multifamily.click()
+    apply_btn = self.wait_for_element(By.XPATH, '//button[contains(text(), "Apply filters")]')
+    apply_btn.click()
+    active = self.wait_for_element(
+      By.XPATH,
+      '//p[.//span[contains(text(), "Active filters:")] and contains(., "Multifamily")]'
+    )
+    self.assertIn("Multifamily", active.text)
+
 if __name__ == "__main__":
   unittest.main()

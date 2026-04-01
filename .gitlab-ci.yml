@@ -17,7 +17,7 @@ jest_unit_tests:
   script:
     - cd frontend
     - npm install --include=dev
-    - npm test
+    - CI=true npm test -- --watchAll=false
   only:
     - main
 

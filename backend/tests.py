@@ -106,7 +106,7 @@ class TestRoutes(unittest.TestCase):
         self.assertIn("longitude", data)
         self.assertIn("transport_type", data)
 
-    def test_nearest_stop_missing_coords(app):
+    def test_nearest_stop_missing_coords(self):
         h = Housing(latitude=None, longitude=None)
         with flask_app.app_context():
             result = nearest_transport_stop_for_housing(h)
@@ -122,14 +122,14 @@ class TestRoutes(unittest.TestCase):
         assert result is None
 
     def test_google_distance_bad_response(self):
+        json_data = {"status": "OK", "routes": []}
         with patch("requests.get") as mock_get:
-            json_data = {"status": "OK", "routes": []}
-        mock_get.return_value.json.return_value = json_data
-        mock_get.return_value.raise_for_status = lambda: None
+            mock_get.return_value.json.return_value = json_data
+            mock_get.return_value.raise_for_status = lambda: None
 
-        result = get_google_walking_distance_miles(
-            30.0, -97.0, 30.1, -97.1, "not_a_key"
-        )
+            result = get_google_walking_distance_miles(
+                30.0, -97.0, 30.1, -97.1, "not_a_key"
+            )
         assert result is None
 
     def test_google_distance_missing_legs(self):
@@ -273,6 +273,74 @@ class TestRoutes(unittest.TestCase):
 
         if len(values) > 1:
             self.assertEqual(values, sorted(values, reverse=True))
+
+    def test_housing_sort_descending(self):
+        response = self.client.get("/api/housing?sort=walk_score&order=desc")
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        values = [
+            item.get("walk_score")
+            for item in payload.get("data", [])
+            if item.get("walk_score") is not None
+        ]
+
+        if len(values) > 1:
+            self.assertEqual(values, sorted(values, reverse=True))
+
+    def test_transportation_sort_descending(self):
+        response = self.client.get("/api/transportation?sort=num_routes&order=desc")
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        values = [
+            item.get("num_routes")
+            for item in payload.get("data", [])
+            if item.get("num_routes") is not None
+        ]
+
+        if len(values) > 1:
+            self.assertEqual(values, sorted(values, reverse=True))
+
+    def test_global_search_response_shape(self):
+        response = self.client.get("/api/search?q=787")
+        self.assertEqual(response.status_code, 200)
+        body = response.get_json()
+        self.assertIn("results", body)
+        self.assertIn("total", body)
+        self.assertIn("page", body)
+        self.assertIn("pages", body)
+        for row in body["results"]:
+            self.assertIn("type", row)
+            self.assertIn("data", row)
+            self.assertIn(row["type"], ("housing", "community", "transportation"))
+
+    def test_global_search_empty_query(self):
+        response = self.client.get("/api/search")
+        self.assertEqual(response.status_code, 200)
+        body = response.get_json()
+        self.assertEqual(body["results"], [])
+        self.assertEqual(body["total"], 0)
+
+    def test_community_search_response_shape(self):
+        response = self.client.get("/api/search/community?q=Travis")
+        self.assertEqual(response.status_code, 200)
+        body = response.get_json()
+        self.assertIn("results", body)
+        self.assertIn("total", body)
+        for row in body["results"]:
+            self.assertIn("data", row)
+            self.assertIn("zip_code", row["data"])
+
+    def test_housing_list_respects_zip_code_filter(self):
+        sample = self.client.get("/api/housing?per_page=1")
+        self.assertEqual(sample.status_code, 200)
+        rows = sample.get_json().get("data") or []
+        if not rows or not rows[0].get("zip_code"):
+            self.skipTest("no housing row with zip_code in DB")
+        z = rows[0]["zip_code"]
+        response = self.client.get(f"/api/housing?zip_code={z}&per_page=50")
+        self.assertEqual(response.status_code, 200)
+        for row in response.get_json().get("data", []):
+            self.assertEqual(row.get("zip_code"), z)
 
     def test_housing_search_with_filter_enforces_unit_type(self):
         sample = self.client.get("/api/housing?unit_type=Multifamily&per_page=1")
