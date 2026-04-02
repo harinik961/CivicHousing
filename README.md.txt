@@ -4,6 +4,16 @@ Canvas / Discord group number:
 Names of the team members: 
 - Coco Zhou, Sri Harini Kolluru, Aarshi Khatiwada, Matthew Pham, Alexander Nguyen
 
+Team Member Names, EIDs, GitLabID's: 
+
+| Name | EID | GitLabID |
+|---|---|---|
+| Coco Zhou | ccz247 | @oxcoco |
+| Matthew Pham | map7578 | @matthewpham16 |
+| Sri Harini Kolluru | sk59945 | @sriharini.kolluru |
+| Alexander Nguyen | ALN2284 | @alexandernguyen1504 |
+| Aarshi Khatiwada | ak48827 | @rckhatiwada1271 |
+
 Name of the project: 
 - CivicHousing 
 
