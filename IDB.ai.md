@@ -16,6 +16,8 @@ Debugging Help
 - Helped debug and fix  routing between model and instance pages by identifying a missing `modelName` prop, which resolved the `/undefined/1` navigation issue and enabled proper linking across all models
 - Assisted in fixing page linking issues for the Navbar
 - Helped debug GitLab API retrievals and link warnings on the About Page
+- Helped troubleshoot data formatting problems, such as handling values like "Every 15 Minutes" (string) values for sorting
+-Assisted in identifying why duplicate API requests were being made from the frontend
 
 
 Conceptual Clarification
@@ -23,6 +25,7 @@ Conceptual Clarification
 - Learned the difference between hot reloading vs restarting the dev server
 - Learned how to use GitLab API to retrieve number of commits and issues closed and the why one is tracked via Gitlab usernames and the other with user emails
 - Learned how list filtering fits REST APIs (optional query parameters on GET, encoding in the URL, and matching what the backend parses)
+- Improved understanding of how data representation affects functionality, such as why string-based values need to be interpreted differently for sorting
 
 Code Improvement
 - Built out the home page carousel using React Bootstrap's Carousel component with
@@ -34,6 +37,7 @@ Code Improvement
 - Setting up docker-compose.yml — AI assisted with configuring docker-compose (services, environment, or build steps) for local development
 - Filtering — AI helped work through how to implement filtering (e.g., query parameters on list endpoints, wiring frontend controls to API calls, and keeping filter state consistent with navigation or URLs)
 - Postman documentation — AI helped structure and write descriptions for the Postman collection (requests, variables, example bodies or responses) so the API was easier for the team to test and share
+- Moved highlighting logic from the backend to the frontend, simplifying the API and allowing more flexible UI control without modifying server responses
 
 
 UI Layout and Masonry Implementation
@@ -52,6 +56,8 @@ With the help of AI interaction I was able to understand what may be failing our
 
 For filtering, AI clarified how list endpoints and query strings fit together, which shortened the trial-and-error when connecting UI filters to the backend. For Postman, AI suggestions made it easier to document each request clearly so teammates could import the collection and reproduce calls without guessing parameters. 
 
+Another key improvement was shifting certain logic, such as highlighting and formatting, from the backend to the frontend. This simplified the API and made the UI more flexible without requiring backend changes
+
 How did you decide what to keep or ignore?
 
 The carousel was initially made with solid background colors for each 
@@ -61,6 +67,8 @@ background images by changing the CSS from `background-color` to
 changed from the AI's initial suggestion of `api.civichousing.me` to 
 `civichousing.me/api` after discussing it with the team.
 To decide what to keep or ignore, I would ask it to clarify what something may mean before doing it and then discussing with my teammates before making any changes.  
+
+AI suggested implementing highlighting on the backend using methods like rendering HTML (e.g., dangerouslySetInnerHTML). I chose to ignore this approach and instead implemented highlighting on the frontend, since it is safer, easier to control, and avoids potential security or rendering issues
 
 **Did the AI ever produce incorrect suggestions?**
 Yes — AI initially suggested restructuring the model data to use flat fields, 
@@ -113,7 +121,6 @@ for real images makes a significant visual difference on a landing page.
   <div className="masonry-item">...</div>
 </div>
 
-```
 
 This change taught me that CSS background images require `background-size: cover` 
 and `background-position: center` to display properly, and that swapping colors 
@@ -131,6 +138,21 @@ for real images makes a significant visual difference on a landing page.
     - npm install --include=dev
     - npm run build
 This change taught me more first hand about how something may run properly in your local machine but it could break on others.
+
+
+**Before**
+  useEffect(() => {
+    fetchData();
+  });
+
+**After**
+  useEffect(() => {
+    fetchData();
+  }, [sort, order]);
+
+  This change taught me that controlling when effects run in React is essential for preventing redundant API calls and ensuring efficient data fetching.
+
+
 
 ## Integrity Statement
 
