@@ -21,8 +21,8 @@ Responsibilities:
 - Ensured task completion
 
 GitLab Information: 
-- Git SHA: 
-- Git Pipeline Link:
+- Git SHA: c36dae0f229314d6188730c91f75567ac75a145f
+- Git Pipeline Link: https://gitlab.com/matthewpham16/cs373-spring-2026-53380_06/-/pipelines/2424854687
 
 Backend API Link: 
 [api.civichousing.me/api](https://api.civichousing.me/api)
