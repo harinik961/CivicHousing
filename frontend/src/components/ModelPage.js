@@ -95,6 +95,14 @@ function buildActiveFilterLines(applied, filterOptions) {
   return lines;
 }
 
+function findLastSyncedAt(rawItems) {
+  for (const item of rawItems || []) {
+    const candidate = item?.data ? item.data.last_synced_at : item?.last_synced_at;
+    if (candidate) return candidate;
+  }
+  return null;
+}
+
 export default function ModelPage({ title, apiEndpoint, modelName, attributes, query, sortOptions = [], filterOptions = [] }) {
 
   const [items, setItems] = useState([]);
@@ -190,6 +198,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
         setTotal(data.total ?? 0);
         setPages(data.pages ?? 1);
         setItems(formatted);
+        setLastSyncedAt((prev) => prev || findLastSyncedAt(raw));
         setLoading(false);
       })
       .catch(err => {
@@ -259,6 +268,7 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
         
         
         setItems(formatted);
+        setLastSyncedAt((prev) => prev || findLastSyncedAt(raw));
         setLoading(false);
       })
       .catch(err => {
