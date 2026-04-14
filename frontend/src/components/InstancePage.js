@@ -3,11 +3,6 @@ import { useParams } from "react-router-dom";
 import InstanceCard from "./InstanceCard";
 import ModelCard from "./ModelCard";
 
-const LOCAL_API_BASE = "http://localhost:5000";
-const PROD_API_BASE = "https://api.civichousing.me";
-const isLocalFrontend = window.location.hostname === "localhost";
-const API_BASE = isLocalFrontend ? LOCAL_API_BASE : PROD_API_BASE;
-
 export default function InstancePage({
   apiEndpoint,
 
@@ -25,7 +20,7 @@ export default function InstancePage({
 
   useEffect(() => {
     if (itemProp !== undefined) return;
-    fetch(`${API_BASE}/${apiEndpoint}/${id}`)
+    fetch(`https://api.civichousing.me/${apiEndpoint}/${id}`)
       .then(res => res.json())
       .then(res => setItemState(res))
       .catch(err => console.error("Error loading instance:", err));
