@@ -15,6 +15,8 @@ from search import (
     global_search,
 )
 
+from nl_query import nl_query_bp
+
 load_dotenv()
 
 
@@ -230,6 +232,8 @@ def create_app():
 
     db.init_app(app)
     migrate = Migrate(app, db)
+    app.register_blueprint(nl_query_bp)
+
 
     auto_create_tables = os.getenv("AUTO_CREATE_TABLES")
     should_auto_create = (

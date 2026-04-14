@@ -13,6 +13,7 @@ import HousingInstance from "./pages/Housing/HousingInstance";
 import TransportationInstance from "./pages/Transportation/Transport-Instance";
 import CommunityInstance from "./pages/Communities/Community-Instance";
 import "./components/instance.css";
+import NLQuery from "./pages/NLQuery";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
         <Route path="/housing/:id" element={<HousingInstance />} />
         <Route path="/community/:id" element={<CommunityInstance />} />
         <Route path="/transportation/:id" element={<TransportationInstance />} />
+        <Route path="/nl-query" element={<NLQuery />} />
       </Routes>
     </Router>
   );

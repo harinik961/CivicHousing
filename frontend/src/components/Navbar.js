@@ -22,6 +22,7 @@ export default function NavBar() {
               <Nav.Link as={Link} to="/provider-visualizations">Provider Visualizations</Nav.Link>
               <Nav.Link as={Link} to="/globalsearch">Search</Nav.Link>
               <Nav.Link as={Link} to="/about">About</Nav.Link>
+              <Nav.Link as={Link} to="/nl-query">Ask Data</Nav.Link>
             </Nav>
           </BSNavbar.Collapse>
       </Container>
