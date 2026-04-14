@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, redirect
+from flask import Flask, jsonify, request, redirect, send_from_directory, abort
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
@@ -16,6 +16,13 @@ from search import (
 )
 
 load_dotenv()
+
+GTFS_ALLOWED_FILES = {
+    "stops.txt",
+    "stop_times.txt",
+    "trips.txt",
+    "routes.txt",
+}
 
 
 def haversine_miles(lat1, lon1, lat2, lon2):
@@ -296,6 +303,14 @@ def create_app():
                 "last_synced_at": latest_sync.isoformat() if latest_sync else None,
             }
         )
+
+    @app.route("/api/gtfs/<path:filename>", methods=["GET"])
+    def get_gtfs_file(filename):
+        if filename not in GTFS_ALLOWED_FILES:
+            abort(404)
+
+        gtfs_dir = os.path.join(os.path.dirname(__file__), "data", "capmetro_data")
+        return send_from_directory(gtfs_dir, filename, mimetype="text/plain")
 
     @app.route("/docs", methods=["GET"])
     def docs():
