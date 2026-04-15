@@ -888,5 +888,5 @@ function useVisualizationOneMap({ mapRef, setError, setLoading }) {
       if (map) map.remove();
       if (styleTag) styleTag.remove();
     };
-  }, []);
+  }, [mapRef, setError, setLoading]);
 }
