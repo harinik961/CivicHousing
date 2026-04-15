@@ -222,39 +222,3 @@ Answer:"""
     answer = answer.replace("```", "").strip()
 
     return answer
-
-
-@nl_query_bp.route("/api/nl-query", methods=["POST"])
-def nl_query():
-    data = request.get_json()
-    question = data.get("question")
-
-    if not question:
-        return jsonify({"error": "Missing question"}), 400
-
-    try:
-        sql = generate_sql(question)
-
-        if not is_safe_sql(sql):
-            return jsonify({
-                "error": "Unsafe query blocked",
-                "sql": sql
-            }), 400
-
-        results = run_query(sql)
-
-        if results:
-            answer = generate_answer(question, results)
-        else:
-            answer = "No results found."
-
-        return jsonify({
-            "question": question,
-            "sql": sql,
-            "results": results,
-            "answer": answer
-        })
-
-    except Exception as e:
-        print("Warning: Error processing NL query:", str(e))
-        return jsonify({"error": str(e)}), 500

@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, redirect
+from flask import Flask, app, jsonify, request, redirect
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
@@ -15,8 +15,7 @@ from search import (
     global_search,
 )
 
-from nl_query import nl_query_bp
-
+from nl_query import generate_sql, is_safe_sql, run_query, generate_answer
 load_dotenv()
 
 def haversine_miles(lat1, lon1, lat2, lon2):
@@ -231,8 +230,8 @@ def create_app():
 
     db.init_app(app)
     migrate = Migrate(app, db)
-    app.register_blueprint(nl_query_bp)
 
+    app.register_blueprint(nl_query_bp, url_prefix="/api")
 
     auto_create_tables = os.getenv("AUTO_CREATE_TABLES")
     should_auto_create = (
@@ -550,6 +549,41 @@ def create_app():
         return jsonify(
             {"results": results, "total": total, "page": page, "pages": pages}
         )
+    
+    @app.route("/api/nl-query", methods=["POST"])
+    def nl_query():
+        data = request.get_json()
+        question = data.get("question")
+
+        if not question:
+            return jsonify({"error": "Missing question"}), 400
+
+        try:
+            sql = generate_sql(question)
+
+            if not is_safe_sql(sql):
+                return jsonify({
+                    "error": "Unsafe query blocked",
+                    "sql": sql
+                }), 400
+
+            results = run_query(sql)
+
+            if results:
+                answer = generate_answer(question, results)
+            else:
+                answer = "No results found."
+
+            return jsonify({
+                "question": question,
+                "sql": sql,
+                "results": results,
+                "answer": answer
+            })
+
+        except Exception as e:
+            print("Warning: Error processing NL query:", str(e))
+            return jsonify({"error": str(e)}), 500
 
     return app
 
