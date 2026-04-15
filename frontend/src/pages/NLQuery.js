@@ -2,13 +2,13 @@ import { useState } from "react";
 import "./NLQuery.css";
 
 
-const LOCAL_API_BASE = "http://localhost:5000";
-const PROD_API_BASE = "https://api.civichousing.me";
-const isLocalFrontend =
-  typeof window !== "undefined" &&
-  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
-const API_BASE = process.env.REACT_APP_API_BASE || (isLocalFrontend ? LOCAL_API_BASE : PROD_API_BASE);
 
+const API_BASE =
+  process.env.REACT_APP_API_BASE ||
+  (window.location.hostname === "localhost"
+    ? "http://localhost:5000"
+    : "https://api.civichousing.me");
+    
 function NLQueryPage() {
   const [question, setQuestion] = useState("");
   const [response, setResponse] = useState(null);
@@ -75,24 +75,35 @@ function NLQueryPage() {
         {loading && <p className="loading">Thinking...</p>}
 
        {response && (
-        <div className="results-section">
-            <div className="result-card">
-            <h3>Answer</h3>
-            <div className="answer-text">
-                {response.answer.split("\n").map((line, i) => (
-                <p key={i} style={{ margin: "2px 0" }}>{line}</p>
-                ))}
-            </div>
-            </div>
-            <div className="result-card">
-              <h4>SQL Query</h4>
-              <pre>{response.sql}</pre>
-            </div>
-
-            <div className="result-card">
-              <h4>Results</h4>
-              <pre>{JSON.stringify(response.results, null, 2)}</pre>
-            </div>
+          <div className="results-section">
+            {/* ERROR STATE */}
+            {response.error && (
+              <div className="result-card">
+                <h3>Error</h3>
+                <p>{response.error}</p>
+              </div>
+            )}
+            {/* SUCCESS STATE */}
+            {!response.error && (
+              <>
+                <div className="result-card">
+                  <h3>Answer</h3>
+                  <div className="answer-text">
+                    {(response.answer || "").split("\n").map((line, i) => (
+                      <p key={i} style={{ margin: "2px 0" }}>{line}</p>
+                    ))}
+                  </div>
+                </div>
+                <div className="result-card">
+                  <h4>SQL Query</h4>
+                  <pre>{response.sql}</pre>
+                </div>
+                <div className="result-card">
+                  <h4>Results</h4>
+                  <pre>{JSON.stringify(response.results, null, 2)}</pre>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
