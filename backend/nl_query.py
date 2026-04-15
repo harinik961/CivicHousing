@@ -8,10 +8,16 @@ load_dotenv()
 
 nl_query_bp = Blueprint("nl_query", __name__)
 
-client = OpenAI(
-    api_key=os.getenv("API_OPENROUTER_KEY"),
-    base_url="https://openrouter.ai/api/v1"
-)
+client = None
+
+api_key = os.getenv("API_OPENROUTER_KEY")
+
+if api_key:
+    client = OpenAI(
+        api_key=api_key,
+        base_url="https://openrouter.ai/api/v1"
+    )
+
 
 DB_URL = os.getenv("DATABASE_URL")
 
@@ -28,13 +34,16 @@ def is_safe_sql(sql: str) -> bool:
         return False
 
     for word in FORBIDDEN:
-        if word in sql_lower:
+        if f" {word} " in f" {sql_lower} ":
             return False
 
     return True
 
 
 def generate_sql(question: str) -> str:
+    if not client:
+        raise Exception("LLM not configured")
+
     prompt = f"""
 You are a PostgreSQL SQL generator.
 
@@ -169,6 +178,9 @@ def run_query(sql: str):
 
 
 def generate_answer(question: str, results: list) -> str:
+    if not client:
+        return "Natural language responses are currently unavailable."
+
     results_text = "\n".join(
         f"- {list(row.values())}" for row in results[:10]
     ) if results else "No results found."
@@ -189,16 +201,6 @@ Numbered list format (EXACTLY like this):
 1. Item One
 2. Item Two
 3. Item Three
-
-BAD: "Here are the results: 1. Item One 2. Item Two"
-GOOD:
-1. Item One
-2. Item Two
-
-Examples of good single-result answers:
-- The community with the highest population of 61,219 is in zip code 78758.
-- The housing project with the most ADA units is Maple Terrace with 42 ADA units.
-- The transportation stop with the most routes is Downtown Station with 12 routes.
 
 Question:
 {question}
