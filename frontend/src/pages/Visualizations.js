@@ -3,8 +3,13 @@ import * as d3 from "d3";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-const API_BASE = "https://api.civichousing.me";
-const GTFS_BASE = process.env.REACT_APP_GTFS_BASE || `${API_BASE}/api/gtfs`;
+const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:8000";
+const TRANSPORTATION_ENDPOINT = "/api/transportation";
+const PAGE_FETCH_CONCURRENCY = 6;
+const TRANSPORTATION_PAGE_SIZE = 500;
+const REQUEST_TIMEOUT_MS = 15000;
+const MAX_ROUTE_EDGE_DISTANCE_KM = 1.75;
+const MAX_NEIGHBORS_PER_ROUTE = 4;
 
 const MIN_ROUTES = 2;
 const TOP_DEGREE_PCT = 0.25;
@@ -21,24 +26,94 @@ const ZOOM_LABELS = 13;
 const pairKey = (a, b) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 
 function buildNodeFromStop(stop) {
-  const lat = Number(stop.stop_lat);
-  const lon = Number(stop.stop_lon);
+  const lat = Number(stop.latitude);
+  const lon = Number(stop.longitude);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  const routes = parseRoutes(stop.routes);
+  const frequencyMinutes = parseFrequencyMinutes(stop.frequency);
   return {
-    id: stop.stop_id,
-    name: stop.stop_name || stop.stop_id,
+    id: String(stop.id ?? stop.stop_id),
+    stopId: String(stop.stop_id ?? stop.id),
+    name: stop.stop_name || stop.stopId || stop.stop_id,
     lat,
     lon,
-    routeSet: new Set(),
-    tripSet: new Set(),
+    routeSet: routes,
     degree: 0,
-    routeCount: 0,
-    tripCount: 0,
+    routeCount: routes.size || Number(stop.num_routes) || 0,
+    frequency: stop.frequency || "Unknown",
+    frequencyMinutes,
     frequencyNormalized: 0,
     centrality: 0,
     connectivity: 0,
     combinedScore: 0,
   };
+}
+
+function parseRoutes(routes) {
+  if (!routes) return new Set();
+  return new Set(
+    String(routes)
+      .split(/[;,|]/)
+      .map((route) => route.trim())
+      .filter(Boolean)
+  );
+}
+
+function parseFrequencyMinutes(frequency) {
+  if (!frequency || frequency === "Unknown") return null;
+  const match = String(frequency).match(/(\d+(?:\.\d+)?)/);
+  return match ? Number(match[1]) : null;
+}
+
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+async function fetchAllTransportation() {
+  const fetchPage = async (page) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      const res = await fetch(
+        `${API_BASE}${TRANSPORTATION_ENDPOINT}?page=${page}&per_page=${TRANSPORTATION_PAGE_SIZE}`,
+        { signal: controller.signal }
+      );
+      if (!res.ok) {
+        throw new Error(`transportation page ${page} failed (${res.status})`);
+      }
+      return res.json();
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
+  const first = await fetchPage(1);
+  const all = [...(first.data || first.results || [])];
+  const pages = Math.max(1, Number(first.pages || 1));
+
+  if (pages > 1) {
+    for (let start = 2; start <= pages; start += PAGE_FETCH_CONCURRENCY) {
+      const end = Math.min(pages, start + PAGE_FETCH_CONCURRENCY - 1);
+      const pagePromises = [];
+      for (let p = start; p <= end; p++) {
+        pagePromises.push(fetchPage(p));
+      }
+
+      const rest = await Promise.all(pagePromises);
+      for (const pageData of rest) {
+        all.push(...(pageData.data || pageData.results || []));
+      }
+    }
+  }
+
+  return all;
 }
 
 function computeApproxCloseness(nodeIds, adjacency, sampleCount = 28) {
@@ -85,21 +160,24 @@ function geoCellKey(node, latMin, lonMin, latStep, lonStep) {
   return `${r},${c}`;
 }
 
-async function loadGTFSGraph() {
-  const [stops, stopTimes, trips] = await Promise.all([
-    d3.csv(`${GTFS_BASE}/stops.txt`),
-    d3.csv(`${GTFS_BASE}/stop_times.txt`),
-    d3.csv(`${GTFS_BASE}/trips.txt`),
-    d3.csv(`${GTFS_BASE}/routes.txt`),
-  ]);
-
-  const tripToRoute = new Map(trips.map((t) => [t.trip_id, t.route_id]));
-  const byTrip = d3.group(stopTimes, (d) => d.trip_id);
+async function loadTransportationGraph() {
+  const stops = await fetchAllTransportation();
 
   const nodeById = new Map();
   for (const stop of stops) {
     const node = buildNodeFromStop(stop);
     if (node) nodeById.set(node.id, node);
+  }
+
+  const allNodes = [...nodeById.values()];
+
+  // Build route index from the stored routes string.
+  const routeIndex = new Map();
+  for (const node of allNodes) {
+    for (const route of node.routeSet) {
+      if (!routeIndex.has(route)) routeIndex.set(route, []);
+      routeIndex.get(route).push(node.id);
+    }
   }
 
   const adjacency = new Map();
@@ -109,49 +187,63 @@ async function loadGTFSGraph() {
     adjacency.get(a).add(b);
   };
 
-  for (const [tripId, rows] of byTrip.entries()) {
-    rows.sort(
-      (a, b) => Number(a.stop_sequence || 0) - Number(b.stop_sequence || 0)
-    );
-    const routeId = tripToRoute.get(tripId);
+  const addEdge = (a, b, route, distanceKm) => {
+    if (a === b) return;
+    const k = pairKey(a, b);
+    const source = nodeById.get(a);
+    const target = nodeById.get(b);
+    if (!source || !target) return;
 
-    for (const row of rows) {
-      const node = nodeById.get(row.stop_id);
-      if (node && routeId) {
-        node.routeSet.add(routeId);
-        node.tripSet.add(tripId);
-      }
+    if (!edgeMap.has(k)) {
+      edgeMap.set(k, {
+        id: k,
+        source: a,
+        target: b,
+        sharedRoutes: new Set(),
+        weight: 0,
+        minDistanceKm: distanceKm,
+      });
     }
 
-    for (let i = 0; i < rows.length - 1; i++) {
-      const a = rows[i].stop_id;
-      const b = rows[i + 1].stop_id;
-      if (a === b || !nodeById.has(a) || !nodeById.has(b)) continue;
+    const edge = edgeMap.get(k);
+    edge.weight += 1;
+    edge.sharedRoutes.add(route);
+    edge.minDistanceKm = Math.min(edge.minDistanceKm, distanceKm);
 
-      const k = pairKey(a, b);
-      if (!edgeMap.has(k)) {
-        edgeMap.set(k, {
-          id: k,
-          source: a,
-          target: b,
-          tripCount: 0,
-          routeSet: new Set(),
-        });
+    addAdj(a, b);
+    addAdj(b, a);
+  };
+
+  for (const [route, ids] of routeIndex.entries()) {
+    for (const id of ids) {
+      const node = nodeById.get(id);
+      if (!node) continue;
+
+      const neighbors = ids
+        .filter((otherId) => otherId !== id)
+        .map((otherId) => {
+          const other = nodeById.get(otherId);
+          const distanceKm = haversineKm(
+            node.lat,
+            node.lon,
+            other.lat,
+            other.lon
+          );
+          return { otherId, distanceKm };
+        })
+        .filter(({ distanceKm }) => distanceKm <= MAX_ROUTE_EDGE_DISTANCE_KM)
+        .sort((a, b) => a.distanceKm - b.distanceKm)
+        .slice(0, MAX_NEIGHBORS_PER_ROUTE);
+
+      for (const { otherId, distanceKm } of neighbors) {
+        addEdge(id, otherId, route, distanceKm);
       }
-      const e = edgeMap.get(k);
-      e.tripCount += 1;
-      if (routeId) e.routeSet.add(routeId);
-
-      addAdj(a, b);
-      addAdj(b, a);
     }
   }
 
-  const allNodes = [...nodeById.values()];
   for (const n of allNodes) {
     n.degree = (adjacency.get(n.id) || new Set()).size;
-    n.routeCount = n.routeSet.size;
-    n.tripCount = n.tripSet.size;
+    n.routeCount = n.routeSet.size || Number(n.routeCount) || 0;
   }
 
   const closeness = computeApproxCloseness(
@@ -167,17 +259,19 @@ async function loadGTFSGraph() {
       0.15 * Math.min(1, n.routeCount / 6);
   }
 
-  // Service frequency proxy from GTFS stop_times/trips: number of distinct trips serving each stop.
-  const tripExtent = d3.extent(allNodes, (n) => n.tripCount);
-  const tripMin = tripExtent[0] ?? 0;
-  const tripMax = tripExtent[1] ?? 0;
+  const freqValues = allNodes
+    .map((n) => n.frequencyMinutes)
+    .filter((v) => Number.isFinite(v));
+  const freqMin = d3.min(freqValues);
+  const freqMax = d3.max(freqValues);
   for (const n of allNodes) {
     n.frequencyNormalized =
-      tripMax > tripMin ? (n.tripCount - tripMin) / (tripMax - tripMin) : 0;
+      Number.isFinite(n.frequencyMinutes) && freqMax > freqMin
+        ? 1 - (n.frequencyMinutes - freqMin) / (freqMax - freqMin)
+        : 0;
     n.combinedScore = 0.6 * n.connectivity + 0.4 * n.frequencyNormalized;
   }
 
-  // Local reach metric on full graph (direct + 2-hop), used for node sizing.
   for (const n of allNodes) {
     const direct = adjacency.get(n.id) || new Set();
     const second = new Set();
@@ -216,7 +310,7 @@ async function loadGTFSGraph() {
   );
   const coverage = new Set();
   for (const [, arr] of byCell.entries()) {
-    arr.sort((a, b) => b.connectivity - a.connectivity);
+    arr.sort((a, b) => b.combinedScore - a.combinedScore);
     for (let i = 0; i < Math.min(PER_CELL_KEEP, arr.length); i++) {
       coverage.add(arr[i].id);
     }
@@ -224,7 +318,7 @@ async function loadGTFSGraph() {
 
   let keep = new Set([...hubs, ...topByDegree, ...coverage]);
   if (keep.size < MIN_NODES) {
-    const ranked = [...allNodes].sort((a, b) => b.connectivity - a.connectivity);
+    const ranked = [...allNodes].sort((a, b) => b.combinedScore - a.combinedScore);
     for (const n of ranked) {
       keep.add(n.id);
       if (keep.size >= MIN_NODES) break;
@@ -236,7 +330,7 @@ async function loadGTFSGraph() {
     const optional = [...keep]
       .filter((id) => !mustKeep.has(id))
       .map((id) => nodeById.get(id))
-      .sort((a, b) => b.connectivity - a.connectivity);
+      .sort((a, b) => b.combinedScore - a.combinedScore);
     keep = new Set([...mustKeep]);
     for (const n of optional) {
       if (keep.size >= MAX_NODES) break;
@@ -253,8 +347,8 @@ async function loadGTFSGraph() {
         id: e.id,
         source: e.source,
         target: e.target,
-        weight: e.tripCount,
-        routeCount: e.routeSet.size,
+        weight: e.weight,
+        routeCount: e.sharedRoutes.size,
         synthetic: false,
       });
     }
@@ -277,8 +371,8 @@ async function loadGTFSGraph() {
       id: e.id,
       source: e.source,
       target: e.target,
-      weight: e.tripCount,
-      routeCount: e.routeSet.size,
+      weight: e.weight,
+      routeCount: e.sharedRoutes.size,
       synthetic: false,
     })),
     retainedNodeIds: new Set(nodes.map((n) => n.id)),
@@ -290,6 +384,7 @@ async function loadGTFSGraph() {
 export default function Visualizations() {
   const mapRef = useRef(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
@@ -299,7 +394,11 @@ export default function Visualizations() {
 
     async function init() {
       try {
-        const graph = await loadGTFSGraph();
+        setLoading(true);
+        const graph = await loadTransportationGraph();
+        if (!graph.nodes.length) {
+          throw new Error("No transportation records were returned from the API.");
+        }
         if (!mounted || !mapRef.current) return;
 
         styleTag = document.createElement("style");
@@ -341,12 +440,13 @@ export default function Visualizations() {
           const div = L.DomUtil.create("div", "viz-legend");
           div.innerHTML = `
             <strong>CapMetro Connectivity Map</strong><br/>
+            • Built from the Transportation API in the database<br/>
             • Circles are transit stops<br/>
             • Bigger = more local reach (direct + 2-hop neighbors)<br/>
             • Warmer color = 0.6×connectivity + 0.4×frequency<br/>
             • Hover: full max reachable area from that stop<br/>
             • Zoomed out: hubs/aggregated links for readability<br/>
-            • Zoomed in: all stops and denser links
+            • Zoomed in: all stops and denser links<br/>
             • Click a stop to expand hidden nearby stops
           `;
           return div;
@@ -378,10 +478,10 @@ export default function Visualizations() {
           );
 
           if (!showFullLinks) {
-            displayLinks = displayLinks.filter((l) => (l.weight || 0) >= 2);
+            displayLinks = displayLinks.filter((l) => (l.weight || 0) >= 1);
           }
 
-          const maxLinks = showFullLinks ? 14000 : 5000;
+          const maxLinks = showFullLinks ? 18000 : 8000;
           if (displayLinks.length > maxLinks) {
             displayLinks = [...displayLinks]
               .sort((a, b) => (b.weight || 0) - (a.weight || 0))
@@ -569,7 +669,8 @@ export default function Visualizations() {
             return (
               `<strong>${data.name}</strong><br/>` +
               `ID: ${data.id}<br/>` +
-              `Routes: ${data.routeCount} · Trips: ${data.tripCount}<br/>` +
+              `Type: ${data.transport_type || "Unknown"}<br/>` +
+              `Routes: ${data.routeCount} · Frequency: ${data.frequency}<br/>` +
               `1-hop: ${stats.directCount} · 2-hop: ${stats.secondCount}<br/>` +
               `Reachable (full graph): ${reachable}<br/>` +
               `Score: ${data.combinedScore.toFixed(3)}<br/>` +
@@ -599,8 +700,8 @@ export default function Visualizations() {
                 id: k,
                 source: nodeId,
                 target: id,
-                weight: e?.tripCount || 1,
-                routeCount: e?.routeSet?.size || 0,
+                weight: e?.weight || 1,
+                routeCount: e?.sharedRoutes?.size || 0,
                 synthetic: !e,
               });
             }
@@ -688,19 +789,19 @@ export default function Visualizations() {
           });
         };
 
-        const bounds = L.latLngBounds(
-          state.nodes.map((n) => [n.lat, n.lon])
-        );
+        const bounds = L.latLngBounds(state.allNodes.map((n) => [n.lat, n.lon]));
         if (bounds.isValid()) {
           map.fitBounds(bounds.pad(0.08));
         }
 
         drawOverlay();
         map.on("zoomend", drawOverlay);
+        setLoading(false);
       } catch (e) {
         if (!mounted) return;
+        setLoading(false);
         setError(
-          "Failed to load GTFS map data. Ensure /api/gtfs/stops.txt, stop_times.txt, trips.txt, and routes.txt are reachable."
+          `Failed to load map data from /api/transportation. ${e?.message || ""}`
         );
       }
     }
@@ -720,8 +821,14 @@ export default function Visualizations() {
     <div style={{ padding: 16 }}>
       <h1 style={{ marginBottom: 4 }}>Visualizations</h1>
       <p style={{ marginTop: 0, color: "#6c7aa4" }}>
-        CapMetro GTFS connectivity mapped directly over Austin basemap
+        CapMetro transportation connectivity mapped directly over Austin basemap
       </p>
+
+      {loading && !error && (
+        <div style={{ color: "#394f8f", marginBottom: 10 }}>
+          Loading transportation data for the map...
+        </div>
+      )}
 
       {error && <div style={{ color: "#b23a3a", marginBottom: 10 }}>{error}</div>}
 

@@ -57,7 +57,7 @@ function formatItem(item, attributes) {
   };
 }
 
-const LOCAL_API_BASE = "http://localhost:5000";
+const LOCAL_API_BASE = "http://localhost:8000";
 const PROD_API_BASE = "https://api.civichousing.me";
 const isLocalFrontend =
   typeof window !== "undefined" &&

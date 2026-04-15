@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, redirect, send_from_directory, abort
+from flask import Flask, jsonify, request, redirect
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
@@ -18,14 +18,6 @@ from search import (
 from nl_query import nl_query_bp
 
 load_dotenv()
-
-GTFS_ALLOWED_FILES = {
-    "stops.txt",
-    "stop_times.txt",
-    "trips.txt",
-    "routes.txt",
-}
-
 
 def haversine_miles(lat1, lon1, lat2, lon2):
     radius_miles = 3958.8
@@ -308,14 +300,6 @@ def create_app():
             }
         )
 
-    @app.route("/api/gtfs/<path:filename>", methods=["GET"])
-    def get_gtfs_file(filename):
-        if filename not in GTFS_ALLOWED_FILES:
-            abort(404)
-
-        gtfs_dir = os.path.join(os.path.dirname(__file__), "data", "capmetro_data")
-        return send_from_directory(gtfs_dir, filename, mimetype="text/plain")
-
     @app.route("/docs", methods=["GET"])
     def docs():
         return redirect(
@@ -513,7 +497,7 @@ def create_app():
     def get_transportation():
 
         page = request.args.get("page", 1, type=int)
-        per_page = 50
+        per_page = request.args.get("per_page", 50, type=int)
 
         query = Transportation.query
         for condition in transportation_filter_conditions(request.args):
@@ -574,4 +558,4 @@ app = create_app()
 application = app
 
 if __name__ == "__main__":  # pragma: no cover
-    app.run(host="0.0.0.0", port=0, debug=True)
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "8000")), debug=True)
