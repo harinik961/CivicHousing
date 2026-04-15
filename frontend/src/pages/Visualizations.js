@@ -386,6 +386,79 @@ export default function Visualizations() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
+  // =========================================================
+  // Visualization 1 Hook: CapMetro Connectivity Map
+  // =========================================================
+  useVisualizationOneMap({ mapRef, setError, setLoading });
+
+  // =========================================================
+  // Visualization 2 Hook Placeholder
+  // =========================================================
+  // useVisualizationTwo(...)
+
+  // =========================================================
+  // Visualization 3 Hook Placeholder
+  // =========================================================
+  // useVisualizationThree(...)
+
+  return (
+    <div style={{ padding: 16 }}>
+      <h1 style={{ marginBottom: 4 }}>Visualizations</h1>
+      <p style={{ marginTop: 0, color: "#6c7aa4" }}>
+        CapMetro transportation connectivity mapped directly over Austin basemap
+      </p>
+
+      {renderVisualizationOne({ mapRef, loading, error })}
+
+      {/*
+        Visualization 2 Section (future)
+        Example:
+        <section>
+          <h2>Visualization 2</h2>
+          ...
+        </section>
+      */}
+
+      {/*
+        Visualization 3 Section (future)
+        Example:
+        <section>
+          <h2>Visualization 3</h2>
+          ...
+        </section>
+      */}
+    </div>
+  );
+}
+
+function renderVisualizationOne({ mapRef, loading, error }) {
+  return (
+    <section>
+      <h2 style={{ marginBottom: 8 }}>Visualization 1: CapMetro Connectivity Map</h2>
+
+      {loading && !error && (
+        <div style={{ color: "#394f8f", marginBottom: 10 }}>
+          Loading transportation data for the map...
+        </div>
+      )}
+
+      {error && <div style={{ color: "#b23a3a", marginBottom: 10 }}>{error}</div>}
+
+      <div
+        ref={mapRef}
+        style={{
+          width: "100%",
+          height: 760,
+          border: "1px solid #d2d9ef",
+          borderRadius: 8,
+          overflow: "hidden",
+        }}
+      />
+    </section>
+  );
+}
+
+function useVisualizationOneMap({ mapRef, setError, setLoading }) {
   useEffect(() => {
     let mounted = true;
     let map;
@@ -816,32 +889,4 @@ export default function Visualizations() {
       if (styleTag) styleTag.remove();
     };
   }, []);
-
-  return (
-    <div style={{ padding: 16 }}>
-      <h1 style={{ marginBottom: 4 }}>Visualizations</h1>
-      <p style={{ marginTop: 0, color: "#6c7aa4" }}>
-        CapMetro transportation connectivity mapped directly over Austin basemap
-      </p>
-
-      {loading && !error && (
-        <div style={{ color: "#394f8f", marginBottom: 10 }}>
-          Loading transportation data for the map...
-        </div>
-      )}
-
-      {error && <div style={{ color: "#b23a3a", marginBottom: 10 }}>{error}</div>}
-
-      <div
-        ref={mapRef}
-        style={{
-          width: "100%",
-          height: 760,
-          border: "1px solid #d2d9ef",
-          borderRadius: 8,
-          overflow: "hidden",
-        }}
-      />
-    </div>
-  );
 }
