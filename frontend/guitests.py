@@ -62,7 +62,8 @@ class CivicHousingUnitTests(unittest.TestCase):
   # Test 4
   def test_transportation_text(self):
     self.driver.get(base_url + "/transportation")
-    self.assertIn("Transportation", self.driver.find_element(By.TAG_NAME, "h2").text)
+    h2 = self.wait_for_element(By.TAG_NAME, "h2")
+    self.assertIn("Transportation", h2.text)
 
   # Test 5
   def test_about_text(self):

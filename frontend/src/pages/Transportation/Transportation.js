@@ -35,13 +35,13 @@ export default function Transportation() {
 
   return (
     <ModelPage
-  title="Transportation"
-  apiEndpoint="/api/transportation"
-  modelName="transportation"
-  sortOptions={sortOptions}
-  filterOptions={filterOptions}
-  attributes={MODEL_ATTRIBUTES.transportation}
-/>
+      title="Transportation"
+      apiEndpoint="/api/transportation"
+      modelName="transportation"
+      sortOptions={sortOptions}
+      filterOptions={filterOptions}
+      attributes={MODEL_ATTRIBUTES.transportation}
+    />
   );
 
 }
