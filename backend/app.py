@@ -1,4 +1,4 @@
-from flask import Flask, app, jsonify, request, redirect
+from flask import Flask, jsonify, request, redirect
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
@@ -231,7 +231,8 @@ def create_app():
 
     db.init_app(app)
     migrate = Migrate(app, db)
-    app.register_blueprint(nl_query_bp, url_prefix="/api")
+    app.register_blueprint(nl_query_bp)
+
 
     auto_create_tables = os.getenv("AUTO_CREATE_TABLES")
     should_auto_create = (
