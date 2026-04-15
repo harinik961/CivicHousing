@@ -231,8 +231,6 @@ def create_app():
     db.init_app(app)
     migrate = Migrate(app, db)
 
-    app.register_blueprint(nl_query_bp, url_prefix="/api")
-
     auto_create_tables = os.getenv("AUTO_CREATE_TABLES")
     should_auto_create = (
         auto_create_tables.lower() == "true"
