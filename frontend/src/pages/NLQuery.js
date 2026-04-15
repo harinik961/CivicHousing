@@ -56,8 +56,9 @@ function NLQueryPage() {
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="e.g., Which community has the highest population?"
-            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-          />
+            onKeyDown={(e) => {if (e.key === "Enter") {e.preventDefault(); handleSubmit();
+                }
+              }}          />
           <button onClick={handleSubmit}>Ask</button>
         </div>
 
