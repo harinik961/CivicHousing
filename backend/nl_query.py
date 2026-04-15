@@ -1,12 +1,9 @@
 import os
 import psycopg2
-from flask import Blueprint, request, jsonify
 from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
-
-nl_query_bp = Blueprint("nl_query", __name__)
 
 client = None
 
