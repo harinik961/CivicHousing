@@ -10,3 +10,4 @@ pytest
 gunicorn
 psycopg2-binary
 sqlalchemy-utils
+openai
