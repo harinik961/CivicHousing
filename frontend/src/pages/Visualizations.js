@@ -3,8 +3,9 @@ import * as d3 from "d3";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-const API_BASE = process.env.REACT_APP_API_BASE || "https://api.civichousing.me";
+const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:8000";
 const TRANSPORTATION_ENDPOINT = "/api/transportation";
+const COMMUNITY_ENDPOINT = "/api/community";
 const PAGE_FETCH_CONCURRENCY = 6;
 const TRANSPORTATION_PAGE_SIZE = 500;
 const REQUEST_TIMEOUT_MS = 15000;
@@ -22,6 +23,16 @@ const LABEL_COUNT = 18;
 const ZOOM_ALL_STOPS = 11;
 const ZOOM_FULL_LINKS = 13;
 const ZOOM_LABELS = 13;
+
+// Fixed Austin viewport for the non-interactive community choropleth.
+const AUSTIN_BOUNDS_LATLNG = [
+  [30.1, -97.95],
+  [30.52, -97.56],
+];
+const TEXAS_ZIP_GEOJSON_URL =
+  "https://raw.githubusercontent.com/OpenDataDE/State-zip-code-GeoJSON/master/tx_texas_zip_codes_geo.min.json";
+
+const normalizeZip = (value) => String(value ?? "").trim().padStart(5, "0");
 
 const pairKey = (a, b) => (a < b ? `${a}|${b}` : `${b}|${a}`);
 
@@ -110,6 +121,38 @@ async function fetchAllTransportation() {
       for (const pageData of rest) {
         all.push(...(pageData.data || pageData.results || []));
       }
+    }
+  }
+
+  return all;
+}
+
+async function fetchAllCommunities() {
+  const fetchPage = async (page) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      const res = await fetch(`${API_BASE}${COMMUNITY_ENDPOINT}?page=${page}&per_page=50`, {
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error(`community page ${page} failed (${res.status})`);
+      return res.json();
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
+  const first = await fetchPage(1);
+  const all = [...(first.data || first.results || [])];
+  const pages = Math.max(1, Number(first.pages || 1));
+
+  if (pages > 1) {
+    for (let start = 2; start <= pages; start += PAGE_FETCH_CONCURRENCY) {
+      const end = Math.min(pages, start + PAGE_FETCH_CONCURRENCY - 1);
+      const jobs = [];
+      for (let p = start; p <= end; p++) jobs.push(fetchPage(p));
+      const rest = await Promise.all(jobs);
+      for (const pageData of rest) all.push(...(pageData.data || pageData.results || []));
     }
   }
 
@@ -383,8 +426,14 @@ async function loadTransportationGraph() {
 
 export default function Visualizations() {
   const mapRef = useRef(null);
+  const choroplethMapRef = useRef(null);
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+
+  const [choroplethError, setChoroplethError] = useState("");
+  const [choroplethLoading, setChoroplethLoading] = useState(true);
+  const [communityMode, setCommunityMode] = useState("median_housing_price");
 
   // =========================================================
   // Visualization 1 Hook: CapMetro Connectivity Map
@@ -392,9 +441,14 @@ export default function Visualizations() {
   useVisualizationOneMap({ mapRef, setError, setLoading });
 
   // =========================================================
-  // Visualization 2 Hook Placeholder
+  // Visualization 2 Hook: Community Choropleth (Voronoi)
   // =========================================================
-  // useVisualizationTwo(...)
+  useVisualizationTwoCommunityChoropleth({
+    mapRef: choroplethMapRef,
+    mode: communityMode,
+    setError: setChoroplethError,
+    setLoading: setChoroplethLoading,
+  });
 
   // =========================================================
   // Visualization 3 Hook Placeholder
@@ -403,21 +457,17 @@ export default function Visualizations() {
 
   return (
     <div style={{ padding: 16 }}>
-      <h1 style={{ marginBottom: 4 }}>Visualizations</h1>
-      <p style={{ marginTop: 0, color: "#6c7aa4" }}>
-        CapMetro transportation connectivity mapped directly over Austin basemap
-      </p>
+      <h1 style={{ marginBottom: 4, textAlign: "center" }}>Visualizations</h1>
 
       {renderVisualizationOne({ mapRef, loading, error })}
 
-      {/*
-        Visualization 2 Section (future)
-        Example:
-        <section>
-          <h2>Visualization 2</h2>
-          ...
-        </section>
-      */}
+      {renderVisualizationTwo({
+        mapRef: choroplethMapRef,
+        loading: choroplethLoading,
+        error: choroplethError,
+        mode: communityMode,
+        onModeChange: setCommunityMode,
+      })}
 
       {/*
         Visualization 3 Section (future)
@@ -434,7 +484,10 @@ export default function Visualizations() {
 function renderVisualizationOne({ mapRef, loading, error }) {
   return (
     <section>
-      <h2 style={{ marginBottom: 8 }}>Visualization 1: CapMetro Connectivity Map</h2>
+      <h2 style={{ marginBottom: 8 }}>CapMetro Connectivity Map</h2>
+      <p style={{ marginTop: 0, color: "#6c7aa4", marginBottom: 10 }}>
+        CapMetro transportation connectivity mapped directly over Austin basemap
+      </p>
 
       {loading && !error && (
         <div style={{ color: "#394f8f", marginBottom: 10 }}>
@@ -454,6 +507,94 @@ function renderVisualizationOne({ mapRef, loading, error }) {
           overflow: "hidden",
         }}
       />
+    </section>
+  );
+}
+
+function renderVisualizationTwo({ mapRef, loading, error, mode, onModeChange }) {
+  const activeButtonStyle = {
+    background: "#253b72",
+    color: "#fff",
+    border: "1px solid #253b72",
+    padding: "6px 10px",
+    borderRadius: 6,
+    cursor: "pointer",
+    fontSize: 13,
+  };
+  const buttonStyle = {
+    background: "#fff",
+    color: "#253b72",
+    border: "1px solid #9eb2de",
+    padding: "6px 10px",
+    borderRadius: 6,
+    cursor: "pointer",
+    fontSize: 13,
+  };
+
+  return (
+    <section style={{ marginTop: 18 }}>
+      <h2 style={{ marginBottom: 8 }}>Community Choropleth</h2>
+      <p style={{ marginTop: 0, color: "#6c7aa4", marginBottom: 10 }}>
+        Austin communities shaded by median housing price or transit score
+      </p>
+
+      {loading && !error && (
+        <div style={{ color: "#394f8f", marginBottom: 10 }}>
+          Loading community choropleth...
+        </div>
+      )}
+
+      {error && <div style={{ color: "#b23a3a", marginBottom: 10 }}>{error}</div>}
+
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          height: 620,
+          border: "1px solid #d2d9ef",
+          borderRadius: 8,
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: 10,
+            left: 10,
+            zIndex: 1000,
+            display: "flex",
+            gap: 8,
+            background: "rgba(255,255,255,0.88)",
+            border: "1px solid #d6dff3",
+            borderRadius: 8,
+            padding: 8,
+            backdropFilter: "blur(1px)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => onModeChange("median_housing_price")}
+            style={mode === "median_housing_price" ? activeButtonStyle : buttonStyle}
+          >
+            Median Housing Price
+          </button>
+          <button
+            type="button"
+            onClick={() => onModeChange("transit_score")}
+            style={mode === "transit_score" ? activeButtonStyle : buttonStyle}
+          >
+            Transit Score
+          </button>
+        </div>
+
+        <div
+          ref={mapRef}
+          style={{
+            width: "100%",
+            height: "100%",
+          }}
+        />
+      </div>
     </section>
   );
 }
@@ -889,4 +1030,207 @@ function useVisualizationOneMap({ mapRef, setError, setLoading }) {
       if (styleTag) styleTag.remove();
     };
   }, [mapRef, setError, setLoading]);
+}
+
+function useVisualizationTwoCommunityChoropleth({ mapRef, mode, setError, setLoading }) {
+  useEffect(() => {
+    let mounted = true;
+    let map;
+    let legend;
+
+    async function init() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const raw = await fetchAllCommunities();
+        const communities = raw
+          .map((d) => ({
+            id: d.id,
+            zipCode: d.zip_code,
+            county: d.county,
+            lat: Number(d.latitude),
+            lon: Number(d.longitude),
+            medianHousingPrice: Number(d.median_housing_price),
+            transitScore: Number(d.transit_score),
+          }))
+          .filter(
+            (d) =>
+              Number.isFinite(d.lat) &&
+              Number.isFinite(d.lon) &&
+              d.lat >= AUSTIN_BOUNDS_LATLNG[0][0] &&
+              d.lat <= AUSTIN_BOUNDS_LATLNG[1][0] &&
+              d.lon >= AUSTIN_BOUNDS_LATLNG[0][1] &&
+              d.lon <= AUSTIN_BOUNDS_LATLNG[1][1]
+          );
+
+        if (!mounted || !mapRef.current) return;
+        if (!communities.length) {
+          throw new Error("No community rows with valid latitude/longitude.");
+        }
+
+        map = L.map(mapRef.current, {
+          preferCanvas: true,
+          zoomControl: false,
+          dragging: false,
+          scrollWheelZoom: false,
+          doubleClickZoom: false,
+          boxZoom: false,
+          keyboard: false,
+          touchZoom: false,
+          tap: false,
+        });
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          minZoom: 10,
+          maxZoom: 12,
+          attribution: "&copy; OpenStreetMap contributors",
+        }).addTo(map);
+
+        const communityByZip = new Map();
+        for (const c of communities) {
+          const z = normalizeZip(c.zipCode);
+          if (z) communityByZip.set(z, c);
+        }
+
+        const getMetric = (d) =>
+          mode === "median_housing_price" ? d.medianHousingPrice : d.transitScore;
+
+        const metricValues = communities
+          .map(getMetric)
+          .filter((v) => Number.isFinite(v));
+        const minV = d3.min(metricValues) ?? 0;
+        const maxV = d3.max(metricValues) ?? 1;
+
+        const colorScale =
+          mode === "median_housing_price"
+            ? d3.scaleSequential(d3.interpolateYlOrRd).domain([minV, maxV])
+            : d3.scaleSequential(d3.interpolateBlues).domain([minV, maxV]);
+
+        const zipGeoJson = await d3.json(TEXAS_ZIP_GEOJSON_URL);
+        const sourceFeatures = zipGeoJson?.features || [];
+
+        const [austinSouth, austinWest] = AUSTIN_BOUNDS_LATLNG[0];
+        const [austinNorth, austinEast] = AUSTIN_BOUNDS_LATLNG[1];
+
+        const intersectsAustinBounds = (feature) => {
+          const [[minLon, minLat], [maxLon, maxLat]] = d3.geoBounds(feature);
+          return !(
+            maxLon < austinWest ||
+            minLon > austinEast ||
+            maxLat < austinSouth ||
+            minLat > austinNorth
+          );
+        };
+
+        const austinZipFeatures = sourceFeatures.filter(intersectsAustinBounds);
+
+        const coloredFeatures = austinZipFeatures
+          .filter((f) => {
+            const p = f.properties || {};
+            const zip = normalizeZip(p.ZCTA5CE10 || p.ZCTA5CE || p.zip_code || p.ZIP);
+            return communityByZip.has(zip);
+          })
+          .map((f) => {
+            const p = f.properties || {};
+            const zip = normalizeZip(p.ZCTA5CE10 || p.ZCTA5CE || p.zip_code || p.ZIP);
+            const c = communityByZip.get(zip);
+            return {
+              ...f,
+              properties: {
+                ...(f.properties || {}),
+                id: c.id,
+                zipCode: c.zipCode,
+                county: c.county,
+                medianHousingPrice: c.medianHousingPrice,
+                transitScore: c.transitScore,
+                metricValue: getMetric(c),
+              },
+            };
+          });
+
+        const baseLayer = L.geoJSON(
+          { type: "FeatureCollection", features: austinZipFeatures },
+          {
+            style: {
+              color: "#bac6e3",
+              weight: 1,
+              fillColor: "#edf1fa",
+              fillOpacity: 0.55,
+            },
+          }
+        ).addTo(map);
+
+        const geoLayer = L.geoJSON(
+          { type: "FeatureCollection", features: coloredFeatures },
+          {
+            style: (feature) => {
+              const v = feature?.properties?.metricValue;
+              return {
+                color: "#eaf0ff",
+                weight: 1,
+                fillOpacity: 0.75,
+                fillColor: Number.isFinite(v) ? colorScale(v) : "#d9deea",
+              };
+            },
+            onEachFeature: (feature, layer) => {
+              const p = feature.properties || {};
+              const label = mode === "median_housing_price" ? "Median Price" : "Transit Score";
+              const valueText =
+                mode === "median_housing_price"
+                  ? Number.isFinite(p.medianHousingPrice)
+                    ? `$${Math.round(p.medianHousingPrice).toLocaleString()}`
+                    : "N/A"
+                  : Number.isFinite(p.transitScore)
+                    ? Number(p.transitScore).toFixed(1)
+                    : "N/A";
+
+              layer.bindPopup(
+                `<strong>ZIP ${p.zipCode ?? "Unknown"}</strong><br/>` +
+                  `County: ${p.county ?? "Unknown"}<br/>` +
+                  `${label}: ${valueText}`
+              );
+            },
+          }
+        ).addTo(map);
+
+        const layerBounds = baseLayer.getBounds();
+        if (layerBounds.isValid()) {
+          map.fitBounds(layerBounds.pad(0.03), {
+            animate: false,
+            paddingTopLeft: [0, 0],
+            paddingBottomRight: [120, 0],
+          });
+        }
+
+        legend = L.control({ position: "topright" });
+        legend.onAdd = () => {
+          const div = L.DomUtil.create("div", "viz-legend");
+          const label = mode === "median_housing_price" ? "Median Housing Price" : "Transit Score";
+          div.innerHTML =
+            `<strong>${label}</strong><br/>` +
+            `Light → Dark = Lower → Higher<br/>` +
+            `Gray = ZIP has no community data<br/>` +
+            `Min: ${Number.isFinite(minV) ? Math.round(minV).toLocaleString() : "N/A"}<br/>` +
+            `Max: ${Number.isFinite(maxV) ? Math.round(maxV).toLocaleString() : "N/A"}`;
+          return div;
+        };
+        legend.addTo(map);
+
+        setLoading(false);
+      } catch (e) {
+        if (!mounted) return;
+        setLoading(false);
+        setError(`Failed to load community choropleth. ${e?.message || ""}`);
+      }
+    }
+
+    init();
+
+    return () => {
+      mounted = false;
+      if (legend && map) map.removeControl(legend);
+      if (map) map.remove();
+    };
+  }, [mapRef, mode, setError, setLoading]);
 }
