@@ -431,6 +431,8 @@ async function loadTransportationGraph() {
 export default function Visualizations() {
   const mapRef = useRef(null);
   const choroplethMapRef = useRef(null);
+  const barChartRef = useRef(null);
+
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -458,6 +460,8 @@ export default function Visualizations() {
   // Visualization 3 Hook Placeholder
   // =========================================================
   // useVisualizationThree(...)
+    useVisualizationThreeBarChart({containerRef: barChartRef, setError, setLoading});
+
 
   return (
     <div style={{ padding: 16 }}>
@@ -473,17 +477,23 @@ export default function Visualizations() {
         onModeChange: setCommunityMode,
       })}
 
-      {/*
-        Visualization 3 Section (future)
-        Example:
-        <section>
-          <h2>Visualization 3</h2>
-          ...
-        </section>
-      */}
-    </div>
-  );
+      {
+      <section style={{marginTop: 18}}>
+        <h2>Price vs Amenities</h2>
+        <div ref={barChartRef}
+          style={{
+            width: "100%",
+            height: 500,
+            border: "1px solid #d2d9ef",
+            borderRadius: 8
+          }}
+          />
+      </section>
+    }
+  </div>
+);
 }
+
 
 function renderVisualizationOne({ mapRef, loading, error }) {
   return (
@@ -1252,3 +1262,229 @@ function useVisualizationTwoCommunityChoropleth({ mapRef, mode, setError, setLoa
     };
   }, [mapRef, mode, setError, setLoading]);
 }
+
+function useVisualizationThreeBarChart({ containerRef, setError, setLoading }) {
+useEffect(() => {
+  let mounted = true;
+  async function init() {
+    try {
+      setLoading(true);
+      const raw = await fetchAllCommunities();
+        if (!mounted || !containerRef.current)
+          return;
+       //had to add to see it popup?
+       await new Promise(res => setTimeout(res, 50));
+       if (!mounted || !containerRef.current)
+          return;
+
+
+
+
+
+
+        const buckets = {
+         "0-100k": { transit: [], health: []},
+         "100-200k": { transit: [], health: []},
+         "200-300k": { transit: [], health: []},
+         "300-400k": { transit: [], health: []},
+         "400-500k": { transit: [], health: []},
+         "500-600k": { transit: [], health: []},
+         "600k+": { transit: [], health: []},
+       };
+
+
+
+
+        for (const d of raw) {
+          const price   = Number(d.median_housing_price);
+          const transit = Number(d.transit_score);
+          const health  = Number(d.health_count);
+
+
+
+
+          if (!Number.isFinite(price) || !Number.isFinite(transit) || !Number.isFinite(health)) continue;
+
+
+
+
+          let bucket;
+           if(price < 100000)
+             bucket = "0-100k";
+           else if(price < 200000)
+             bucket = "100-200k";
+           else if (price < 300000)
+             bucket = "200-300k";
+           else if (price < 400000)
+             bucket = "300-400k";
+           else if (price < 500000)
+             bucket = "400-500k";
+           else if (price < 600000)
+             bucket = "500-600k";
+           else
+             bucket = "600k+";
+
+
+
+
+
+
+          buckets[bucket].transit.push(transit);
+          buckets[bucket].health.push(health);
+        }
+
+
+
+
+        const average = (arr) => {
+       if (!arr.length)
+         return 0;
+        let sum = 0;
+        for (const number of arr) sum += number;
+        return sum / arr.length;
+      };
+      const data = [
+       { bucket: "0-100k",transit: average(buckets["0-100k"].transit), health: average(buckets["0-100k"].health)   },
+       { bucket: "100-200k", transit: average(buckets["100-200k"].transit), health: average(buckets["100-200k"].health) },
+       { bucket: "200-300k", transit: average(buckets["200-300k"].transit), health: average(buckets["200-300k"].health) },
+       { bucket: "300-400k", transit: average(buckets["300-400k"].transit), health: average(buckets["300-400k"].health) },
+       { bucket: "400-500k", transit: average(buckets["400-500k"].transit), health: average(buckets["400-500k"].health) },
+       { bucket: "500-600k", transit: average(buckets["500-600k"].transit), health: average(buckets["500-600k"].health) },
+       { bucket: "600k+",transit: average(buckets["600k+"].transit), health: average(buckets["600k+"].health)},
+     ];
+
+
+
+
+      const width= containerRef.current.clientWidth;
+      const height= 500;
+      const marginTop= 10;
+      const marginRight= 20;
+      const marginBottom= 30;
+      const marginLeft= 50;
+
+
+
+
+      d3.select(containerRef.current).selectAll("*").remove();
+
+
+
+
+      const svg = d3.select(containerRef.current)
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height);
+      const fx = d3.scaleBand()
+        .domain(data.map(d => d.bucket))
+        .rangeRound([marginLeft, width - marginRight])
+        .paddingInner(0.1);
+      const x = d3.scaleBand()
+        .domain(["transit", "health"])
+        .rangeRound([0, fx.bandwidth()])
+        .padding(0.05);
+
+
+
+
+      const maxValue = d3.max(data, d => Math.max(d.transit, d.health));
+      const y = d3.scaleLinear()
+        .domain([0, maxValue]).nice()
+        .rangeRound([height - marginBottom, marginTop]);
+
+
+
+
+      const color = d3.scaleOrdinal()
+        .domain(["transit", "health"])
+        .range(["#4f83ff", "#34c38f"]);
+    
+      for (const d of data) {
+        const groupX = fx(d.bucket);
+        svg.append("text")
+         .attr("x", groupX + x("transit") + x.bandwidth() / 2)
+         .attr("y", y(d.transit) - 4)
+         .attr("text-anchor", "middle")
+         .style("font-size", "10px")
+         .style("fill", "#333")
+         .text(Number.isFinite(d.transit) ? d.transit.toFixed(1) : "");
+
+
+
+
+        svg.append("rect")
+          .attr("x",      groupX + x("transit"))
+          .attr("y",      y(d.transit))
+          .attr("width",  x.bandwidth())
+          .attr("height", y(0) - y(d.transit))
+          .attr("fill",   color("transit"));
+
+
+
+
+        svg.append("rect")
+          .attr("x",      groupX + x("health"))
+          .attr("y",      y(d.health))
+          .attr("width",  x.bandwidth())
+          .attr("height", y(0) - y(d.health))
+          .attr("fill",   color("health"));
+        svg.append("text")
+         .attr("x", groupX + x("health") + x.bandwidth() / 2)
+         .attr("y", y(d.health) - 4)
+         .attr("text-anchor", "middle")
+         .style("font-size", "10px")
+         .style("fill", "#333")
+         .text(Number.isFinite(d.health) ? d.health.toFixed(1) : "");
+      }
+      // x axis
+      svg.append("g")
+        .attr("transform", `translate(0,${height - marginBottom})`)
+        .call(d3.axisBottom(fx).tickSizeOuter(0));
+      // y axis
+      svg.append("g")
+        .attr("transform", `translate(${marginLeft},0)`)
+        .call(d3.axisLeft(y).ticks(null, "s"));
+    
+
+
+
+
+      const legend = svg.append("g")
+        .attr("transform", `translate(${width - 130}, ${marginTop})`);
+
+
+
+
+      legend.append("rect").attr("width", 12).attr("height", 12).attr("fill", "#4f83ff");
+      legend.append("text").attr("x", 18).attr("y", 10).style("font-size", "12px").text("Transit Score");
+
+
+
+
+      legend.append("rect").attr("y", 20).attr("width", 12).attr("height", 12).attr("fill", "#34c38f");
+      legend.append("text").attr("x", 18).attr("y", 30).style("font-size", "12px").text("Health Score");
+
+
+
+
+      setLoading(false);
+    }
+
+
+
+
+  
+    catch(e){
+      if (!mounted) return;
+      setError("failed to load bar chart");
+    }
+  }
+    init();
+    return()=>{
+      mounted = false;
+    };
+}, [containerRef, setError, setLoading]);
+}
+
+
+
