@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import InstancePage from "../../components/InstancePage";
 
-const API_BASE = "https://api.civichousing.me";
+const API_BASE =
+  process.env.REACT_APP_API_BASE ||
+  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://localhost:5000"
+    : "https://api.civichousing.me");
 
 const getImage = (item) => item.street_view_url;
 

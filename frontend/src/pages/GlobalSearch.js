@@ -2,7 +2,11 @@ import { useEffect, useState, useCallback } from "react";
 import ModelCard from "../components/ModelCard";
 import { MODEL_ATTRIBUTES } from "../config/modelAttributes";
 
-const API_BASE = "https://api.civichousing.me";
+const API_BASE =
+  process.env.REACT_APP_API_BASE ||
+  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://localhost:5000"
+    : "https://api.civichousing.me");
 const PER_PAGE = 12;
 
 function normalizeImage(item) {

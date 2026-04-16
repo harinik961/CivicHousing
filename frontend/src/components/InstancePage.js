@@ -20,7 +20,13 @@ export default function InstancePage({
 
   useEffect(() => {
     if (itemProp !== undefined) return;
-    fetch(`https://api.civichousing.me/${apiEndpoint}/${id}`)
+    const API_BASE =
+      process.env.REACT_APP_API_BASE ||
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+        ? "http://localhost:5000"
+        : "https://api.civichousing.me");
+
+    fetch(`${API_BASE}${apiEndpoint}/${id}`)
       .then(res => res.json())
       .then(res => setItemState(res))
       .catch(err => console.error("Error loading instance:", err));
