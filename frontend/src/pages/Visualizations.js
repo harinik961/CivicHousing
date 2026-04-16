@@ -1161,7 +1161,7 @@ function useVisualizationTwoCommunityChoropleth({ mapRef, mode, setError, setLoa
           }
         ).addTo(map);
 
-        const geoLayer = L.geoJSON(
+        L.geoJSON(
           { type: "FeatureCollection", features: coloredFeatures },
           {
             style: (feature) => {
