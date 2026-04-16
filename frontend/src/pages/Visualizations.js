@@ -658,10 +658,15 @@ function useVisualizationOneMap({ mapRef, setError, setLoading }) {
           const div = L.DomUtil.create("div", "viz-legend");
           div.innerHTML = `
             <strong>CapMetro Connectivity Map</strong><br/>
-            • Built from the Transportation API in the database<br/>
+            <div style="margin:8px 0 4px 0;">
+              <div style="height:12px;border-radius:999px;background:linear-gradient(to right, #2c7bb6, #00a6ca, #00ccbc, #90eb9d, #ffff8c, #f9d057, #f29e2e, #d7191c);border:1px solid rgba(255,255,255,0.14);"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;gap:12px;font-size:11px;opacity:0.95;margin-bottom:4px;">
+              <span>Colder / worse</span><span>Warmer / better</span>
+            </div>
+            • Color blends connectivity + frequency<br/>
             • Circles are transit stops<br/>
             • Bigger = more local reach (direct + 2-hop neighbors)<br/>
-            • Warmer color = 0.6×connectivity + 0.4×frequency<br/>
             • Hover: full max reachable area from that stop<br/>
             • Zoomed out: hubs/aggregated links for readability<br/>
             • Zoomed in: all stops and denser links<br/>
@@ -1211,9 +1216,18 @@ function useVisualizationTwoCommunityChoropleth({ mapRef, mode, setError, setLoa
         legend.onAdd = () => {
           const div = L.DomUtil.create("div", "viz-legend");
           const label = mode === "median_housing_price" ? "Median Housing Price" : "Transit Score";
+          const gradient =
+            mode === "median_housing_price"
+              ? "linear-gradient(to right, #fff7bc, #fec44f, #d95f0e, #7f0000)"
+              : "linear-gradient(to right, #eff3ff, #bdd7e7, #6baed6, #08519c)";
           div.innerHTML =
             `<strong>${label}</strong><br/>` +
-            `Light → Dark = Lower → Higher<br/>` +
+            `<div style="margin:6px 0 4px 0;">` +
+              `<div style="height:12px;border-radius:999px;background:${gradient};border:1px solid rgba(0,0,0,0.15);"></div>` +
+            `</div>` +
+            `<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">` +
+              `<span>Colder / lower</span><span>Warmer / higher</span>` +
+            `</div>` +
             `Gray = ZIP has no community data<br/>` +
             `Min: ${Number.isFinite(minV) ? Math.round(minV).toLocaleString() : "N/A"}<br/>` +
             `Max: ${Number.isFinite(maxV) ? Math.round(maxV).toLocaleString() : "N/A"}`;
