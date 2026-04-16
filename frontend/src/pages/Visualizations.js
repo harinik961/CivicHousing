@@ -3,7 +3,7 @@ import * as d3 from "d3";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:8000";
+const API_BASE = process.env.REACT_APP_API_BASE || "https://api.civichousing.me";
 const TRANSPORTATION_ENDPOINT = "/api/transportation";
 const COMMUNITY_ENDPOINT = "/api/community";
 const PAGE_FETCH_CONCURRENCY = 6;

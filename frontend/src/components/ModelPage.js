@@ -57,12 +57,8 @@ function formatItem(item, attributes) {
   };
 }
 
-const LOCAL_API_BASE = "http://localhost:8000";
 const PROD_API_BASE = "https://api.civichousing.me";
-const isLocalFrontend =
-  typeof window !== "undefined" &&
-  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
-const API_BASE = process.env.REACT_APP_API_BASE || (isLocalFrontend ? LOCAL_API_BASE : PROD_API_BASE);
+const API_BASE = process.env.REACT_APP_API_BASE || PROD_API_BASE;
 
 function bucketsEqual(a, b, f) {
   if (!a || !b) return false;
