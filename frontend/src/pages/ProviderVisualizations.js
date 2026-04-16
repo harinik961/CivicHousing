@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import * as topojson from "topojson-client";
 
-const API_URL = "https://railreach.me/api/regions";
+const REGIONS_API_URL = "https://railreach.me/api/regions";
+const STATIONS_API_URL = "https://railreach.me/api/stations";
+const ROUTES_API_URL = "https://railreach.me/api/routes";
 const US_TOPOJSON_URL = "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
 
 async function fetchRegions() {
@@ -16,7 +18,59 @@ async function fetchRegions() {
   const MAX_PAGES = 50;
 
   while (hasMore && page <= MAX_PAGES) {
-    const res = await fetch(`${API_URL}?page=${page}`);
+    const res = await fetch(`${REGIONS_API_URL}?page=${page}&pageSize=100`);
+    const json = await res.json();
+    const data = json.data || [];
+
+    if (data.length === 0) break;
+
+    const signature = JSON.stringify(data.slice(0, 3));
+    if (seenPages.has(signature)) break;
+    seenPages.add(signature);
+
+    all = all.concat(data);
+    page++;
+  }
+
+  return all;
+}
+
+async function fetchStations() {
+  let all = [];
+  let page = 1;
+  let hasMore = true;
+
+  const seenPages = new Set();
+  const MAX_PAGES = 50;
+
+  while (hasMore && page <= MAX_PAGES) {
+    const res = await fetch(`${STATIONS_API_URL}?page=${page}&pageSize=100`);
+    const json = await res.json();
+    const data = json.data || [];
+
+    if (data.length === 0) break;
+
+    const signature = JSON.stringify(data.slice(0, 3));
+    if (seenPages.has(signature)) break;
+    seenPages.add(signature);
+
+    all = all.concat(data);
+    page++;
+  }
+
+  return all;
+}
+
+async function fetchRoutes() {
+  let all = [];
+  let page = 1;
+  let hasMore = true;
+
+  const seenPages = new Set();
+  const MAX_PAGES = 50;
+
+  while (hasMore && page <= MAX_PAGES) {
+    const res = await fetch(`${ROUTES_API_URL}?page=${page}&pageSize=100`);
     const json = await res.json();
     const data = json.data || [];
 
@@ -37,7 +91,6 @@ function normalizeName(s) {
   return s?.trim();
 }
 
-// US State Abbreviations 
 const NAME_TO_ABBR = new Map([
   ["Alabama", "AL"], ["Alaska", "AK"], ["Arizona", "AZ"], ["Arkansas", "AR"],
   ["California", "CA"], ["Colorado", "CO"], ["Connecticut", "CT"], ["Delaware", "DE"],
@@ -56,9 +109,8 @@ const NAME_TO_ABBR = new Map([
 
 export default function ProviderVisualizations() {
   const mapRef = useRef(null);
-  // const svgRef = useRef(null);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const scatterRef = useRef(null);
+  const routesRef = useRef(null);
 
   useEffect(() => {
     let map;
@@ -69,26 +121,23 @@ export default function ProviderVisualizations() {
 
     async function init() {
       try {
-        setLoading(true);
 
-        const [regions, us] = await Promise.all([
+        const [regions, stations, routes, us] = await Promise.all([
           fetchRegions(),
+          fetchStations(),
+          fetchRoutes(), 
           fetch(US_TOPOJSON_URL).then((r) => r.json()),
         ]);
 
         if (!mounted || !mapRef.current) return;
 
+        // ================= MAP =================
         const valueMap = new Map(
           regions.map((d) => [
             d.code?.trim().toUpperCase(),
             +d.noVehicleAvailablePercent,
           ])
         );
-
-        console.log(
-          regions.find(d => d.code?.toLowerCase().includes("ny"))
-        );
-        console.log(regions.slice(0, 10));
 
         const values = [...valueMap.values()].filter(Number.isFinite);
 
@@ -185,41 +234,146 @@ export default function ProviderVisualizations() {
               const code = NAME_TO_ABBR.get(name);
               const val = valueMap.get(code);
               return val != null ? color(val) : "#e5e7eb";
-            })
-            .on("mousemove", function (event, d) {
-              const name = d.properties.name;
-              const code = NAME_TO_ABBR.get(normalizeName(name));
-              const val = valueMap.get(code);
-
-              d3.select("body")
-                .selectAll(".choropleth-tooltip")
-                .data([null])
-                .join("div")
-                .attr("class", "choropleth-tooltip")
-                .style("position", "absolute")
-                .style("background", "rgba(0,0,0,0.8)")
-                .style("color", "white")
-                .style("padding", "6px 8px")
-                .style("border-radius", "4px")
-                .style("font-size", "12px")
-                .style("pointer-events", "none")
-                .style("left", event.pageX + 10 + "px")
-                .style("top", event.pageY + 10 + "px")
-                .html(`${name}<br>${val != null ? val + "%" : "No data"}`);
-            })
-            .on("mouseleave", () => {
-              d3.selectAll(".choropleth-tooltip").remove();
             });
         }
 
         render();
-
         map.on("zoomend moveend", render);
 
-        setLoading(false);
+        // ================= SCATTERPLOT =================
+        if (scatterRef.current) {
+          const width = 1000;
+          const height = 600;
+          const marginTop = 25;
+          const marginRight = 20;
+          const marginBottom = 40;
+          const marginLeft = 50;
+
+          const data = stations.map(d => ({
+            x: d.routesServedCount,
+            y: d.connectedDestinations?.length || 0,
+            name: d.name
+          })).filter(d => d.x != null && d.y != null);
+
+          const x = d3.scaleLinear()
+            .domain(d3.extent(data, d => d.x)).nice()
+            .range([marginLeft, width - marginRight]);
+
+          const y = d3.scaleLinear()
+            .domain(d3.extent(data, d => d.y)).nice()
+            .range([height - marginBottom, marginTop]);
+
+          const svgScatter = d3.select(scatterRef.current)
+            .append("svg")
+            .attr("viewBox", [0, 0, width, height])
+            .attr("width", "100%")
+            .attr("height", "600px")
+            .style("display", "block");
+
+          svgScatter.append("g")
+            .attr("transform", `translate(0,${height - marginBottom})`)
+            .call(d3.axisBottom(x).tickFormat(d3.format("d")));
+
+          svgScatter.append("g")
+            .attr("transform", `translate(${marginLeft},0)`)
+            .call(d3.axisLeft(y));
+
+          // X-axis label
+          svgScatter.append("text")
+            .attr("x", width / 2)
+            .attr("y", height - 5)
+            .attr("text-anchor", "middle")
+            .style("font-size", "12px")
+            .text("Routes Served");
+
+          // Y-axis label
+          svgScatter.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("x", -height / 2)
+            .attr("y", 15)
+            .attr("text-anchor", "middle")
+            .style("font-size", "12px")
+            .text("Connected Destinations");
+
+          svgScatter.append("g")
+            .selectAll("circle")
+            .data(data)
+            .join("circle")
+            .attr("cx", d => x(d.x))
+            .attr("cy", d => y(d.y))
+            .attr("r", 4)
+            .attr("fill", "steelblue");
+        }
+
+        // ================= PIE CHART =================
+        if (routesRef.current) {
+          const width = 400;
+          const height = 200;
+          const radius = Math.min(width, height) / 2;
+
+          const grouped = d3.rollup(
+            routes,
+            v => v.length,
+            d => d.regionsSpanned?.length || 0
+          );
+
+          const data = Array.from(grouped, ([key, value]) => ({
+            regions: key,
+            name: `${key} Regions`,
+            value
+          })).sort((a, b) => a.regions - b.regions);
+
+          const color = d3.scaleOrdinal()
+            .domain(data.map(d => d.name))
+            .range(d3.schemeSpectral[data.length > 10 ? 10 : data.length]);
+
+          const pie = d3.pie()
+            .sort(null)
+            .value(d => d.value);
+
+          const arc = d3.arc()
+            .innerRadius(0)
+            .outerRadius(radius - 10);
+
+          const arcLabel = d3.arc()
+            .innerRadius(radius * 0.7)
+            .outerRadius(radius * 0.7);
+
+          const svgPie = d3.select(routesRef.current)
+            .append("svg")
+            .attr("viewBox", [-width / 2, -height / 2, width, height]);
+
+          const arcs = pie(data);
+
+          svgPie.append("g")
+            .attr("stroke", "white")
+            .selectAll("path")
+            .data(arcs)
+            .join("path")
+            .attr("fill", d => color(d.data.name))
+            .attr("d", arc)
+            .append("title")
+            .text(d => `${d.data.name}: ${d.data.value}`);
+
+          svgPie.append("g")
+            .attr("text-anchor", "middle")
+            .attr("font-size", "3px")
+            .selectAll("text")
+            .data(arcs)
+            .join("text")
+            .attr("transform", d => `translate(${arcLabel.centroid(d)})`)
+            .call(text => text.append("tspan")
+              .attr("font-weight", "bold")
+              .text(d => d.data.name))
+            .call(text => text.append("tspan")
+              .attr("x", 0)
+              .attr("y", "1.2em")
+              .attr("fill-opacity", 0.7)
+              .text(d => d.data.value));
+        }
+
       } catch (e) {
-        setLoading(false);
-        setError(e.message || "Unknown error");
+        console.log(e.message || "Unknown error");
       }
     }
 
@@ -230,26 +384,72 @@ export default function ProviderVisualizations() {
       if (map) map.remove();
     };
   }, []);
-
+  
   return (
     <div style={{ padding: 16 }}>
       <h1>Provider Visualizations</h1>
 
+      {/* ================= MAP ================= */}
+      <h2 style={{ marginTop: 40 }}>Regions Choropleth Map</h2>
       <p style={{ color: "#666" }}>
         Choropleth Map of Regions mapped with No Vehicle Availability (%)
       </p>
 
-      {loading && !error && <div>Loading map...</div>}
-      {error && <div style={{ color: "red" }}>{error}</div>}
+      <div style={{ width: "100%", overflow: "hidden" }}>
+        <div ref={mapRef} style={{ height: "750px" }} />
+      </div>
+
+      {/* ================= SCATTER ================= */}
+      <h2 style={{ marginTop: 40 }}>Stations Scatterplot</h2>
+      <p style={{ color: "#666" }}>
+        Scatter Plot of Stations of Routes Served (x) vs. Connected Destinations (y)
+      </p>
 
       <div
-        ref={mapRef}
         style={{
-          height: "750px",
-          border: "1px solid #ddd",
-          borderRadius: "8px",
+          display: "flex",
+          justifyContent: "center",
+          width: "100%",
+          padding: "0 8px",
+          marginBottom: 40
         }}
-      />
+      >
+        <div
+          ref={scatterRef}
+          style={{
+            width: "100%",
+            maxWidth: "1200px",
+            display: "block",
+          }}
+        />
+      </div>
+
+      {/* ================= PIE ================= */}
+      <h2 style={{ marginTop: 40 }}>Routes Pie Chart</h2>
+      <p style={{ color: "#666" }}>
+        Distribution of Routes by Number of Regions Spanned
+      </p>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          width: "100%",
+          padding: "0 8px",
+          marginBottom: 20
+        }}
+      >
+        <div
+          ref={routesRef}
+          style={{
+            width: "100%",
+            maxWidth: "1500px",
+            minWidth: "800px",
+            // minHeight: "1000px",
+            display: "block"
+          }}
+        />
+      </div>
     </div>
   );
 }
