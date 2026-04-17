@@ -6,7 +6,7 @@ import "leaflet/dist/leaflet.css";
 const API_BASE =
   process.env.REACT_APP_API_BASE ||
   (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-    ? "http://localhost:5000"
+    ? "http://localhost:8000"
     : "https://api.civichousing.me");
 const TRANSPORTATION_ENDPOINT = "/api/transportation";
 const COMMUNITY_ENDPOINT = "/api/community";
@@ -488,6 +488,80 @@ export default function Visualizations() {
             borderRadius: 8
           }}
           />
+
+        <h2 style={{ marginTop: 16 }}>Critiques</h2>
+
+        <div
+          style={{
+            width: "100%",
+            height: 500,
+            border: "1px solid #d2d9ef",
+            borderRadius: 8,
+            padding: 12,
+            marginTop: 14,
+            display: "grid",
+            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+            gridTemplateRows: "repeat(2, minmax(0, 1fr))",
+            gap: 12,
+          }}
+        >
+          {[
+            {
+              question: "What did we do well?",
+              answer:
+                "As a group, we were able to communicate very well through Discord whether it be short messages updating each other about what we were working on or full on discussions about certain implementations of the project. Also, since our schedules as students fluctuate from busy weeks to less busy weeks, whenever a member was not able to do as much one week, they always picked up more to work on the next.",
+            },
+            {
+              question: "What did we learn?",
+              answer:
+                "Through this project we learned a lot about full stack development and skills we can bring into industry level software engineering. We learned a lot about the frontend through technologies such as JavaScript and Node.js, the backend through Flask, databases through PostgreSQL, the CI/CD pipeline, and bringing these all together through hosting our website and database through AWS.",
+            },
+            {
+              question: "What did we teach each other?",
+              answer:
+                "We were able to bridge gaps in understanding whenever a teammate did not understand something. Learning about all these technologies in a short amount of time is quite hard for just a single person, so luckily we had a group we could discuss and bounce ideas around. Through talking about our misunderstandings we were able to learn all the technologies and apply them to our project efficiently.",
+            },
+            { question: "What can we do better?", answer: "" },
+            {
+              question: "What effect did the peer reviews have?",
+              answer:
+                "We think the peer reviews had a generally good effect on us. It for sure kept us on task because we all wanted to work for a good peer review but for each of us as well. We were able to get good feedback as well on our work styles and where we can improve for each other whether it be through our communication or timeliness.",
+            },
+            { question: "What puzzles us?", answer: "" },
+          ].map(({ question, answer }) => (
+            <div
+              key={question}
+              style={{
+                border: "1px solid #d2d9ef",
+                borderRadius: 8,
+                background: "#fafcff",
+                padding: 10,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 22,
+                  fontWeight: 700,
+                  color: "#1f2f59",
+                  marginBottom: 8,
+                }}
+              >
+                {question}
+              </div>
+              {answer && (
+                <div
+                  style={{
+                    fontSize: 17,
+                    lineHeight: 1.45,
+                    color: "#2f3d63",
+                  }}
+                >
+                  {answer}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </section>
     }
   </div>
