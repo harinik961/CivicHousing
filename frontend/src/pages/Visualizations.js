@@ -1450,7 +1450,17 @@ useEffect(() => {
 
 
       const legend = svg.append("g")
-        .attr("transform", `translate(${width - 130}, ${marginTop})`);
+        .attr("transform", `translate(${marginLeft + 8}, ${marginTop + 6})`);
+
+      legend
+        .append("rect")
+        .attr("x", -6)
+        .attr("y", -6)
+        .attr("width", 130)
+        .attr("height", 44)
+        .attr("rx", 6)
+        .attr("fill", "rgba(255,255,255,0.88)")
+        .attr("stroke", "#d2d9ef");
 
 
 
