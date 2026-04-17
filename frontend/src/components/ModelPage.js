@@ -294,6 +294,9 @@ export default function ModelPage({ title, apiEndpoint, modelName, attributes, q
     return (
       <div className="container mt-4 text-center">
         <h2>{title}</h2>
+        <div className="mb-2">
+          <DataBadge lastSyncedAt={lastSyncedAt} />
+        </div>
         <p>Loading data...</p>
       </div>
     );
