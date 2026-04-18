@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import ModelCard from "./ModelCard";
 import DataBadge from "./DataBadge";
 
@@ -33,7 +34,6 @@ function normalizeImage(item) {
     return withStreetViewRadius(candidate);
   }
 
-  // Backend sometimes returns raw base64 without a data URI prefix
   return `data:image/jpeg;base64,${candidate}`;
 }
 
@@ -118,22 +118,53 @@ export default function ModelPage({
   filterOptions = [],
   defaultSort = "",
 }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const urlParams = new URLSearchParams(location.search);
+
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastSyncedAt, setLastSyncedAt] = useState(null);
+
+  const urlSort = urlParams.get("sort");
+  const urlOrder = urlParams.get("order");
+  const urlSearch = urlParams.get("q");
+  const urlPage = parseInt(urlParams.get("page") || "1");
 
   const initialFilterValues = {};
   for (const f of filterOptions) {
     const filterKey = f.parameter || f.min_parameter;
     initialFilterValues[filterKey] = f.buckets[0];
   }
-  const [filterValues, setFilterValues] = useState(initialFilterValues);
-  const [draftFilterValues, setDraftFilterValues] =
-    useState(initialFilterValues);
 
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [pages, setPages] = useState(1);
+  const urlFilterValues = { ...initialFilterValues };
+  for (const f of filterOptions) {
+    const key = f.parameter || f.min_parameter;
+
+    if (f.parameter) {
+      const val = urlParams.get(f.parameter);
+      if (val !== null) {
+        urlFilterValues[key] =
+          f.buckets.find((b) => String(b.value) === val) ||
+          initialFilterValues[key];
+      }
+    } else {
+      const min = urlParams.get(f.min_parameter);
+      const max = urlParams.get(f.max_parameter);
+
+      urlFilterValues[key] =
+        f.buckets.find(
+          (b) =>
+            String(b.min ?? "") === String(min ?? "") &&
+            String(b.max ?? "") === String(max ?? "")
+        ) || initialFilterValues[key];
+    }
+  }
+ 
+  const [filterValues, setFilterValues] = useState(urlFilterValues);
+  const [draftFilterValues, setDraftFilterValues] =
+    useState(urlFilterValues);
+  const [page, setPage] = useState(urlPage);
   let defaultSortField = "";
   let defaultSortOrder = "asc";
   let defaultSortValue = "";
@@ -143,17 +174,53 @@ export default function ModelPage({
     defaultSortOrder = parts[1];
     defaultSortValue = defaultSort;
   }
-  const [sort, setSort] = useState(defaultSortField);
-  const [order, setOrder] = useState(defaultSortOrder);
-  const [sortValue, setSortValue] = useState(defaultSortValue);
+
+  const [sort, setSort] = useState(urlSort || defaultSortField);
+  const [order, setOrder] = useState(urlOrder || defaultSortOrder);
+  const [sortValue, setSortValue] = useState(
+    urlSort && urlOrder ? `${urlSort}|${urlOrder}` : defaultSortValue
+  );
+
   const [showFilters, setShowFilters] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeSearch, setActiveSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState(urlSearch || "");
+  const [activeSearch, setActiveSearch] = useState(urlSearch || "");
+
+  const [total, setTotal] = useState(0);
+  const [pages, setPages] = useState(1);
 
   const attributesRef = useRef(attributes);
   const filterOptionsRef = useRef(filterOptions);
 
   const PER_PAGE = 50;
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (page > 1) params.set("page", page);
+    if (sort) params.set("sort", sort);
+    if (order) params.set("order", order);
+    if (activeSearch) params.set("q", activeSearch);
+
+    for (const f of filterOptionsRef.current) {
+      const key = f.parameter || f.min_parameter;
+      const bucket = filterValues[key];
+      if (!bucket) continue;
+
+      if (f.parameter) {
+        if (bucket.value !== null) params.set(f.parameter, bucket.value);
+      } else {
+        if (bucket.min !== null) params.set(f.min_parameter, bucket.min);
+        if (bucket.max !== null) params.set(f.max_parameter, bucket.max);
+      }
+    }
+
+    const newSearch = params.toString();
+    const currentSearch = location.search.replace(/^\?/, "");
+
+    if (newSearch !== currentSearch) {
+      navigate(`?${newSearch}`, { replace: true });
+    }
+  }, [page, sort, order, filterValues, activeSearch, navigate, location.search]);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/data-as-of`)
@@ -195,8 +262,9 @@ export default function ModelPage({
     if (isSearching) {
       params.set("q", activeSearch.trim());
     }
+
     const url = isSearching
-      ? `${API_BASE}/api/search/${modelName}?${params}`
+      ? `${API_BASE}/api/search/${modelName}?${params.toString()}`
       : `${API_BASE}${apiEndpoint}?${params}`;
 
     fetch(url)
@@ -206,8 +274,7 @@ export default function ModelPage({
         const formatted = raw
           .map((item) => {
             const actual = item.data ? item.data : item;
-
-            if (!actual) return null; // safety
+            if (!actual) return null;
 
             return {
               ...formatItem(actual, attributesRef.current),
@@ -215,18 +282,14 @@ export default function ModelPage({
             };
           })
           .filter(Boolean);
+
         setTotal(data.total ?? 0);
         setPages(data.pages ?? 1);
         setItems(formatted);
         setLastSyncedAt((prev) => prev || findLastSyncedAt(raw));
         setLoading(false);
       })
-      .catch((err) => {
-        console.error("Error loading model data:", err);
-        setLoading(false);
-      });
-
-    console.log("ACTIVE SEARCH:", activeSearch);
+      .catch(() => setLoading(false));
   }, [apiEndpoint, modelName, sort, order, filterValues, activeSearch]);
 
   // Handle page changes - fetch new page from server
