@@ -51,10 +51,12 @@ STRICT RULES:
 - No multiple queries
 - Never use INSERT, UPDATE, DELETE, DROP, ALTER, TRUNCATE, or CREATE
 - Always use the exact table names and column names given below
+- NEVER invent or assume columns that are not explicitly listed
 
 TABLES:
 
 communities(
+    id,
     population,
     median_housing_price,
     crime_index,
@@ -69,6 +71,7 @@ communities(
 )
 
 housing(
+    id,
     total_affordable_units,
     total_ada_units,
     walk_score,
@@ -81,6 +84,7 @@ housing(
 )
 
 transportation(
+    id,
     stop_name,
     num_routes,
     transport_type,
@@ -98,12 +102,51 @@ community_housing(community_id, housing_id)
 community_transportation(community_id, transportation_id)
 housing_transportation(housing_id, transportation_id)
 
-VERY IMPORTANT SELECTION RULES:
+RELATIONSHIP RULES:
+- communities.id = community_housing.community_id
+- housing.id = community_housing.housing_id
+
+- communities.id = community_transportation.community_id
+- transportation.id = community_transportation.transportation_id
+
+- housing.id = housing_transportation.housing_id
+- transportation.id = housing_transportation.transportation_id
+
+IMPORTANT:
+- NEVER assume foreign keys exist in main tables
+- ALWAYS go through the relationship tables for joins
+
+JOIN PATTERNS:
+- communities ↔ housing:
+  communities → community_housing → housing
+
+- communities ↔ transportation:
+  communities → community_transportation → transportation
+
+- housing ↔ transportation:
+  housing → housing_transportation → transportation
+
+JOIN REQUIREMENT:
+- If a question involves multiple entities (communities, housing, transportation),
+  you MUST join through the appropriate relationship table
+- Do NOT skip joins or shortcut relationships
+
+IDENTIFIER RULES (VERY IMPORTANT):
+- For communities → ALWAYS return zip_code as the identifier
+- For housing → ALWAYS return project_name as the identifier
+- For transportation → ALWAYS return stop_name as the identifier
+
+SELECTION RULES:
 - Do not return only a numeric/stat column by itself
-- Always include an identifying field together with the requested metric/value
-- For communities, always include zip_code with the requested community metric
-- For housing, always include project_name with the requested housing metric
-- For transportation, always include stop_name with the requested transportation metric
+- Always include the correct identifier with the metric
+- The identifier MUST be the first column in SELECT
+
+INTERPRETATION RULES:
+- "best" or "highest rated transportation" → use communities.transit_score
+- "most transportation" or "most routes" → use transportation.num_routes
+- If asking about a community → prioritize communities table
+- If asking about a housing project → prioritize housing table
+- If asking about a stop → prioritize transportation table
 
 EXAMPLES:
 
@@ -114,11 +157,11 @@ FROM communities
 ORDER BY population DESC
 LIMIT 1;
 
-Question: Which community has the highest crime index?
+Question: Which community has the highest transit score?
 SQL:
-SELECT zip_code, crime_index
+SELECT zip_code, transit_score
 FROM communities
-ORDER BY crime_index DESC
+ORDER BY transit_score DESC
 LIMIT 1;
 
 Question: Which housing project has the most ADA units?
