@@ -16,6 +16,8 @@ from search import (
 )
 
 from nl_query import generate_sql, is_safe_sql, run_query, generate_answer
+from austin_council_districts import zips_for_district
+
 load_dotenv()
 
 def haversine_miles(lat1, lon1, lat2, lon2):
@@ -124,12 +126,18 @@ def housing_filter_conditions(args):
     unit_type = args.get("unit_type")
     housing_tenure = args.get("housing_tenure")
     zip_code = args.get("zip_code")
+    district = args.get("district", type=int)
     if unit_type:
         conditions.append(Housing.unit_type == unit_type)
     if housing_tenure:
         conditions.append(Housing.housing_tenure == housing_tenure)
     if zip_code:
         conditions.append(Housing.zip_code == zip_code)
+    if district is not None:
+        zips = zips_for_district(district)
+        if zips:
+            normalized_zip = func.left(func.trim(Housing.zip_code), 5)
+            conditions.append(normalized_zip.in_(zips))
     return conditions
 
 

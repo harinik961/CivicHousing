@@ -51,8 +51,17 @@ class TestRoutes(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_housing_district_filter(self):
-        response = self.client.get("/api/housing?district=1")
+        response = self.client.get("/api/housing?district=4&per_page=50")
         self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        rows = data.get("data") or []
+        if not rows:
+            self.skipTest("no housing rows in district 4 ZIPs in DB")
+        allowed = {"78752", "78753", "78758"}
+        for row in rows:
+            z = row.get("zip_code") or ""
+            prefix = str(z).strip()[:5]
+            self.assertIn(prefix, allowed, msg=f"unexpected zip {z!r} for district=4")
 
     def test_community_endpoint(self):
         response = self.client.get("/api/community")

@@ -17,7 +17,10 @@ services:
           action: rebuild
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        REACT_APP_API_BASE: http://localhost:5000
     container_name: frontend
     ports:
       - "3000:80"

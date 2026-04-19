@@ -1,10 +1,17 @@
 import unittest
+from urllib.parse import urlparse
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 import time
+
+
+def url_without_query(url):
+    """Scheme + host + path only; ModelPage appends sort/order query params on some routes."""
+    p = urlparse(url)
+    return f"{p.scheme}://{p.netloc}{p.path}".rstrip("/")
 
 '''
 Attribution: Ed Post #267 states we can reuse boilerplate code from previous year's
@@ -73,27 +80,39 @@ class CivicHousingUnitTests(unittest.TestCase):
   # Test 6
   def test_home_url(self): 
     self.driver.get(base_url)
-    self.assertEqual(self.driver.current_url.rstrip("/"), (base_url).rstrip("/"))
+    self.assertEqual(url_without_query(self.driver.current_url), url_without_query(base_url))
   
   # Test 7 
   def test_community_url(self): 
     self.driver.get(base_url + "/community")
-    self.assertEqual(self.driver.current_url.rstrip("/"), (base_url + "/community").rstrip("/"))
+    self.assertEqual(
+        url_without_query(self.driver.current_url),
+        url_without_query(base_url + "/community"),
+    )
   
   # Test 8
   def test_housing_url(self): 
     self.driver.get(base_url + "/housing")
-    self.assertEqual(self.driver.current_url.rstrip("/"), (base_url + "/housing").rstrip("/"))
+    self.assertEqual(
+        url_without_query(self.driver.current_url),
+        url_without_query(base_url + "/housing"),
+    )
 
   # Test 9
   def test_transportation_url(self): 
     self.driver.get(base_url + "/transportation")
-    self.assertEqual(self.driver.current_url.rstrip("/"), (base_url + "/transportation").rstrip("/"))
+    self.assertEqual(
+        url_without_query(self.driver.current_url),
+        url_without_query(base_url + "/transportation"),
+    )
 
   # Test 10
   def test_about_url(self):
     self.driver.get(base_url + "/about")
-    self.assertEqual(self.driver.current_url.rstrip("/"), (base_url + "/about").rstrip("/"))
+    self.assertEqual(
+        url_without_query(self.driver.current_url),
+        url_without_query(base_url + "/about"),
+    )
 
   # Test 11
   def test_data_badge_visible_on_housing_page(self):
