@@ -148,7 +148,7 @@ Now generate SQL for this question:
 """
 
     response = client.chat.completions.create(
-        model="meta-llama/llama-3.1-8b-instruct",
+        model="meta-llama/llama-3.3-70b-instruct",
         messages=[{"role": "user", "content": prompt}]
     )
 
@@ -159,7 +159,9 @@ Now generate SQL for this question:
 
 
 def run_query(sql: str):
-    conn = psycopg2.connect(DB_URL)
+    db_url = os.getenv("DATABASE_URL").replace("postgresql+psycopg2://", "postgresql://")
+
+    conn = psycopg2.connect(db_url)
     cur = conn.cursor()
 
     cur.execute(sql)
@@ -208,7 +210,7 @@ Results:
 Answer:"""
 
     response = client.chat.completions.create(
-        model="meta-llama/llama-3.1-8b-instruct",
+        model="meta-llama/llama-3.3-70b-instruct",
         messages=[
             {"role": "system", "content": "You are a helpful data assistant. Follow all formatting rules exactly. Return only the answer — no preamble, no explanation."},
             {"role": "user", "content": prompt}
