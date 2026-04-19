@@ -108,6 +108,42 @@ function findLastSyncedAt(rawItems) {
   return null;
 }
 
+function appendFiltersToParams(params, filterOptions, filterValues) {
+  for (const f of filterOptions) {
+    const filterKey = f.parameter || f.min_parameter;
+    const bucket = filterValues[filterKey];
+    if (!bucket) continue;
+
+    if (f.parameter) {
+      if (bucket.value !== null) params.append(f.parameter, bucket.value);
+    } else {
+      if (bucket.min !== null) params.append(f.min_parameter, bucket.min);
+      if (bucket.max !== null) params.append(f.max_parameter, bucket.max);
+    }
+  }
+}
+
+function buildStatsParams(filterOptions, filterValues, activeSearch) {
+  const params = new URLSearchParams();
+  const q = activeSearch.trim();
+  if (q) params.set("q", q);
+  appendFiltersToParams(params, filterOptions, filterValues);
+  return params;
+}
+
+function formatInt(n) {
+  if (n == null || Number.isNaN(Number(n))) return "—";
+  return Number(n).toLocaleString();
+}
+
+function formatFixed(n, digits = 1) {
+  if (n == null || Number.isNaN(Number(n))) return "—";
+  return Number(n).toLocaleString(undefined, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
+}
+
 export default function ModelPage({
   title,
   apiEndpoint,
@@ -187,6 +223,7 @@ export default function ModelPage({
 
   const [total, setTotal] = useState(0);
   const [pages, setPages] = useState(1);
+  const [summary, setSummary] = useState(null);
 
   const attributesRef = useRef(attributes);
   const filterOptionsRef = useRef(filterOptions);
@@ -236,6 +273,7 @@ export default function ModelPage({
   useEffect(() => {
     setLoading(true);
     setPage(1);
+    setSummary(null);
 
     const params = new URLSearchParams({
       page: 1,
@@ -245,18 +283,7 @@ export default function ModelPage({
     if (sort) params.append("sort", sort);
     if (order) params.append("order", order);
 
-    for (const f of filterOptionsRef.current) {
-      const filterKey = f.parameter || f.min_parameter;
-      const bucket = filterValues[filterKey];
-      if (!bucket) continue;
-
-      if (f.parameter) {
-        if (bucket.value !== null) params.append(f.parameter, bucket.value);
-      } else {
-        if (bucket.min !== null) params.append(f.min_parameter, bucket.min);
-        if (bucket.max !== null) params.append(f.max_parameter, bucket.max);
-      }
-    }
+    appendFiltersToParams(params, filterOptionsRef.current, filterValues);
 
     const isSearching = activeSearch.trim();
     if (isSearching) {
@@ -266,6 +293,13 @@ export default function ModelPage({
     const url = isSearching
       ? `${API_BASE}/api/search/${modelName}?${params.toString()}`
       : `${API_BASE}${apiEndpoint}?${params}`;
+
+    const statsParams = buildStatsParams(
+      filterOptionsRef.current,
+      filterValues,
+      activeSearch
+    );
+    const statsUrl = `${API_BASE}${apiEndpoint}/stats?${statsParams.toString()}`;
 
     fetch(url)
       .then((res) => res.json())
@@ -290,6 +324,11 @@ export default function ModelPage({
         setLoading(false);
       })
       .catch(() => setLoading(false));
+
+    fetch(statsUrl)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((s) => setSummary(s))
+      .catch(() => setSummary(null));
   }, [apiEndpoint, modelName, sort, order, filterValues, activeSearch]);
 
   // Handle page changes - fetch new page from server
@@ -307,18 +346,7 @@ export default function ModelPage({
     if (sort) params.append("sort", sort);
     if (order) params.append("order", order);
 
-    for (const f of filterOptionsRef.current) {
-      const filterKey = f.parameter || f.min_parameter;
-      const bucket = filterValues[filterKey];
-      if (!bucket) continue;
-
-      if (f.parameter) {
-        if (bucket.value !== null) params.append(f.parameter, bucket.value);
-      } else {
-        if (bucket.min !== null) params.append(f.min_parameter, bucket.min);
-        if (bucket.max !== null) params.append(f.max_parameter, bucket.max);
-      }
-    }
+    appendFiltersToParams(params, filterOptionsRef.current, filterValues);
 
     const isSearching = activeSearch.trim();
     if (isSearching) {
@@ -391,7 +419,56 @@ export default function ModelPage({
         Showing {start}-{end} of {total}
       </p>
 
-      <h2 className="text-center mb-4">{title}</h2>
+      <h2 className="text-center mb-2">{title}</h2>
+
+      {summary && modelName === "housing" && (
+        <p className="text-center mb-3" aria-live="polite">
+          <span className="fw-semibold">{formatInt(summary.count)} projects</span>
+          {" · "}
+          <span>
+            {formatInt(summary.total_affordable_units)} total affordable units
+          </span>
+          {" · "}
+          <span>avg walk score {formatFixed(summary.avg_walk_score)}</span>
+        </p>
+      )}
+
+      {summary && modelName === "community" && (
+        <>
+          <p className="text-center mb-1" aria-live="polite">
+            <span className="fw-semibold">{formatInt(summary.count)} communities</span>
+            {" · "}
+            <span>
+              {formatInt(summary.population_sum)} population in tracked areas
+            </span>
+            {" · "}
+            <span>
+              avg transit score {formatFixed(summary.avg_transit_score)}
+            </span>
+          </p>
+          <p className="text-center small text-muted mb-3">
+            Affordable-unit figures here are area rollups; use Housing for
+            project-level inventory.
+          </p>
+        </>
+      )}
+
+      {summary && modelName === "transportation" && (
+        <p className="text-center mb-3" aria-live="polite">
+          <span className="fw-semibold">{formatInt(summary.count)} transit stops</span>
+          {" · "}
+          <span>avg {formatFixed(summary.avg_num_routes)} routes per stop</span>
+          {" · "}
+          <span>
+            avg {formatFixed(summary.avg_travel_time_ut_minutes)} min to UT
+          </span>
+          {" · "}
+          <span>
+            avg {formatFixed(summary.avg_travel_time_downtown_minutes)} min to
+            downtown
+          </span>
+        </p>
+      )}
 
       <div className="d-flex justify-content-center mb-3 gap-2">
         <input

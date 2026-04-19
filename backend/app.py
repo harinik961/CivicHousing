@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import os
 import math
 import requests
-from sqlalchemy import cast, Integer
+from sqlalchemy import cast, Integer, case
 from sqlalchemy.sql import func
 from models import db, Housing, Community, Transportation
 from flask_migrate import Migrate
@@ -13,6 +13,7 @@ from search import (
     search_communities,
     search_transportation,
     global_search,
+    combined_filter,
 )
 
 from nl_query import generate_sql, is_safe_sql, run_query, generate_answer
@@ -223,6 +224,92 @@ def transportation_filter_conditions(args):
     return conditions
 
 
+def housing_stats_payload(args):
+    q = args.get("q", "")
+    filt = combined_filter(Housing, q, housing_filter_conditions(args))
+    stmt = db.session.query(
+        func.count(Housing.id),
+        func.coalesce(func.sum(Housing.total_affordable_units), 0),
+        func.avg(Housing.walk_score),
+        func.coalesce(func.sum(Housing.total_ada_units), 0),
+    )
+    if filt is not None:
+        stmt = stmt.filter(filt)
+    c, sum_u, avg_w, sum_a = stmt.one()
+    return {
+        "count": int(c or 0),
+        "total_affordable_units": int(sum_u or 0),
+        "avg_walk_score": round(float(avg_w), 1) if avg_w is not None else None,
+        "total_ada_units": int(sum_a or 0),
+    }
+
+
+def community_stats_payload(args):
+    q = args.get("q", "")
+    filt = combined_filter(Community, q, community_filter_conditions(args))
+    stmt = db.session.query(
+        func.count(Community.id),
+        func.coalesce(func.sum(Community.population), 0),
+        func.coalesce(func.sum(Community.community_total_affordable_units), 0),
+        func.avg(Community.median_housing_price),
+        func.avg(Community.transit_score),
+        func.coalesce(func.sum(Community.park_count), 0),
+        func.coalesce(func.sum(Community.health_count), 0),
+    )
+    if filt is not None:
+        stmt = stmt.filter(filt)
+    row = stmt.one()
+    c, pop_sum, aff_sum, avg_price, avg_transit, parks, health = row
+    return {
+        "count": int(c or 0),
+        "population_sum": int(pop_sum or 0),
+        "community_total_affordable_units_sum": int(aff_sum or 0),
+        "avg_median_housing_price": round(float(avg_price), 1)
+        if avg_price is not None
+        else None,
+        "avg_transit_score": round(float(avg_transit), 1)
+        if avg_transit is not None
+        else None,
+        "park_count_sum": int(parks or 0),
+        "health_count_sum": int(health or 0),
+    }
+
+
+def transportation_stats_payload(args):
+    q = args.get("q", "")
+    filt = combined_filter(
+        Transportation, q, transportation_filter_conditions(args)
+    )
+    wheelchair_yes = case(
+        (Transportation.wheelchair_accessible == "Wheelchair Accessible", 1),
+        else_=0,
+    )
+    stmt = db.session.query(
+        func.count(Transportation.id),
+        func.avg(Transportation.num_routes),
+        func.avg(Transportation.travel_time_ut_minutes),
+        func.avg(Transportation.travel_time_downtown_minutes),
+        func.sum(wheelchair_yes),
+    )
+    if filt is not None:
+        stmt = stmt.filter(filt)
+    c, avg_nr, avg_ut, avg_dt, wc_count = stmt.one()
+    cnt = int(c or 0)
+    wc = int(wc_count or 0)
+    return {
+        "count": cnt,
+        "avg_num_routes": round(float(avg_nr), 1) if avg_nr is not None else None,
+        "avg_travel_time_ut_minutes": round(float(avg_ut), 1)
+        if avg_ut is not None
+        else None,
+        "avg_travel_time_downtown_minutes": round(float(avg_dt), 1)
+        if avg_dt is not None
+        else None,
+        "wheelchair_accessible_stops": wc,
+        "wheelchair_accessible_pct": round(100.0 * wc / cnt, 1) if cnt else None,
+    }
+
+
 def create_app():
 
     app = Flask(__name__)
@@ -359,6 +446,10 @@ def create_app():
             }
         )
 
+    @app.route("/api/housing/stats", methods=["GET"], strict_slashes=False)
+    def get_housing_stats():
+        return jsonify(housing_stats_payload(request.args))
+
     @app.route("/api/housing/<int:id>", methods=["GET"], strict_slashes=False)
     def get_one_housing(id):
 
@@ -465,6 +556,10 @@ def create_app():
             }
         )
 
+    @app.route("/api/community/stats", methods=["GET"], strict_slashes=False)
+    def get_community_stats():
+        return jsonify(community_stats_payload(request.args))
+
     @app.route("/api/community/<int:id>", methods=["GET"], strict_slashes=False)
     def get_community(id):
 
@@ -526,6 +621,10 @@ def create_app():
                 "pages": pagination.pages,
             }
         )
+
+    @app.route("/api/transportation/stats", methods=["GET"], strict_slashes=False)
+    def get_transportation_stats():
+        return jsonify(transportation_stats_payload(request.args))
 
     @app.route("/api/transportation/<int:id>", methods=["GET"], strict_slashes=False)
     def get_one_transportation(id):

@@ -105,6 +105,78 @@ class TestRoutes(unittest.TestCase):
         self.assertIn("page", data)
         self.assertIn("pages", data)
 
+    def test_housing_stats_matches_list_total(self):
+        stats = self.client.get("/api/housing/stats").get_json()
+        listing = self.client.get("/api/housing?page=1&per_page=50").get_json()
+        self.assertEqual(stats["count"], listing["total"])
+
+    def test_housing_stats_structure(self):
+        response = self.client.get("/api/housing/stats")
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        for key in (
+            "count",
+            "total_affordable_units",
+            "avg_walk_score",
+            "total_ada_units",
+        ):
+            self.assertIn(key, data)
+
+    def test_housing_stats_filtered_matches_list(self):
+        stats = self.client.get("/api/housing/stats?unit_type=Multifamily").get_json()
+        listing = self.client.get(
+            "/api/housing?unit_type=Multifamily&page=1&per_page=50"
+        ).get_json()
+        self.assertEqual(stats["count"], listing["total"])
+
+    def test_housing_stats_search_parity(self):
+        q = "787"
+        search_r = self.client.get(
+            f"/api/search/housing?q={quote(q)}&page=1&per_page=50"
+        )
+        self.assertEqual(search_r.status_code, 200)
+        stats_r = self.client.get(f"/api/housing/stats?q={quote(q)}")
+        self.assertEqual(stats_r.status_code, 200)
+        self.assertEqual(
+            stats_r.get_json()["count"],
+            search_r.get_json()["total"],
+        )
+
+    def test_community_stats_matches_list_total(self):
+        stats = self.client.get("/api/community/stats").get_json()
+        listing = self.client.get("/api/community?page=1&per_page=50").get_json()
+        self.assertEqual(stats["count"], listing["total"])
+
+    def test_community_stats_structure(self):
+        data = self.client.get("/api/community/stats").get_json()
+        for key in (
+            "count",
+            "population_sum",
+            "community_total_affordable_units_sum",
+            "avg_median_housing_price",
+            "avg_transit_score",
+            "park_count_sum",
+            "health_count_sum",
+        ):
+            self.assertIn(key, data)
+
+    def test_transportation_stats_matches_list_total(self):
+        stats = self.client.get("/api/transportation/stats").get_json()
+        listing = self.client.get("/api/transportation?page=1&per_page=50").get_json()
+        self.assertEqual(stats["count"], listing["total"])
+
+    def test_transportation_stats_structure(self):
+        data = self.client.get("/api/transportation/stats").get_json()
+        for key in (
+            "count",
+            "avg_num_routes",
+            "avg_travel_time_ut_minutes",
+            "avg_travel_time_downtown_minutes",
+            "wheelchair_accessible_stops",
+            "wheelchair_accessible_pct",
+        ):
+            self.assertIn(key, data)
+
     def test_transportation_by_id(self):
         response = self.client.get("/api/transportation/1")
         self.assertEqual(response.status_code, 200)

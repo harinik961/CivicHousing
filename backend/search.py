@@ -35,6 +35,33 @@ def build_ilike_filter(model, query):
     return or_(*filters)
 
 
+def build_search_filter(model, query):
+    """Full-text + ILIKE filter used by list search. None if query is empty."""
+    if not query or not str(query).strip():
+        return None
+    query = str(query).strip()
+    phrase_q, plain_q, or_q = build_queries(query)
+    return or_(
+        model.ts_vector.op("@@")(phrase_q),
+        model.ts_vector.op("@@")(plain_q),
+        model.ts_vector.op("@@")(or_q),
+        build_ilike_filter(model, query),
+    )
+
+
+def combined_filter(model, query, extra_filters=None):
+    """Same predicate as search_model: search text + optional extra AND conditions."""
+    sf = build_search_filter(model, query)
+    extras = list(extra_filters or [])
+    if sf is None:
+        if not extras:
+            return None
+        return and_(*extras)
+    if not extras:
+        return sf
+    return and_(sf, *extras)
+
+
   
 # Core search logic
   
@@ -59,18 +86,7 @@ def search_model(
         + func.ts_rank(model.ts_vector, or_q)
     ).label("rank")
 
-    # Combined filter
-    filter_condition = or_(
-        model.ts_vector.op("@@")(phrase_q),
-        model.ts_vector.op("@@")(plain_q),
-        model.ts_vector.op("@@")(or_q),
-        build_ilike_filter(model, query),  # fallback for substrings
-    )
-
-    if extra_filters:
-        combined = and_(filter_condition, *extra_filters)
-    else:
-        combined = filter_condition
+    combined = combined_filter(model, query, extra_filters)
 
     base_query = db.session.query(model, rank).filter(combined)
 
