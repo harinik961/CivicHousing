@@ -521,13 +521,21 @@ export default function Visualizations() {
               answer:
                 "We were able to bridge gaps in understanding whenever a teammate did not understand something. Learning about all these technologies in a short amount of time is quite hard for just a single person, so luckily we had a group we could discuss and bounce ideas around. Through talking about our misunderstandings we were able to learn all the technologies and apply them to our project efficiently.",
             },
-            { question: "What can we do better?", answer: "" },
+            {
+              question: "What can we do better?",
+              answer:
+                "Overall we did a pretty good job on working together as a team but if we had to pick something it would be having more accurate photos for certain transportation, housing, or community cards since the Google Maps API was not always the best in showing an accurate depiction of each respective card.",
+            },
             {
               question: "What effect did the peer reviews have?",
               answer:
                 "We think the peer reviews had a generally good effect on us. It for sure kept us on task because we all wanted to work for a good peer review but for each of us as well. We were able to get good feedback as well on our work styles and where we can improve for each other whether it be through our communication or timeliness.",
             },
-            { question: "What puzzles us?", answer: "" },
+            {
+              question: "What puzzles us?",
+              answer:
+                "We were really intrigued by the problem of affordable housing in Austin so we built this website in order to combat this inequality. Being able to tackle all this while learning the ins and outs of new technologies really puzzled us but in a good way that kept us motivated.",
+            },
           ].map(({ question, answer }) => (
             <div
               key={question}
