@@ -551,7 +551,7 @@ export default function Visualizations() {
               {answer && (
                 <div
                   style={{
-                    fontSize: 16,
+                    fontSize: 14,
                     lineHeight: 1.45,
                     color: "#2f3d63",
                   }}
