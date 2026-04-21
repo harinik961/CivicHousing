@@ -104,6 +104,39 @@ def get_google_walking_distance_miles(
         return None
 
 
+def community_satellite_image_url(lat, lon, zoom=15, size="600x400"):
+    maps_key = os.getenv("GOOGLE_MAPS_API_KEY")
+    if not maps_key:
+        return None
+
+    try:
+        lat = float(lat)
+        lon = float(lon)
+        if not math.isfinite(lat) or not math.isfinite(lon):
+            return None
+    except (TypeError, ValueError):
+        return None
+
+    return (
+        "https://maps.googleapis.com/maps/api/staticmap"
+        f"?center={lat:.6f},{lon:.6f}"
+        f"&zoom={zoom}&size={size}&maptype=satellite&key={maps_key}"
+    )
+
+
+def apply_community_image_override(payload):
+    if not isinstance(payload, dict):
+        return payload
+
+    satellite_url = community_satellite_image_url(
+        payload.get("latitude"), payload.get("longitude")
+    )
+    if satellite_url:
+        payload["street_view_url"] = satellite_url
+
+    return payload
+
+
 HOUSING_SORT_MAP = {
     "walk_score": Housing.walk_score,
     "total_affordable_units": cast(
@@ -406,6 +439,10 @@ def create_app():
 
         results, total, pages = global_search(query, page=page, per_page=per_page)
 
+        for item in results:
+            if item.get("type") == "community" and isinstance(item.get("data"), dict):
+                item["data"] = apply_community_image_override(item["data"])
+
         return jsonify(
             {"results": results, "total": total, "page": page, "pages": pages}
         )
@@ -545,7 +582,10 @@ def create_app():
             query = query.order_by(column.desc() if order == "desc" else column.asc())
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
-        data = [c.to_dict(include_relations=False) for c in pagination.items]
+        data = [
+            apply_community_image_override(c.to_dict(include_relations=False))
+            for c in pagination.items
+        ]
 
         return jsonify(
             {
@@ -565,7 +605,9 @@ def create_app():
 
         community = Community.query.get_or_404(id)
 
-        return jsonify(community.to_dict(include_relations=True))
+        return jsonify(
+            apply_community_image_override(community.to_dict(include_relations=True))
+        )
 
     @app.route("/api/search/community", methods=["GET"])
     def community_search_route():
@@ -584,6 +626,10 @@ def create_app():
             sort_column=sort_col,
             order=order,
         )
+
+        for item in results:
+            if isinstance(item.get("data"), dict):
+                item["data"] = apply_community_image_override(item["data"])
 
         return jsonify(
             {"results": results, "total": total, "page": page, "pages": pages}
