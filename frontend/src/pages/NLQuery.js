@@ -43,7 +43,7 @@ function NLQueryPage() {
   return (
     <div className="page-container">
       <div className="header-section">
-        <h1 className="page-title">Ask the Data</h1>
+        <h1 className="page-title">Ask Civic Housing!</h1>
         <p className="page-subtitle">
           Ask questions about housing, communities, and transportation.
         </p>
