@@ -122,7 +122,7 @@ export default function ProviderVisualizations() {
     async function init() {
       try {
 
-        const [regions, stations, routes, us] = await Promise.all([
+        const [regions, routes, us] = await Promise.all([
           fetchRegions(),
           fetchStations(),
           fetchRoutes(), 
@@ -249,9 +249,9 @@ export default function ProviderVisualizations() {
           const marginBottom = 40;
           const marginLeft = 50;
 
-          const data = stations.map(d => ({
-            x: d.routesServedCount,
-            y: d.connectedDestinations?.length || 0,
+          const data = routes.map(d => ({
+            x: d.stationsServed,
+            y: d.majorStops?.length || 0,
             name: d.name
           })).filter(d => d.x != null && d.y != null);
 
@@ -284,7 +284,7 @@ export default function ProviderVisualizations() {
             .attr("y", height - 5)
             .attr("text-anchor", "middle")
             .style("font-size", "12px")
-            .text("Routes Served");
+            .text("Stations Served");
 
           // Y-axis label
           svgScatter.append("text")
@@ -293,7 +293,7 @@ export default function ProviderVisualizations() {
             .attr("y", 15)
             .attr("text-anchor", "middle")
             .style("font-size", "12px")
-            .text("Connected Destinations");
+            .text("Number of Major Stops");
 
           svgScatter.append("g")
             .selectAll("circle")
@@ -400,9 +400,9 @@ export default function ProviderVisualizations() {
       </div>
 
       {/* SCATTER */}
-      <h2 style={{ marginTop: 40 }}>Stations Scatterplot</h2>
+      <h2 style={{ marginTop: 40 }}>Routes Scatterplot</h2>
       <p style={{ color: "#666" }}>
-        Scatter Plot of Stations of Routes Served (x) vs. Connected Destinations (y)
+        Scatter Plot of Routes of Stations Served (x) vs. Number of Major Stops (y)
       </p>
 
       <div style={{ display: "flex", justifyContent: "center", width: "100%", padding: "0 8px", marginBottom: 40 }}>
