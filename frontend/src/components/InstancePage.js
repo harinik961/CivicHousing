@@ -45,6 +45,9 @@ export default function InstancePage({
     item.name ||
     `Item ${item.id}`;
 
+  const isCommunityInstance = apiEndpoint === "/api/community";
+  const streetMediaLabel = isCommunityInstance ? "Aerial View Image" : "Street View";
+
   const labelOverrides = {
     walk_score: "Walkability Score",
     transit_score: "Transit Score",
@@ -53,8 +56,8 @@ export default function InstancePage({
     walking_map_embed_url: "Walking Route to Transit",
     walking_distance: "Distance to Transit",
     closest_stop_frequency: "Transit Frequency",
-    street_view_url: "Street View",
-    street_view_image: "Street View",
+    street_view_url: streetMediaLabel,
+    street_view_image: streetMediaLabel,
     community_total_affordable_units: "Total Affordable Units (in this area)",
     community_housing_count: "Housing Projects (in this area)"
   };
@@ -278,6 +281,12 @@ export default function InstancePage({
             labelOverrides[key] ||
             key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
+          const showHeaderImage =
+            (key === "project_name" || key === "stop_name" || key === "zip_code") &&
+            getImage &&
+            getImage(item) &&
+            !(isCommunityInstance && key === "zip_code");
+
           return (
             <div className="masonry-item" key={i}>
 
@@ -287,11 +296,7 @@ export default function InstancePage({
 
                   <h5 className="attribute-key">{label}</h5>
 
-                  {(key === "project_name" ||
-                    key === "stop_name" ||
-                    key === "zip_code") &&
-                    getImage &&
-                    getImage(item) && (
+                  {showHeaderImage && (
                       <img
                         src={normalizeImage(withStreetViewRadius(getImage(item)))}
                         alt={displayName}
