@@ -480,6 +480,9 @@ export default function Visualizations() {
       {
       <section style={{marginTop: 18}}>
         <h2>Price vs Amenities</h2>
+        <p style={{ marginTop: 0, color: "#6c7aa4", marginBottom: 10 }}>
+          Austin housing prices compared to health and transit score
+        </p>
         <div ref={barChartRef}
           style={{
             width: "100%",
@@ -1523,6 +1526,25 @@ useEffect(() => {
       svg.append("g")
         .attr("transform", `translate(${marginLeft},0)`)
         .call(d3.axisLeft(y).ticks(null, "s"));
+
+      svg.append("text")
+        .attr("x", (marginLeft + (width - marginRight)) / 2)
+        .attr("y", height - 2)
+        .attr("text-anchor", "middle")
+        .style("font-size", "13px")
+        .style("font-weight", "600")
+        .style("fill", "#2f3d63")
+        .text("Price in USD");
+
+      svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -(marginTop + (height - marginBottom)) / 2)
+        .attr("y", 16)
+        .attr("text-anchor", "middle")
+        .style("font-size", "13px")
+        .style("font-weight", "600")
+        .style("fill", "#2f3d63")
+        .text("Score");
     
 
 
