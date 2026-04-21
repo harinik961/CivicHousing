@@ -494,7 +494,6 @@ export default function Visualizations() {
         <div
           style={{
             width: "100%",
-            height: 500,
             border: "1px solid #d2d9ef",
             borderRadius: 8,
             padding: 12,
@@ -548,7 +547,7 @@ export default function Visualizations() {
             >
               <div
                 style={{
-                  fontSize: 22,
+                  fontSize: "clamp(10px, 2vw, 22px)",
                   fontWeight: 700,
                   color: "#1f2f59",
                   marginBottom: 8,
@@ -556,17 +555,15 @@ export default function Visualizations() {
               >
                 {question}
               </div>
-              {answer && (
-                <div
-                  style={{
-                    fontSize: 15.5,
-                    lineHeight: 1.45,
-                    color: "#2f3d63",
-                  }}
-                >
-                  {answer}
-                </div>
-              )}
+              <div
+                style={{
+                  fontSize: "clamp(6px, 1.4vw, 15.5px)",
+                  lineHeight: 1.45,
+                  color: "#2f3d63",
+                }}
+              >
+                {answer}
+              </div>
             </div>
           ))}
         </div>

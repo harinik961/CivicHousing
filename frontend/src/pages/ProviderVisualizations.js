@@ -387,9 +387,9 @@ export default function ProviderVisualizations() {
   
   return (
     <div style={{ padding: 16 }}>
-      <h1>Provider Visualizations</h1>
+      <h1>Provider Visualizations - RailReach</h1>
 
-      {/* ================= MAP ================= */}
+      {/* MAP */}
       <h2 style={{ marginTop: 40 }}>Regions Choropleth Map</h2>
       <p style={{ color: "#666" }}>
         Choropleth Map of Regions mapped with No Vehicle Availability (%)
@@ -399,57 +399,107 @@ export default function ProviderVisualizations() {
         <div ref={mapRef} style={{ height: "750px" }} />
       </div>
 
-      {/* ================= SCATTER ================= */}
+      {/* SCATTER */}
       <h2 style={{ marginTop: 40 }}>Stations Scatterplot</h2>
       <p style={{ color: "#666" }}>
         Scatter Plot of Stations of Routes Served (x) vs. Connected Destinations (y)
       </p>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          width: "100%",
-          padding: "0 8px",
-          marginBottom: 40
-        }}
-      >
-        <div
-          ref={scatterRef}
-          style={{
-            width: "100%",
-            maxWidth: "1200px",
-            display: "block",
-          }}
-        />
+      <div style={{ display: "flex", justifyContent: "center", width: "100%", padding: "0 8px", marginBottom: 40 }}>
+        <div ref={scatterRef} style={{ width: "100%", maxWidth: "1200px" }} />
       </div>
 
-      {/* ================= PIE ================= */}
+      {/* PIE */}
       <h2 style={{ marginTop: 40 }}>Routes Pie Chart</h2>
       <p style={{ color: "#666" }}>
         Distribution of Routes by Number of Regions Spanned
       </p>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          width: "100%",
-          padding: "0 8px",
-          marginBottom: 20
-        }}
-      >
+      <div style={{ display: "flex", justifyContent: "center", width: "100%", padding: "0 8px", marginBottom: 20 }}>
+        <div ref={routesRef} style={{ width: "100%", maxWidth: "1500px", minWidth: "800px" }} />
+      </div>
+
+      {/* ================= CRITIQUES SECTION ================= */}
+      <section>
+        <h2 style={{ marginTop: 40 }}>RailReach Critiques</h2>
+
         <div
-          ref={routesRef}
           style={{
             width: "100%",
-            maxWidth: "1500px",
-            minWidth: "800px",
-            // minHeight: "1000px",
-            display: "block"
+            border: "1px solid #d2d9ef",
+            borderRadius: 8,
+            padding: 12,
+            marginTop: 14,
+            display: "grid",
+            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+            gridTemplateRows: "repeat(2, minmax(0, 1fr))",
+            gap: 12,
           }}
-        />
-      </div>
+        >
+          {[
+            {
+              question: "What did they do well?",
+              answer:
+                "RailReach's website design was very well implemented. The UI was easy to understand and use. The website is responsive and displays the information about the models they gathered in an intuitive way, making it easy to access and understand.",
+            },
+            {
+              question: "How effective was their RESTful API?",
+              answer:
+                "Their RESTful API was fairly effective. The API documentation documents the API well, outlining the contents the json responses clearly. However, some of the claimed data points for their stations model is empty alongside their general model API endpoints don't return all the data for that model at once but in increments of pages, which made using the data for visualizations rather slow.",
+            },
+            {
+              question: "How well did they implement your user stories?",
+              answer:
+                "RailReach implemted our user stories well. We maintained clear communications throughout the user story process. Each user story was fulfilled and accounted for, with each new feature requested being completed in a timely manner.",
+            },
+            {
+              question: "What did we learn from their website?",
+              answer:
+                "We learned quite a lot about trains as a mode of transport across the United States. RailReach provided quite a lot of data between their stations, routes, and regions models about trains. They made information readily available about this mode of transportation, highigting the usefulness of trains. For example, most of our team wasn't aware of how plentiful train resources are in our state, and their website helped bridge that gap in knowledge with train stations and routes we had never been made aware of prior to this point.",
+            },
+            {
+              question: "What can they do better?",
+              answer:
+                "While the overall website design is appealing, we wish that RailReach would improve the text blurb on their splash page a bit more by breaking it up into smaller segments and possibly adding more images. In addition, the minor issues noted in their API as discussed earlier could probably be fixed if future development continued.",
+            },
+            {
+              question: "What puzzles us about their website?",
+              answer:
+                "We're still a little confused by the functionality of the accessibility mode on their site. The only functional change we can note when activating this mode is that images turn black. We're under the impression that it increases contrast to support struggling with visual disabilities; however, since their site is almost entirely black and white already, this feature seems a bit unnecessary.",
+            },
+          ].map(({ question, answer }) => (
+            <div
+              key={question}
+              style={{
+                border: "1px solid #d2d9ef",
+                borderRadius: 8,
+                background: "#fafcff",
+                padding: 10,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "clamp(10px, 2vw, 22px)",
+                  fontWeight: 700,
+                  color: "#1f2f59",
+                  marginBottom: 8,
+                }}
+              >
+                {question}
+              </div>
+              <div
+                style={{
+                  fontSize: "clamp(6px, 1.4vw, 15.5px)",
+                  lineHeight: 1.45,
+                  color: "#2f3d63",
+                }}
+              >
+                {answer}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
