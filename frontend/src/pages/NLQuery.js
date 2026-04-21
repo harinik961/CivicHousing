@@ -59,7 +59,7 @@ function NLQueryPage() {
             onKeyDown={(e) => {if (e.key === "Enter") {e.preventDefault(); handleSubmit();
                 }
               }}          />
-          <button onClick={handleSubmit}>Ask</button>
+          <button type="button" onClick={handleSubmit}>Ask</button>
         </div>
 
         {/* Example questions */}
