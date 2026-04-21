@@ -5,7 +5,6 @@ import "leaflet/dist/leaflet.css";
 import * as topojson from "topojson-client";
 
 const REGIONS_API_URL = "https://railreach.me/api/regions";
-const STATIONS_API_URL = "https://railreach.me/api/stations";
 const ROUTES_API_URL = "https://railreach.me/api/routes";
 const US_TOPOJSON_URL = "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
 
@@ -19,32 +18,6 @@ async function fetchRegions() {
 
   while (hasMore && page <= MAX_PAGES) {
     const res = await fetch(`${REGIONS_API_URL}?page=${page}&pageSize=100`);
-    const json = await res.json();
-    const data = json.data || [];
-
-    if (data.length === 0) break;
-
-    const signature = JSON.stringify(data.slice(0, 3));
-    if (seenPages.has(signature)) break;
-    seenPages.add(signature);
-
-    all = all.concat(data);
-    page++;
-  }
-
-  return all;
-}
-
-async function fetchStations() {
-  let all = [];
-  let page = 1;
-  let hasMore = true;
-
-  const seenPages = new Set();
-  const MAX_PAGES = 50;
-
-  while (hasMore && page <= MAX_PAGES) {
-    const res = await fetch(`${STATIONS_API_URL}?page=${page}&pageSize=100`);
     const json = await res.json();
     const data = json.data || [];
 
@@ -124,7 +97,6 @@ export default function ProviderVisualizations() {
 
         const [regions, routes, us] = await Promise.all([
           fetchRegions(),
-          fetchStations(),
           fetchRoutes(), 
           fetch(US_TOPOJSON_URL).then((r) => r.json()),
         ]);
