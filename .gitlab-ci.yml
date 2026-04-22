@@ -5,6 +5,8 @@ stages:
 
 build_website:
   stage: build
+  tags: 
+    - docker
   script:
     - cd frontend
     - npm install --include=dev
@@ -14,6 +16,8 @@ build_website:
 
 jest_unit_tests: 
   stage: test
+  tags: 
+    - docker
   script:
     - cd frontend
     - npm install --include=dev
@@ -23,6 +27,8 @@ jest_unit_tests:
 
 selenium_acceptance_tests: 
   stage: test
+  tags: 
+    - docker
   image: python:3.12
   before_script:
     - apt-get update && apt-get install -y wget gnupg unzip curl fonts-liberation libxss1 libappindicator3-1 libnss3 lsb-release xdg-utils
@@ -37,6 +43,8 @@ selenium_acceptance_tests:
 
 backend_tests: 
   stage: test
+  tags: 
+    - docker
   image: python:3.12
   before_script:
     - pip install -r backend/requirements.txt
@@ -46,6 +54,8 @@ backend_tests:
 
 postman_api_tests:
   stage: test
+  tags: 
+    - docker
   image:
     name: postman/newman:alpine
     entrypoint: [""]
