@@ -31,8 +31,10 @@ selenium_acceptance_tests:
     - coco-mac
   image: python:3.12
   before_script:
-  - apt-get update
-  - apt-get install -y chromium
+    - apt-get update
+    - apt-get install -y chromium chromium-driver
+    - python3 -m pip install --upgrade pip
+    - python3 -m pip install -r frontend/requirements.txt
   script:
     - cd frontend
     - python3 guitests.py
