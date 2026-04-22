@@ -21,6 +21,48 @@ The proposed project:
 CivicHousing is a data-driven web platform that highlights affordable housing availability and transportation accessibility gaps across Austin, Texas. It integrates public housing inventory data, transit infrastructure data, sidewalk and walkability metrics, and community-level indicators to reveal where affordability and mobility intersect, or fail to.
 By mapping the relationship between lower-income housing, public transportation density, and neighborhood accessibility, the platform empowers residents, planners, and policymakers to identify transit-accessible affordable housing, evaluate safety and walkability, and uncover inequities in urban development.
 
+## Phase 4
+
+Project Leader: 
+Name: Matthew Pham
+Responsibilities: 
+- Scheduled meetings/calls
+- Assigned tasks/issues
+- Ensured task completion
+
+GitLab Information: 
+- Git SHA: add later
+- Git Pipeline Link: add later
+
+Backend API Link: 
+[api.civichousing.me/api](https://api.civichousing.me/api)
+
+Website Link: 
+[civichousing.me](https://civichousing.me/)
+
+Postman Documentation: 
+[Postman API Documentation](https://documenter.getpostman.com/view/52514232/2sBXcDHMyK)
+
+Estimated and Actual Hours: 
+| Name | Estimated Hours | Actual Hours |
+|------|-------------------|--------------|
+| Coco Zhou | 15 hrs | 10 hrs |
+| Matthew Pham | 13 hrs | 13 hrs |
+| Sri Harini Kolluru | 11 hrs | 12 hrs |
+| Alexander Nguyen | 10 hrs | 12 hrs |
+| Aarshi Khatiwada | 10 hrs | 12 hrs |
+
+Customer Stories Estimated and Time Spent: 
+| Customer Story | Estimated Hours | Time Spent |
+|------|-------------------|--------------|
+| Customer Story #6 (Issue #137) | 1 hours | 2 hours |
+| Customer Story #7 (Issue #138) | 1 hour | 1 hour 30 mins |
+| Customer Story #8 (Issue #139) | 1 hour | 2 hours |
+| Customer Story #9 (Issue #140) | 1 hour | 1 hour  |
+| Customer Story #10 (Issue #141) | 1 mins | 1 hour |
+
+Comments: N/A
+
 ## Phase 3
 
 Project Leader: 
