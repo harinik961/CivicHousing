@@ -130,6 +130,12 @@ Backend — Phase II backend work includes the `associations.py` script (run sep
 ## Pagination
 
 All three list endpoints (`/api/community`, `/api/housing`, `/api/transportation`) support pagination. The backend accepts a `page` query parameter (default 1) and uses a fixed `per_page` of 50; it uses SQLAlchemy’s `query.paginate()` with `error_out=False` so out-of-range pages return an empty list instead of a 404. Each response includes `data` (the current page of items), `total` (total count), `page` (current page number), and `pages` (total number of pages). On the frontend, the model pages (Communities, Housing, Transportation) use this payload to display a pagination bar with first, previous, next, and last controls, and show “Page X of Y” plus the range of items (e.g. “1–50 of 403”). When the user changes page, the frontend fetches the new page from the API and updates the list. The community instance page also uses pagination when loading all housing in a zip code (requesting `page` and `per_page=50` in a loop until all pages are fetched) to compute aggregated affordable-units and housing-count stats.
+## PHASE IV
+
+## Implementations of Phase IV Features
+Added three Data Visualizations using D3 for our site, we have a bar graph which shows prices vs amenties, connectivity graph which visualzies transportation connectivity across Austin, and a choropleth graph which shows median housing pricing and transit score. We also created three provider visualizations which includes a regions choropleth map, routes scatterplot, and a routes pie chart. Apart from the visualizations, we implemented a natural query system using OpenRouter which uses the model meta-llama/llama-3.3-70b-instruct and includes effective prompting and detailed instructions for only using select, and provides examples of how to answer by providing examples and telling it to also return SQL answers, the bulk of this code is found in NLQuery.py. 
+
+We have also added critiques on our site and our developer's site, and created a presentation. 
 
 ## PHASE III
 
@@ -145,6 +151,31 @@ Frontend: Model pages were updated to include interactive search bars, sorting o
 
 Backend: Phase III backend work focused on integrating full-text search with PostgreSQL using ts_vector, implementing trigger functions in models.py to keep search indexes updated, and building reusable query logic in search.py. Additional improvements include consistent handling of query parameters for sorting and filtering, ensuring efficient and scalable data retrieval across all endpoints.
 
+## User Stories (Phase IV)
+### Housing : Set default to be highest to lowest number of affordable availbale houing 
+As a housing navigator helping low-income clients, I want the housing model page to default to sorting by total affordable units descending, so the projects with the most available units show up first. Making me manually pick a sort every time I load the page wastes clicks I repeat dozens of times a week.
+
+**How we handled it:** 
+We handled this user story by creating a defaultSortField and having it so the defualt is just ascending order using the defaultSortField which is "", and if defaultSort is defined then we set the value to that instead, which it is for housing. 
+### Show multiple clickable example questions in the natural language query page
+As someone who's never used a natural language search tool before, I want the query page to show 3–4 clickable example questions like "Which zip codes have the most affordable rental units?" so I have a starting point. A text box with only one example is intimidating, as I don't know what the system can or can't answer, so I'll probably just leave the page.
+**How we handled it:** 
+We handled this story by adding three clickable options which populates the search bar if the user wants to use default questions, or just view to see examples. 
+### Shareable filtered/sorted URLs for model pages
+As a case manager emailing housing options to a client, I want the filters I apply on the housing page to be reflected in the URL so I can copy-paste a link that opens the page with those exact filters already set. Right now if I filter to "Rental, Signle family, sorted by price low to high," I can't share that view and my client would have to redo all those filters themselves.
+**How we handled it:** 
+We implemented filtered/sorted by ensuring URL stores all the page states, for filters, sorting, search, and pagination. Whenever the page loads, we read the URL and set up the UI to match those states stored in the URL. When we interact with the UI for the page states, it updates the stored URL and thus the UI of what the model page displays. All other aspects of how we fetch data, etc. remained the same.
+
+### Aggregate stats banner at top of model pages
+As a journalist writing about Austin's housing gap, I want to see a summary bar at the top of each model page, something like "403 projects · 12,345 total affordable units · avg walk score 62" so I can grab quick headline numbers without having to page through every listing or export data to a spreadsheet.
+
+**How we handled it:** 
+We handled this story by creating housing_stats_payload, community_stats_payload, and transportation_stats_payload which aggregates the records accordingly and basically runs a query, applies a filter if exists, and returns a dict. We show details like count, sum of affordable units, avg walk score, avg median housing price, and number of accessible stops based on the model page. 
+
+### Filter housing by council district
+As an Austin voter trying to hold my council member accountable, I want to filter the housing model page by council district, not just zip code. Council districts are how Austin makes policy decisions about affordable housing, and zip codes don't map cleanly to them. If I'm in District 4, I want to see exactly what affordable housing exists in my politicians district
+**How we handled it:** 
+We handled this story by mapping zipcodes to council districts by doing this in austin_council_districts.py and adding its associated details in model.py, and adding it as a filter option similar to how we added filters in the previous phase.  
 
 ## User Stories (Phase III)
 
