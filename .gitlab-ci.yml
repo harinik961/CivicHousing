@@ -31,10 +31,8 @@ selenium_acceptance_tests:
     - coco-mac
   image: python:3.12
   before_script:
-    - apt-get update && apt-get install -y wget gnupg unzip curl fonts-liberation libxss1 libappindicator3-1 libnss3 lsb-release xdg-utils
-    - wget -q -O /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-    - apt-get install -y /tmp/google-chrome.deb
-    - pip install -r frontend/requirements.txt
+  - apt-get update
+  - apt-get install -y chromium
   script:
     - cd frontend
     - python3 guitests.py
