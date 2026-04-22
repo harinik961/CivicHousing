@@ -458,14 +458,19 @@ class TestRoutes(unittest.TestCase):
         for row in body["results"]:
             self.assertEqual(row["data"]["transport_type"], "Bus")
 
-
     def test_nl_query_success(self):
-        with patch("app.generate_sql", return_value="SELECT zip_code, population FROM communities"), \
-            patch("app.is_safe_sql", return_value=True), \
-            patch("app.run_query", return_value=[{"zip_code": "78758", "population": 1000}]), \
-            patch("app.generate_answer", return_value="Zip code 78758 has population 1000."):
+        with patch(
+            "app.generate_sql",
+            return_value="SELECT zip_code, population FROM communities",
+        ), patch("app.is_safe_sql", return_value=True), patch(
+            "app.run_query", return_value=[{"zip_code": "78758", "population": 1000}]
+        ), patch(
+            "app.generate_answer", return_value="Zip code 78758 has population 1000."
+        ):
 
-            response = self.client.post("/api/nl-query", json={"question": "test question"})
+            response = self.client.post(
+                "/api/nl-query", json={"question": "test question"}
+            )
             self.assertEqual(response.status_code, 200)
 
             data = response.get_json()
@@ -474,16 +479,15 @@ class TestRoutes(unittest.TestCase):
             self.assertIn("results", data)
             self.assertIn("answer", data)
 
-
     def test_nl_query_missing_question(self):
         response = self.client.post("/api/nl-query", json={})
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.get_json()["error"], "Missing question")
 
-
     def test_nl_query_unsafe_sql(self):
-        with patch("app.generate_sql", return_value="DROP TABLE users"), \
-            patch("app.is_safe_sql", return_value=False):
+        with patch("app.generate_sql", return_value="DROP TABLE users"), patch(
+            "app.is_safe_sql", return_value=False
+        ):
 
             response = self.client.post("/api/nl-query", json={"question": "bad query"})
             self.assertEqual(response.status_code, 400)
@@ -492,18 +496,16 @@ class TestRoutes(unittest.TestCase):
             self.assertEqual(data["error"], "Unsafe query blocked")
             self.assertIn("sql", data)
 
-
     def test_nl_query_no_results(self):
-        with patch("app.generate_sql", return_value="SELECT * FROM communities"), \
-            patch("app.is_safe_sql", return_value=True), \
-            patch("app.run_query", return_value=[]):
+        with patch("app.generate_sql", return_value="SELECT * FROM communities"), patch(
+            "app.is_safe_sql", return_value=True
+        ), patch("app.run_query", return_value=[]):
 
             response = self.client.post("/api/nl-query", json={"question": "no data"})
             self.assertEqual(response.status_code, 200)
 
             data = response.get_json()
             self.assertEqual(data["answer"], "No results found.")
-
 
     def test_nl_query_exception(self):
         with patch("app.generate_sql", side_effect=Exception("LLM failure")):

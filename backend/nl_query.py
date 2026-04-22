@@ -10,15 +10,22 @@ client = None
 api_key = os.getenv("API_OPENROUTER_KEY")
 
 if api_key:
-    client = OpenAI(
-        api_key=api_key,
-        base_url="https://openrouter.ai/api/v1"
-    )
+    client = OpenAI(api_key=api_key, base_url="https://openrouter.ai/api/v1")
 
 
 DB_URL = os.getenv("DATABASE_URL")
 
-FORBIDDEN = ["insert", "update", "delete", "drop", "alter", "truncate", "create", "grant", "revoke"]
+FORBIDDEN = [
+    "insert",
+    "update",
+    "delete",
+    "drop",
+    "alter",
+    "truncate",
+    "create",
+    "grant",
+    "revoke",
+]
 
 
 def is_safe_sql(sql: str) -> bool:
@@ -192,7 +199,7 @@ Now generate SQL for this question:
 
     response = client.chat.completions.create(
         model="meta-llama/llama-3.3-70b-instruct",
-        messages=[{"role": "user", "content": prompt}]
+        messages=[{"role": "user", "content": prompt}],
     )
 
     sql = response.choices[0].message.content.strip()
@@ -202,7 +209,9 @@ Now generate SQL for this question:
 
 
 def run_query(sql: str):
-    db_url = os.getenv("DATABASE_URL").replace("postgresql+psycopg2://", "postgresql://")
+    db_url = os.getenv("DATABASE_URL").replace(
+        "postgresql+psycopg2://", "postgresql://"
+    )
 
     conn = psycopg2.connect(db_url)
     cur = conn.cursor()
@@ -223,9 +232,11 @@ def generate_answer(question: str, results: list) -> str:
     if not client:
         return "Natural language responses are currently unavailable."
 
-    results_text = "\n".join(
-        f"- {list(row.values())}" for row in results[:10]
-    ) if results else "No results found."
+    results_text = (
+        "\n".join(f"- {list(row.values())}" for row in results[:10])
+        if results
+        else "No results found."
+    )
 
     prompt = f"""Given a user's question and database results, generate a clear natural English answer.
 
@@ -255,9 +266,12 @@ Answer:"""
     response = client.chat.completions.create(
         model="meta-llama/llama-3.3-70b-instruct",
         messages=[
-            {"role": "system", "content": "You are a helpful data assistant. Follow all formatting rules exactly. Return only the answer — no preamble, no explanation."},
-            {"role": "user", "content": prompt}
-        ]
+            {
+                "role": "system",
+                "content": "You are a helpful data assistant. Follow all formatting rules exactly. Return only the answer — no preamble, no explanation.",
+            },
+            {"role": "user", "content": prompt},
+        ],
     )
 
     answer = response.choices[0].message.content.strip()

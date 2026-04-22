@@ -21,6 +21,7 @@ from austin_council_districts import zips_for_district
 
 load_dotenv()
 
+
 def haversine_miles(lat1, lon1, lat2, lon2):
     radius_miles = 3958.8
 
@@ -297,12 +298,12 @@ def community_stats_payload(args):
         "count": int(c or 0),
         "population_sum": int(pop_sum or 0),
         "community_total_affordable_units_sum": int(aff_sum or 0),
-        "avg_median_housing_price": round(float(avg_price), 1)
-        if avg_price is not None
-        else None,
-        "avg_transit_score": round(float(avg_transit), 1)
-        if avg_transit is not None
-        else None,
+        "avg_median_housing_price": (
+            round(float(avg_price), 1) if avg_price is not None else None
+        ),
+        "avg_transit_score": (
+            round(float(avg_transit), 1) if avg_transit is not None else None
+        ),
         "park_count_sum": int(parks or 0),
         "health_count_sum": int(health or 0),
     }
@@ -310,9 +311,7 @@ def community_stats_payload(args):
 
 def transportation_stats_payload(args):
     q = args.get("q", "")
-    filt = combined_filter(
-        Transportation, q, transportation_filter_conditions(args)
-    )
+    filt = combined_filter(Transportation, q, transportation_filter_conditions(args))
     wheelchair_yes = case(
         (Transportation.wheelchair_accessible == "Wheelchair Accessible", 1),
         else_=0,
@@ -332,12 +331,12 @@ def transportation_stats_payload(args):
     return {
         "count": cnt,
         "avg_num_routes": round(float(avg_nr), 1) if avg_nr is not None else None,
-        "avg_travel_time_ut_minutes": round(float(avg_ut), 1)
-        if avg_ut is not None
-        else None,
-        "avg_travel_time_downtown_minutes": round(float(avg_dt), 1)
-        if avg_dt is not None
-        else None,
+        "avg_travel_time_ut_minutes": (
+            round(float(avg_ut), 1) if avg_ut is not None else None
+        ),
+        "avg_travel_time_downtown_minutes": (
+            round(float(avg_dt), 1) if avg_dt is not None else None
+        ),
         "wheelchair_accessible_stops": wc,
         "wheelchair_accessible_pct": round(100.0 * wc / cnt, 1) if cnt else None,
     }
@@ -700,7 +699,7 @@ def create_app():
         return jsonify(
             {"results": results, "total": total, "page": page, "pages": pages}
         )
-    
+
     @app.route("/api/nl-query", methods=["POST"])
     def nl_query():
         data = request.get_json()
@@ -713,10 +712,7 @@ def create_app():
             sql = generate_sql(question)
 
             if not is_safe_sql(sql):
-                return jsonify({
-                    "error": "Unsafe query blocked",
-                    "sql": sql
-                }), 400
+                return jsonify({"error": "Unsafe query blocked", "sql": sql}), 400
 
             results = run_query(sql)
 
@@ -725,12 +721,9 @@ def create_app():
             else:
                 answer = "No results found."
 
-            return jsonify({
-                "question": question,
-                "sql": sql,
-                "results": results,
-                "answer": answer
-            })
+            return jsonify(
+                {"question": question, "sql": sql, "results": results, "answer": answer}
+            )
 
         except Exception as e:
             print("Warning: Error processing NL query:", str(e))

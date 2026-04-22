@@ -2,9 +2,9 @@ from models import db, Housing, Community, Transportation
 from sqlalchemy import func, or_, and_, desc, asc, cast, String
 
 
-  
 # Build full-text queries
-  
+
+
 def build_queries(query):
     query = query.strip()
 
@@ -20,9 +20,9 @@ def build_queries(query):
     return phrase_query, plain_query, or_query
 
 
-  
 # Dynamic ILIKE fallback
-  
+
+
 def build_ilike_filter(model, query):
     filters = []
 
@@ -62,9 +62,9 @@ def combined_filter(model, query, extra_filters=None):
     return and_(sf, *extras)
 
 
-  
 # Core search logic
-  
+
+
 def search_model(
     model,
     query,
@@ -107,9 +107,9 @@ def search_model(
     return results, total, total_pages
 
 
-  
 # Model-specific search
-  
+
+
 def search_housing(
     query,
     page=1,
@@ -189,6 +189,7 @@ def search_transportation(
 
 
 # Global search
+
 
 def global_search(query, page=1, per_page=20):
     if not query or query.strip() == "":

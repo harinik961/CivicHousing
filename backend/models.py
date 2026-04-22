@@ -5,8 +5,8 @@ from sqlalchemy_utils import TSVectorType
 
 db = SQLAlchemy()
 
-  # Association Tables
-  
+# Association Tables
+
 community_housing = db.Table(
     "community_housing",
     db.Column(
@@ -39,8 +39,8 @@ housing_transportation = db.Table(
     ),
 )
 
-  # Community Model
-  
+# Community Model
+
 
 class Community(db.Model):
     __tablename__ = "communities"
@@ -107,8 +107,8 @@ class Community(db.Model):
         return data
 
 
-  # Housing Model
-  
+# Housing Model
+
 
 class Housing(db.Model):
     __tablename__ = "housing"
@@ -175,8 +175,8 @@ class Housing(db.Model):
         return data
 
 
-  # Transportation Model
-  
+# Transportation Model
+
 
 class Transportation(db.Model):
     __tablename__ = "transportation"
@@ -250,8 +250,8 @@ class Transportation(db.Model):
         return data
 
 
-  # Trigger DDL — fires after table creation via db.create_all()
-  
+# Trigger DDL — fires after table creation via db.create_all()
+
 event.listen(
     Community.__table__,
     "after_create",
