@@ -55,11 +55,11 @@ Estimated and Actual Hours:
 Customer Stories Estimated and Time Spent: 
 | Customer Story | Estimated Hours | Time Spent |
 |------|-------------------|--------------|
-| Customer Story #6 (Issue #137) | 1 hours | 2 hours |
-| Customer Story #7 (Issue #138) | 1 hour | 1 hour 30 mins |
-| Customer Story #8 (Issue #139) | 1 hour | 2 hours |
-| Customer Story #9 (Issue #140) | 1 hour | 1 hour  |
-| Customer Story #10 (Issue #141) | 1 mins | 1 hour |
+| Customer Story #16 (Issue #137) | 1 hours | 2 hours |
+| Customer Story #17 (Issue #138) | 1 hour | 1 hour 30 mins |
+| Customer Story #18 (Issue #139) | 1 hour | 2 hours |
+| Customer Story #19 (Issue #140) | 1 hour | 1 hour  |
+| Customer Story #20 (Issue #141) | 1 mins | 1 hour |
 
 Comments: N/A
 
@@ -97,11 +97,11 @@ Estimated and Actual Hours:
 Customer Stories Estimated and Time Spent: 
 | Customer Story | Estimated Hours | Time Spent |
 |------|-------------------|--------------|
-| Customer Story #6 (Issue #78) | 2 hours | 3 hours |
-| Customer Story #7 (Issue #79) | 1 hour | 1 hour 30 mins |
-| Customer Story #8 (Issue #80) | 1 hour 30 mins | 2 hours |
-| Customer Story #9 (Issue #81) | 1 hour | 1 hour 30 mins |
-| Customer Story #10 (Issue #82) | 30 mins | 1 hour |
+| Customer Story #11 (Issue #78) | 2 hours | 3 hours |
+| Customer Story #12 (Issue #79) | 1 hour | 1 hour 30 mins |
+| Customer Story #13 (Issue #80) | 1 hour 30 mins | 2 hours |
+| Customer Story #14 (Issue #81) | 1 hour | 1 hour 30 mins |
+| Customer Story #15 (Issue #82) | 30 mins | 1 hour |
 
 Comments: N/A
 
@@ -139,11 +139,11 @@ Estimated and Actual Hours:
 Customer Stories Estimated and Time Spent: 
 | Customer Story | Estimated Time | Time Spent |
 |------|-------------------|--------------|
-| Customer Story #11 (Issue #116) | 45 mins | 45 mins |
-| Customer Story #12 (Issue #118) | 20 mins | 10 mins |
-| Customer Story #13 (Issue #119) | 50 mins | 30 mins |
-| Customer Story #14 (Issue #115) | 1 hour | 45 mins|
-| Customer Story #15 (Issue #117) | 1 hour | 30 mins |
+| Customer Story #6 (Issue #116) | 45 mins | 45 mins |
+| Customer Story #7 (Issue #118) | 20 mins | 10 mins |
+| Customer Story #8 (Issue #119) | 50 mins | 30 mins |
+| Customer Story #9 (Issue #115) | 1 hour | 45 mins|
+| Customer Story #10 (Issue #117) | 1 hour | 30 mins |
 
 Comments: 
 We used AccessATX's group's selenium test for reference and as a boilerplate 
