@@ -59,7 +59,7 @@ Customer Stories Estimated and Time Spent:
 | Customer Story #17 (Issue #138) | 1 hour | 1 hour 30 mins |
 | Customer Story #18 (Issue #139) | 1 hour | 2 hours |
 | Customer Story #19 (Issue #140) | 1 hour | 1 hour  |
-| Customer Story #20 (Issue #141) | 1 mins | 1 hour |
+| Customer Story #20 (Issue #141) | 1 hour | 1 hour |
 
 Comments: N/A
 
