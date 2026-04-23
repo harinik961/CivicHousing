@@ -17,7 +17,9 @@ Debugging Help
 - Assisted in fixing page linking issues for the Navbar
 - Helped debug GitLab API retrievals and link warnings on the About Page
 - Helped troubleshoot data formatting problems, such as handling values like "Every 15 Minutes" (string) values for sorting
--Assisted in identifying why duplicate API requests were being made from the frontend
+- Assisted in identifying why duplicate API requests were being made from the frontend
+- Helped troubleshoot issues with NLP Query where LLM could not handle opinion-based questions/queries
+- When we experienced issues with running out of Gitlab CI/CD minutes, helped set up local runners to run CI/CD pipeline
 
 
 Conceptual Clarification
@@ -26,6 +28,8 @@ Conceptual Clarification
 - Learned how to use GitLab API to retrieve number of commits and issues closed and the why one is tracked via Gitlab usernames and the other with user emails
 - Learned how list filtering fits REST APIs (optional query parameters on GET, encoding in the URL, and matching what the backend parses)
 - Improved understanding of how data representation affects functionality, such as why string-based values need to be interpreted differently for sorting
+- Conceptually clarified what POST is and how it differs from GET
+- Clarified how AMI works with affordable housing for presentation
 
 Code Improvement
 - Built out the home page carousel using React Bootstrap's Carousel component with
@@ -38,10 +42,11 @@ Code Improvement
 - Filtering — AI helped work through how to implement filtering (e.g., query parameters on list endpoints, wiring frontend controls to API calls, and keeping filter state consistent with navigation or URLs)
 - Postman documentation — AI helped structure and write descriptions for the Postman collection (requests, variables, example bodies or responses) so the API was easier for the team to test and share
 - Moved highlighting logic from the backend to the frontend, simplifying the API and allowing more flexible UI control without modifying server responses
+- Suggested fixes for altering CI/CD file and selenium tests for local runner 
 
 
 UI Layout and Masonry Implementation
-- Helped implement a masonry style layout for the instance   pages so cards would flow naturally instead of stacking in rigid rows
+- Helped implement a masonry style layout for the instance pages so cards would flow naturally instead of stacking in rigid rows
 
 
 ## Reflection on Use
@@ -56,7 +61,7 @@ With the help of AI interaction I was able to understand what may be failing our
 
 For filtering, AI clarified how list endpoints and query strings fit together, which shortened the trial-and-error when connecting UI filters to the backend. For Postman, AI suggestions made it easier to document each request clearly so teammates could import the collection and reproduce calls without guessing parameters. 
 
-Another key improvement was shifting certain logic, such as highlighting and formatting, from the backend to the frontend. This simplified the API and made the UI more flexible without requiring backend changes
+Another key improvement was shifting certain logic, such as highlighting and formatting, from the backend to the frontend. This simplified the API and made the UI more flexible without requiring backend changes.
 
 How did you decide what to keep or ignore?
 
@@ -152,6 +157,18 @@ This change taught me more first hand about how something may run properly in yo
 
   This change taught me that controlling when effects run in React is essential for preventing redundant API calls and ensuring efficient data fetching.
 
+**Before**
+before_script:
+  - apt-get update && apt-get install -y wget gnupg unzip curl fonts-liberation libxss1 libappindicator3-1 libnss3 lsb-release xdg-utils
+  - wget -q -O /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+  - apt-get install -y /tmp/google-chrome.deb
+  - pip install -r frontend/requirements.txt
+**After**
+before_script: 
+  - apt-get update
+  - apt-get install -y chromium chromium-driver
+  - python3 -m pip install --upgrade pip
+  - python3 -m pip install -r frontend/requirements.txt
 
 
 ## Integrity Statement

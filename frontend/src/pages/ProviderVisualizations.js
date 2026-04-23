@@ -383,7 +383,7 @@ export default function ProviderVisualizations() {
             {
               question: "How effective was their RESTful API?",
               answer:
-                "Their RESTful API was fairly effective. The API documentation documents the API well, outlining the contents the json responses clearly. However, some of the claimed data points for their stations model is empty alongside their general model API endpoints don't return all the data for that model at once but in increments of pages, which made using the data for visualizations rather slow.",
+                "Their RESTful API was fairly effective. The API documentation documents the API well, outlining the contents the json responses clearly. However, their general model API endpoints don't return all the data for that model at once but in increments of pages, which made using the data for visualizations rather slow.",
             },
             {
               question: "How well did they implement your user stories?",

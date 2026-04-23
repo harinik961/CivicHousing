@@ -282,7 +282,9 @@ Debugging Help
 - Assisted in fixing page linking issues for the Navbar
 - Helped debug GitLab API retrievals and link warnings on the About Page
 - Helped troubleshoot data formatting problems, such as handling values like "Every 15 Minutes" (string) values for sorting
--Assisted in identifying why duplicate API requests were being made from the frontend
+- Assisted in identifying why duplicate API requests were being made from the frontend
+- Helped troubleshoot issues with NLP Query where LLM could not handle opinion-based questions/queries
+- When we experienced issues with running out of Gitlab CI/CD minutes, helped set up local runners to run CI/CD pipeline
 
 
 Conceptual Clarification
@@ -291,6 +293,8 @@ Conceptual Clarification
 - Learned how to use GitLab API to retrieve number of commits and issues closed and the why one is tracked via Gitlab usernames and the other with user emails
 - Learned how list filtering fits REST APIs (optional query parameters on GET, encoding in the URL, and matching what the backend parses)
 - Improved understanding of how data representation affects functionality, such as why string-based values need to be interpreted differently for sorting
+- Conceptually clarified what POST is and how it differs from GET
+- Clarified how AMI works with affordable housing for presentation
 
 Code Improvement
 - Built out the home page carousel using React Bootstrap's Carousel component with
@@ -303,10 +307,11 @@ Code Improvement
 - Filtering — AI helped work through how to implement filtering (e.g., query parameters on list endpoints, wiring frontend controls to API calls, and keeping filter state consistent with navigation or URLs)
 - Postman documentation — AI helped structure and write descriptions for the Postman collection (requests, variables, example bodies or responses) so the API was easier for the team to test and share
 - Moved highlighting logic from the backend to the frontend, simplifying the API and allowing more flexible UI control without modifying server responses
+- Suggested fixes for altering CI/CD file and selenium tests for local runner 
 
 
 UI Layout and Masonry Implementation
-- Helped implement a masonry style layout for the instance   pages so cards would flow naturally instead of stacking in rigid rows
+- Helped implement a masonry style layout for the instance pages so cards would flow naturally instead of stacking in rigid rows
 
 
 ## Reflection on Use
@@ -321,7 +326,7 @@ With the help of AI interaction I was able to understand what may be failing our
 
 For filtering, AI clarified how list endpoints and query strings fit together, which shortened the trial-and-error when connecting UI filters to the backend. For Postman, AI suggestions made it easier to document each request clearly so teammates could import the collection and reproduce calls without guessing parameters. 
 
-Another key improvement was shifting certain logic, such as highlighting and formatting, from the backend to the frontend. This simplified the API and made the UI more flexible without requiring backend changes
+Another key improvement was shifting certain logic, such as highlighting and formatting, from the backend to the frontend. This simplified the API and made the UI more flexible without requiring backend changes.
 
 How did you decide what to keep or ignore?
 
@@ -417,6 +422,18 @@ This change taught me more first hand about how something may run properly in yo
 
   This change taught me that controlling when effects run in React is essential for preventing redundant API calls and ensuring efficient data fetching.
 
+**Before**
+before_script:
+  - apt-get update && apt-get install -y wget gnupg unzip curl fonts-liberation libxss1 libappindicator3-1 libnss3 lsb-release xdg-utils
+  - wget -q -O /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+  - apt-get install -y /tmp/google-chrome.deb
+  - pip install -r frontend/requirements.txt
+**After**
+before_script: 
+  - apt-get update
+  - apt-get install -y chromium chromium-driver
+  - python3 -m pip install --upgrade pip
+  - python3 -m pip install -r frontend/requirements.txt
 
 
 ## Integrity Statement
@@ -559,6 +576,12 @@ Backend — Phase II backend work includes the `associations.py` script (run sep
 ## Pagination
 
 All three list endpoints (`/api/community`, `/api/housing`, `/api/transportation`) support pagination. The backend accepts a `page` query parameter (default 1) and uses a fixed `per_page` of 50; it uses SQLAlchemy’s `query.paginate()` with `error_out=False` so out-of-range pages return an empty list instead of a 404. Each response includes `data` (the current page of items), `total` (total count), `page` (current page number), and `pages` (total number of pages). On the frontend, the model pages (Communities, Housing, Transportation) use this payload to display a pagination bar with first, previous, next, and last controls, and show “Page X of Y” plus the range of items (e.g. “1–50 of 403”). When the user changes page, the frontend fetches the new page from the API and updates the list. The community instance page also uses pagination when loading all housing in a zip code (requesting `page` and `per_page=50` in a loop until all pages are fetched) to compute aggregated affordable-units and housing-count stats.
+## PHASE IV
+
+## Implementations of Phase IV Features
+Added three Data Visualizations using D3 for our site, we have a bar graph which shows prices vs amenties, connectivity graph which visualzies transportation connectivity across Austin, and a choropleth graph which shows median housing pricing and transit score. We also created three provider visualizations which includes a regions choropleth map, routes scatterplot, and a routes pie chart. Apart from the visualizations, we implemented a natural query system using OpenRouter which uses the model meta-llama/llama-3.3-70b-instruct and includes effective prompting and detailed instructions for only using select, and provides examples of how to answer by providing examples and telling it to also return SQL answers, the bulk of this code is found in NLQuery.py. 
+
+We have also added critiques on our site and our developer's site, and created a presentation. 
 
 ## PHASE III
 
@@ -574,6 +597,31 @@ Frontend: Model pages were updated to include interactive search bars, sorting o
 
 Backend: Phase III backend work focused on integrating full-text search with PostgreSQL using ts_vector, implementing trigger functions in models.py to keep search indexes updated, and building reusable query logic in search.py. Additional improvements include consistent handling of query parameters for sorting and filtering, ensuring efficient and scalable data retrieval across all endpoints.
 
+## User Stories (Phase IV)
+### Housing : Set default to be highest to lowest number of affordable availbale houing 
+As a housing navigator helping low-income clients, I want the housing model page to default to sorting by total affordable units descending, so the projects with the most available units show up first. Making me manually pick a sort every time I load the page wastes clicks I repeat dozens of times a week.
+
+**How we handled it:** 
+We handled this user story by creating a defaultSortField and having it so the defualt is just ascending order using the defaultSortField which is "", and if defaultSort is defined then we set the value to that instead, which it is for housing. 
+### Show multiple clickable example questions in the natural language query page
+As someone who's never used a natural language search tool before, I want the query page to show 3–4 clickable example questions like "Which zip codes have the most affordable rental units?" so I have a starting point. A text box with only one example is intimidating, as I don't know what the system can or can't answer, so I'll probably just leave the page.
+**How we handled it:** 
+We handled this story by adding three clickable options which populates the search bar if the user wants to use default questions, or just view to see examples. 
+### Shareable filtered/sorted URLs for model pages
+As a case manager emailing housing options to a client, I want the filters I apply on the housing page to be reflected in the URL so I can copy-paste a link that opens the page with those exact filters already set. Right now if I filter to "Rental, Signle family, sorted by price low to high," I can't share that view and my client would have to redo all those filters themselves.
+**How we handled it:** 
+We implemented filtered/sorted by ensuring URL stores all the page states, for filters, sorting, search, and pagination. Whenever the page loads, we read the URL and set up the UI to match those states stored in the URL. When we interact with the UI for the page states, it updates the stored URL and thus the UI of what the model page displays. All other aspects of how we fetch data, etc. remained the same.
+
+### Aggregate stats banner at top of model pages
+As a journalist writing about Austin's housing gap, I want to see a summary bar at the top of each model page, something like "403 projects · 12,345 total affordable units · avg walk score 62" so I can grab quick headline numbers without having to page through every listing or export data to a spreadsheet.
+
+**How we handled it:** 
+We handled this story by creating housing_stats_payload, community_stats_payload, and transportation_stats_payload which aggregates the records accordingly and basically runs a query, applies a filter if exists, and returns a dict. We show details like count, sum of affordable units, avg walk score, avg median housing price, and number of accessible stops based on the model page. 
+
+### Filter housing by council district
+As an Austin voter trying to hold my council member accountable, I want to filter the housing model page by council district, not just zip code. Council districts are how Austin makes policy decisions about affordable housing, and zip codes don't map cleanly to them. If I'm in District 4, I want to see exactly what affordable housing exists in my politicians district
+**How we handled it:** 
+We handled this story by mapping zipcodes to council districts by doing this in austin_council_districts.py and adding its associated details in model.py, and adding it as a filter option similar to how we added filters in the previous phase.  
 
 ## User Stories (Phase III)
 
